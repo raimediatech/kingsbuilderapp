@@ -27,7 +27,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
   } catch (error) {
     console.error("API Error:", error);
-    return json({ error: "Failed to fetch pages" }, { status: 500 });
+    return json({ 
+      error: "Failed to fetch pages",
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }, { status: 500 });
   }
 }
 
@@ -71,6 +75,10 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ error: "Method not allowed" }, { status: 405 });
   } catch (error) {
     console.error("API Error:", error);
-    return json({ error: "Failed to process request" }, { status: 500 });
+    return json({ 
+      error: "Failed to process request",
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }, { status: 500 });
   }
 }

@@ -35,13 +35,22 @@ export async function createShopifyPage(session: any, pageData: any) {
         variables: {
           input: {
             title: pageData.title,
-            body: pageData.content,
+            body: typeof pageData.content === 'string' ? pageData.content : JSON.stringify(pageData.content),
             handle: pageData.handle,
           },
         },
       },
     });
 
+    console.log("Shopify API Response:", response.body);
+    
+    // Check for user errors
+    if (response.body.data && response.body.data.pageCreate && response.body.data.pageCreate.userErrors && response.body.data.pageCreate.userErrors.length > 0) {
+      const userErrors = response.body.data.pageCreate.userErrors;
+      console.error("Shopify user errors:", userErrors);
+      throw new Error(`Shopify API Error: ${userErrors.map(e => e.message).join(', ')}`);
+    }
+    
     return response.body;
   } catch (error) {
     console.error("Error creating Shopify page:", error);
@@ -84,13 +93,22 @@ export async function updateShopifyPage(session: any, pageId: string, pageData: 
           input: {
             id: pageId,
             title: pageData.title,
-            body: pageData.content,
+            body: typeof pageData.content === 'string' ? pageData.content : JSON.stringify(pageData.content),
             handle: pageData.handle,
           },
         },
       },
     });
 
+    console.log("Shopify API Response:", response.body);
+    
+    // Check for user errors
+    if (response.body.data && response.body.data.pageUpdate && response.body.data.pageUpdate.userErrors && response.body.data.pageUpdate.userErrors.length > 0) {
+      const userErrors = response.body.data.pageUpdate.userErrors;
+      console.error("Shopify user errors:", userErrors);
+      throw new Error(`Shopify API Error: ${userErrors.map(e => e.message).join(', ')}`);
+    }
+    
     return response.body;
   } catch (error) {
     console.error("Error updating Shopify page:", error);

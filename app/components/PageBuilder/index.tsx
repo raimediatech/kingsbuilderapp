@@ -71,8 +71,14 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
     }
     
     try {
-      const widgetData = JSON.parse(e.dataTransfer.getData("widget"));
-      if (widgetData) {
+      const widgetDataString = e.dataTransfer.getData("widget");
+      if (!widgetDataString) {
+        console.warn("No widget data found in drop event");
+        return;
+      }
+      
+      const widgetData = JSON.parse(widgetDataString);
+      if (widgetData && widgetData.type) {
         const newElement = {
           id: `element-${Date.now()}`,
           type: widgetData.type,
@@ -80,14 +86,19 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
           settings: getDefaultSettings(widgetData.type)
         };
         
-        setPageElements([...pageElements, newElement]);
-        setToastMessage(`Added ${widgetData.title} element`);
+        setPageElements(prevElements => [...prevElements, newElement]);
+        setToastMessage(`Added ${widgetData.title || widgetData.type} element`);
         setToastError(false);
+        setShowToast(true);
+      } else {
+        console.warn("Invalid widget data:", widgetData);
+        setToastMessage("Invalid widget data");
+        setToastError(true);
         setShowToast(true);
       }
     } catch (error) {
       console.error("Error dropping element:", error);
-      setToastMessage("Error adding element");
+      setToastMessage(`Error adding element: ${error.message}`);
       setToastError(true);
       setShowToast(true);
     }
@@ -245,17 +256,22 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
       };
       
       // Call onSave callback if provided
-      if (onSave) {
+      if (onSave && typeof onSave === 'function') {
         await onSave(pageData);
+        
+        // Show success message
+        setToastMessage("Page saved successfully");
+        setToastError(false);
+        setShowToast(true);
+      } else {
+        // No save callback provided, just show a message
+        setToastMessage("No save handler configured");
+        setToastError(true);
+        setShowToast(true);
       }
-      
-      // Show success message
-      setToastMessage("Page saved successfully");
-      setToastError(false);
-      setShowToast(true);
     } catch (error) {
       console.error("Error saving page:", error);
-      setToastMessage("Error saving page. Please try again.");
+      setToastMessage(`Error saving page: ${error.message || 'Unknown error'}`);
       setToastError(true);
       setShowToast(true);
     }

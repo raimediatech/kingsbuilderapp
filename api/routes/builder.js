@@ -579,6 +579,79 @@ router.get('/:pageId', async (req, res) => {
           const shop = '${shop}';
           const userEmail = '${userEmail || ""}';
 
+          // Notification function
+          function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.kb-notification');
+            existingNotifications.forEach(n => n.remove());
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = \`kb-notification kb-notification-\${type}\`;
+            notification.innerHTML = \`
+              <div class="kb-notification-content">
+                <span class="kb-notification-message">\${message}</span>
+                <button class="kb-notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+              </div>
+            \`;
+            
+            // Add styles
+            notification.style.cssText = \`
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              z-index: 10000;
+              background: \${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : type === 'warning' ? '#fff3cd' : '#d1ecf1'};
+              color: \${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : type === 'warning' ? '#856404' : '#0c5460'};
+              border: 1px solid \${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : type === 'warning' ? '#ffeaa7' : '#bee5eb'};
+              border-radius: 4px;
+              padding: 12px 16px;
+              max-width: 400px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              animation: slideIn 0.3s ease-out;
+            \`;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+              if (notification.parentElement) {
+                notification.remove();
+              }
+            }, 5000);
+          }
+          
+          // Add notification styles
+          if (!document.getElementById('kb-notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'kb-notification-styles';
+            style.textContent = \`
+              @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+              }
+              .kb-notification-content {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              }
+              .kb-notification-close {
+                background: none;
+                border: none;
+                font-size: 18px;
+                cursor: pointer;
+                margin-left: 12px;
+                opacity: 0.7;
+              }
+              .kb-notification-close:hover {
+                opacity: 1;
+              }
+            \`;
+            document.head.appendChild(style);
+          }
+
           // Save button functionality
           ${canEdit ? `
           document.getElementById('save-btn').addEventListener('click', function() {
@@ -642,7 +715,7 @@ router.get('/:pageId', async (req, res) => {
             .then(data => {
               // Remove loading indicator
               document.body.removeChild(loadingEl);
-              alert('Page saved successfully!');
+              showNotification('Page saved successfully!', 'success');
             })
             .catch(error => {
               console.error('Error saving page:', error);
@@ -651,7 +724,7 @@ router.get('/:pageId', async (req, res) => {
               
               // Fallback to local storage if API fails
               localStorage.setItem(`page_${pageId}`, JSON.stringify(pageData));
-              alert('Page saved locally (API unavailable)');
+              showNotification('Page saved locally (API unavailable)', 'warning');
             });
           });
 
