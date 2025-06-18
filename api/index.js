@@ -318,26 +318,39 @@ app.get('/app/builder', (req, res) => {
       </div>
       
       <script>
-        // Store current state
-        let pageContent = [];
-        const shop = "${shop}";
-        const pageId = "${pageId || 'new'}";
+        // Global variables - declare at the top
+        var pageContent = [];
+        var shop = "${shop}";
+        var pageId = "${pageId || 'new'}";
         
-        // Initialize page content
-        pageContent = [];
-        
-        // Load existing page content if editing
-        if (pageId !== 'new') {
-          loadPageContent();
-        }
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+          // Initialize page content
+          pageContent = [];
+          
+          // Load existing page content if editing
+          if (pageId !== 'new') {
+            loadPageContent();
+          } else {
+            renderPreview();
+          }
+          
+          // Show welcome message
+          showToast('🚀 Page Builder loaded! Click widgets to add them, drag to reorder. Ctrl+S to save, Ctrl+Z to undo.');
+        });
         
         function addWidget(type) {
-          const widget = createWidget(type);
-          pageContent.push(widget);
-          renderPreview();
-          
-          // Show success message
-          showToast(\`\${widget.name} widget added!\`);
+          try {
+            const widget = createWidget(type);
+            pageContent.push(widget);
+            renderPreview();
+            
+            // Show success message
+            showToast(\`\${widget.name} widget added!\`);
+          } catch (error) {
+            console.error('Error adding widget:', error);
+            showToast('Error adding widget. Please try again.');
+          }
         }
         
         function createWidget(type) {
@@ -362,7 +375,7 @@ app.get('/app/builder', (req, res) => {
         function renderPreview() {
           const previewContent = document.getElementById('page-content');
           
-          if (pageContent.length === 0) {
+          if (!pageContent || pageContent.length === 0) {
             previewContent.innerHTML = '<div class="empty-state">Click on widgets above to add them to your page</div>';
             return;
           }
@@ -416,6 +429,10 @@ app.get('/app/builder', (req, res) => {
         }
         
         function removeWidget(index) {
+          if (!pageContent || index < 0 || index >= pageContent.length) {
+            showToast('Error: Widget not found');
+            return;
+          }
           const widget = pageContent[index];
           pageContent.splice(index, 1);
           renderPreview();
@@ -423,6 +440,10 @@ app.get('/app/builder', (req, res) => {
         }
         
         function duplicateWidget(index) {
+          if (!pageContent || index < 0 || index >= pageContent.length) {
+            showToast('Error: Widget not found');
+            return;
+          }
           const widget = {...pageContent[index]};
           pageContent.splice(index + 1, 0, widget);
           renderPreview();
@@ -430,6 +451,10 @@ app.get('/app/builder', (req, res) => {
         }
         
         function editWidget(index) {
+          if (!pageContent || index < 0 || index >= pageContent.length) {
+            showToast('Error: Widget not found');
+            return;
+          }
           const widget = pageContent[index];
           const newContent = prompt(\`Edit \${widget.name} content:\`, widget.html);
           if (newContent !== null) {
@@ -445,7 +470,7 @@ app.get('/app/builder', (req, res) => {
         }
         
         function savePage() {
-          if (pageContent.length === 0) {
+          if (!pageContent || pageContent.length === 0) {
             showToast('Add some widgets before saving!');
             return;
           }
@@ -521,7 +546,7 @@ app.get('/app/builder', (req, res) => {
                 break;
               case 'z':
                 event.preventDefault();
-                if (pageContent.length > 0) {
+                if (pageContent && pageContent.length > 0) {
                   const lastWidget = pageContent.pop();
                   renderPreview();
                   showToast(\`Undid: \${lastWidget.name}\`);
@@ -530,12 +555,6 @@ app.get('/app/builder', (req, res) => {
             }
           }
         });
-        
-        // Initialize preview
-        renderPreview();
-        
-        // Initialize with welcome message
-        showToast('🚀 Page Builder loaded! Click widgets to add them, drag to reorder. Ctrl+S to save, Ctrl+Z to undo.');
       </script>
     </body>
     </html>
