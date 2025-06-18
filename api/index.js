@@ -439,93 +439,6 @@ app.get('/app/builder', (req, res) => {
           <p>Select a widget to edit its properties</p>
         </div>
       </div>
-      <div class="container">
-        <div class="header">
-          <div>
-            <h1>🏗️ KingsBuilder - Page Builder</h1>
-            <p>Build beautiful pages with drag-and-drop widgets</p>
-          </div>
-          <div>
-            <button class="btn btn-secondary" onclick="goBack()">← Back to Pages</button>
-            <button class="btn" onclick="savePage()">💾 Save Page</button>
-          </div>
-        </div>
-        
-        <div class="builder-container">
-          <h2>Available Widgets</h2>
-          <div class="widget-grid">
-            <!-- Basic Widgets -->
-            <div class="widget-card" onclick="addWidget('heading')">
-              <div class="widget-icon">📝</div>
-              <div class="widget-title">Heading</div>
-              <div class="widget-desc">Add titles and headings</div>
-            </div>
-            <div class="widget-card" onclick="addWidget('text')">
-              <div class="widget-icon">📄</div>
-              <div class="widget-title">Text Block</div>
-              <div class="widget-desc">Rich text content</div>
-            </div>
-            <div class="widget-card" onclick="addWidget('image')">
-              <div class="widget-icon">🖼️</div>
-              <div class="widget-title">Image</div>
-              <div class="widget-desc">Add images and galleries</div>
-            </div>
-            <div class="widget-card" onclick="addWidget('button')">
-              <div class="widget-icon">🔘</div>
-              <div class="widget-title">Button</div>
-              <div class="widget-desc">Call-to-action buttons</div>
-            </div>
-            <div class="widget-card" onclick="addWidget('video')">
-              <div class="widget-icon">📹</div>
-              <div class="widget-title">Video</div>
-              <div class="widget-desc">Embed videos</div>
-            </div>
-            <div class="widget-card" onclick="addWidget('divider')">
-              <div class="widget-icon">➖</div>
-              <div class="widget-title">Divider</div>
-              <div class="widget-desc">Section separators</div>
-            </div>
-            
-            <!-- Advanced Widgets -->
-            <div class="widget-card" onclick="addWidget('hero')">
-              <div class="widget-icon">🎯</div>
-              <div class="widget-title">Hero Section</div>
-              <div class="widget-desc">Header with image/video</div>
-            </div>
-            <div class="widget-card" onclick="addWidget('gallery')">
-              <div class="widget-icon">🖼️</div>
-              <div class="widget-title">Image Gallery</div>
-              <div class="widget-desc">Photo galleries</div>
-            </div>
-            <div class="widget-card" onclick="addWidget('testimonials')">
-              <div class="widget-icon">💬</div>
-              <div class="widget-title">Testimonials</div>
-              <div class="widget-desc">Customer reviews</div>
-            </div>
-            <div class="widget-card" onclick="addWidget('pricing')">
-              <div class="widget-icon">💰</div>
-              <div class="widget-title">Pricing Table</div>
-              <div class="widget-desc">Product pricing</div>
-            </div>
-            <div class="widget-card" onclick="addWidget('features')">
-              <div class="widget-icon">⭐</div>
-              <div class="widget-title">Features Grid</div>
-              <div class="widget-desc">Feature highlights</div>
-            </div>
-            <div class="widget-card" onclick="addWidget('contact')">
-              <div class="widget-icon">📧</div>
-              <div class="widget-title">Contact Form</div>
-              <div class="widget-desc">Lead capture forms</div>
-            </div>
-          </div>
-          
-          <div class="preview-area" id="preview">
-            <h3>🎨 Page Preview</h3>
-            <p>Click on widgets above to add them to your page</p>
-            <div id="page-content"></div>
-          </div>
-        </div>
-      </div>
 
       <script>
         // Global variables
@@ -535,6 +448,7 @@ app.get('/app/builder', (req, res) => {
         var pageId = "${pageId || 'new'}";
         var currentStatus = 'draft';
         var draggedWidget = null;
+        var tempWidgetContent = '';
         
         // Initialize page builder
         document.addEventListener('DOMContentLoaded', function() {
@@ -1081,6 +995,73 @@ app.get('/app/builder', (req, res) => {
           if (e.key === 'Escape') {
             closeProperties();
           }
+        }
+        
+        // Add missing essential functions
+        function addWidget(widgetType) {
+          const widget = createWidget(widgetType);
+          pageContent.push(widget);
+          renderCanvas();
+          showToast(\`\${widget.name} added to page!\`, 'success');
+        }
+        
+        function createWidget(type) {
+          const widgets = {
+            heading: { name: 'Heading', html: '<h2 style="color: #1f2937; margin: 20px 0;">Your Heading Here</h2>' },
+            text: { name: 'Text Block', html: '<p style="color: #374151; line-height: 1.6; margin: 15px 0;">Your text content goes here. Edit this to add your own content.</p>' },
+            image: { name: 'Image', html: '<img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=300&fit=crop" alt="Placeholder" style="width: 100%; border-radius: 8px; margin: 10px 0;">' },
+            button: { name: 'Button', html: '<a href="#" style="display: inline-block; background: #4338ca; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 10px 0;">Click Me</a>' },
+            video: { name: 'Video', html: '<iframe width="100%" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen style="border-radius: 8px; margin: 10px 0;"></iframe>' },
+            divider: { name: 'Divider', html: '<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">' },
+            hero: { name: 'Hero Section', html: '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 80px 40px; text-align: center; border-radius: 12px; margin: 20px 0;"><h1 style="font-size: 48px; margin-bottom: 20px;">Welcome to Our Store</h1><p style="font-size: 20px; margin-bottom: 30px; opacity: 0.9;">Discover amazing products and services</p><a href="#" style="display: inline-block; background: white; color: #4338ca; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px;">Shop Now</a></div>' },
+            gallery: { name: 'Image Gallery', html: '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0;"><img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&h=200&fit=crop" style="width: 100%; border-radius: 8px;"><img src="https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=300&h=200&fit=crop" style="width: 100%; border-radius: 8px;"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop" style="width: 100%; border-radius: 8px;"></div>' },
+            testimonials: { name: 'Testimonials', html: '<div style="background: #f8fafc; padding: 40px; border-radius: 12px; text-align: center; border-left: 4px solid #4338ca; margin: 20px 0;"><blockquote style="font-size: 20px; font-style: italic; margin: 0 0 20px; color: #1f2937;">"This product changed my life! Amazing quality and service."</blockquote><cite style="font-weight: bold; color: #4338ca;">- Happy Customer</cite></div>' },
+            pricing: { name: 'Pricing Table', html: '<div style="border: 2px solid #e5e7eb; border-radius: 12px; padding: 40px; text-align: center; max-width: 350px; margin: 20px auto; background: white;"><h3 style="font-size: 24px; margin-bottom: 20px;">Premium Plan</h3><div style="font-size: 48px; font-weight: bold; color: #4338ca; margin: 20px 0;">$29<span style="font-size: 18px; color: #6b7280;">/month</span></div><ul style="list-style: none; padding: 0; margin: 30px 0; text-align: left;"><li style="padding: 8px 0; color: #374151;">✓ All features included</li><li style="padding: 8px 0; color: #374151;">✓ 24/7 support</li><li style="padding: 8px 0; color: #374151;">✓ Free updates</li></ul><a href="#" style="display: block; background: #4338ca; color: white; padding: 16px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Get Started</a></div>' },
+            features: { name: 'Features Grid', html: '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin: 20px 0;"><div style="text-align: center; padding: 30px;"><div style="background: #4338ca; color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px;">⚡</div><h3 style="margin-bottom: 15px;">Fast Performance</h3><p style="color: #6b7280;">Lightning-fast loading times</p></div><div style="text-align: center; padding: 30px;"><div style="background: #4338ca; color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px;">🔒</div><h3 style="margin-bottom: 15px;">Secure</h3><p style="color: #6b7280;">Bank-level security</p></div><div style="text-align: center; padding: 30px;"><div style="background: #4338ca; color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px;">📱</div><h3 style="margin-bottom: 15px;">Mobile Ready</h3><p style="color: #6b7280;">Responsive design</p></div></div>' },
+            contact: { name: 'Contact Form', html: '<div style="background: white; padding: 40px; border-radius: 12px; border: 1px solid #e5e7eb; margin: 20px 0;"><h2 style="text-align: center; margin-bottom: 10px;">Get In Touch</h2><p style="text-align: center; color: #6b7280; margin-bottom: 30px;">We would love to hear from you</p><form style="max-width: 600px; margin: 0 auto;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;"><div><label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Name</label><input type="text" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px;" placeholder="Your name"></div><div><label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Email</label><input type="email" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px;" placeholder="your@email.com"></div></div><div style="margin-bottom: 20px;"><label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Message</label><textarea style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px; min-height: 120px; resize: vertical;" placeholder="Your message here..."></textarea></div><button type="submit" style="width: 100%; background: #4338ca; color: white; padding: 16px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Send Message</button></form></div>' }
+          };
+          
+          return widgets[type] || { name: 'Unknown', html: '<p>Widget not found</p>' };
+        }
+        
+        function renderCanvas() {
+          const canvasContent = document.getElementById('canvasContent');
+          const canvasEmpty = document.getElementById('canvasEmpty');
+          
+          if (!canvasContent || !canvasEmpty) {
+            console.error('Canvas elements not found');
+            return;
+          }
+          
+          if (pageContent.length === 0) {
+            canvasEmpty.style.display = 'flex';
+            canvasContent.innerHTML = '';
+            return;
+          }
+          
+          canvasEmpty.style.display = 'none';
+          canvasContent.innerHTML = pageContent.map((widget, index) => 
+            \`<div class="widget-element" data-widget-index="\${index}" onclick="selectWidget(\${index})">
+              <div class="widget-toolbar">
+                <button class="toolbar-btn" onclick="editWidget(\${index})" title="Edit Properties">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="toolbar-btn" onclick="duplicateWidget(\${index})" title="Duplicate">
+                  <i class="fas fa-copy"></i>
+                </button>
+                <button class="toolbar-btn" onclick="moveWidgetUp(\${index})" title="Move Up">
+                  <i class="fas fa-arrow-up"></i>
+                </button>
+                <button class="toolbar-btn" onclick="moveWidgetDown(\${index})" title="Move Down">
+                  <i class="fas fa-arrow-down"></i>
+                </button>
+                <button class="toolbar-btn delete" onclick="removeWidget(\${index})" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+              \${widget.html}
+            </div>\`
+          ).join('');
         }
         
         function showToast(message, type = 'success') {
