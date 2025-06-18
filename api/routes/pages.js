@@ -399,7 +399,7 @@ router.get('/', async (req, res) => {
                         <td>${new Date(page.created_at).toLocaleDateString()}</td>
                         <td>
                           <div class="table-actions">
-                            <a href="/builder/${page.id}?shop=${shop}" class="btn-icon" title="Edit">
+                            <a href="/app/builder?pageId=${page.id}&shop=${shop}" class="btn-icon" title="Edit">
                               <i class="fas fa-edit"></i>
                             </a>
                             <a href="https://${shop}/pages/${page.handle}" target="_blank" class="btn-icon" title="View">
@@ -621,7 +621,7 @@ router.get('/new', (req, res) => {
             // In a real implementation, this would send data to the server
             // For now, we'll just redirect to the builder
             alert('Page created successfully!');
-            window.location.href = '/builder/new?shop=${shop}';
+            window.location.href = '/app/builder?shop=${shop}';
           });
           
           // Auto-generate handle from title

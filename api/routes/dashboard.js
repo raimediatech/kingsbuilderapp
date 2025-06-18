@@ -493,7 +493,7 @@ router.get('/', async (req, res) => {
                         <td>${new Date(page.created_at).toLocaleDateString()}</td>
                         <td>
                           <div class="table-actions">
-                            <a href="/builder/${page.id}?shop=${shop}" class="btn-icon" title="Edit">
+                            <a href="/app/builder?pageId=${page.id}&shop=${shop}" class="btn-icon" title="Edit">
                               <i class="fas fa-edit"></i>
                             </a>
                             <a href="https://${shop}/pages/${page.handle}" target="_blank" class="btn-icon" title="View">

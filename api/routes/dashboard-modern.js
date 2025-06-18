@@ -459,7 +459,7 @@ router.get('/', async (req, res) => {
                           </span>
                         </td>
                         <td class="actions">
-                          <a href="/builder/${page.id}?shop=${shop}" class="action-btn" title="Edit">
+                          <a href="/app/builder?pageId=${page.id}&shop=${shop}" class="action-btn" title="Edit">
                             <i class="fas fa-edit"></i>
                           </a>
                           <button class="action-btn" title="Delete" onclick="deletePage('${page.id}')">

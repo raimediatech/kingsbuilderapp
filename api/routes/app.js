@@ -315,7 +315,7 @@ router.get('/', async (req, res) => {
                         pageCard.innerHTML = '<h3 class="card-title">' + (page.title || 'Untitled Page') + '</h3>' +
                           '<p>' + (page.body_html ? page.body_html.replace(/<[^>]*>/g, ' ').substring(0, 100) + '...' : 'No content') + '</p>' +
                           '<div class="button-group">' +
-                          '<a href="/builder/' + page.id + '?shop=' + shopOrigin + '" class="app-button">Edit Page</a>' +
+                          '<a href="/app/builder?pageId=' + page.id + '&shop=' + shopOrigin + '" class="app-button">Edit Page</a>' +
                           '</div>';
                         pagesContainer.appendChild(pageCard);
                       });
@@ -522,7 +522,7 @@ router.get('/pages', async (req, res) => {
                         pageCard.style.marginBottom = '20px';
                         pageCard.innerHTML = '<h3>' + (page.title || 'Untitled Page') + '</h3>' +
                           '<p>' + (page.body_html ? page.body_html.replace(/<[^>]*>/g, ' ').substring(0, 100) + '...' : 'No content') + '</p>' +
-                          '<a href="/builder/' + page.id + '?shop=' + shopOrigin + '" class="app-button">Edit Page</a>';
+                          '<a href="/app/builder?pageId=' + page.id + '&shop=' + shopOrigin + '" class="app-button">Edit Page</a>';
                         pagesContainer.appendChild(pageCard);
                       });
                     } else {
