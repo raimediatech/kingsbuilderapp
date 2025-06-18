@@ -109,89 +109,164 @@ app.get('/app/builder', (req, res) => {
           padding: 0;
           color: #202223;
           background-color: #f6f6f7;
+          overflow-x: hidden;
         }
         .container {
-          max-width: 1200px;
+          width: 100%;
+          max-width: 1600px;
           margin: 0 auto;
-          padding: 20px;
+          padding: 0;
         }
         .header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 30px;
-          padding: 20px;
+          padding: 15px 20px;
           background: white;
-          border-radius: 8px;
           box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          position: sticky;
+          top: 0;
+          z-index: 100;
         }
         .builder-container {
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          min-height: 600px;
-          padding: 20px;
-        }
-        .widget-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 15px;
-          margin-bottom: 30px;
+          grid-template-columns: 300px 1fr 300px;
+          min-height: calc(100vh - 60px);
+          background: #f6f6f7;
         }
-        .widget-card, .widget-item {
-          border: 2px solid #e1e5e9;
-          border-radius: 8px;
+        .sidebar {
+          background: white;
+          border-right: 1px solid #e5e7eb;
+          height: calc(100vh - 60px);
+          overflow-y: auto;
+          padding: 0;
+          position: sticky;
+          top: 60px;
+        }
+        .sidebar-right {
+          background: white;
+          border-left: 1px solid #e5e7eb;
+          height: calc(100vh - 60px);
+          overflow-y: auto;
+          padding: 0;
+          position: sticky;
+          top: 60px;
+        }
+        .main-content {
+          padding: 20px;
+          overflow-y: auto;
+          background: #f6f6f7;
+        }
+        .widget-section {
+          padding: 0;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .widget-section-title {
+          font-size: 14px;
+          font-weight: 600;
+          text-transform: uppercase;
+          color: #6b7280;
           padding: 15px;
-          cursor: pointer;
-          transition: all 0.2s;
-          text-align: center;
-          margin-bottom: 10px;
+          margin: 0;
+          background: #f9fafb;
+          border-bottom: 1px solid #e5e7eb;
         }
-        .widget-card:hover, .widget-item:hover {
-          border-color: #4338ca;
-          box-shadow: 0 4px 12px rgba(67, 56, 202, 0.15);
-          transform: translateY(-2px);
+        .widget-list {
+          padding: 10px;
         }
         .widget-item {
           display: flex;
           align-items: center;
-          text-align: left;
+          padding: 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+          margin-bottom: 8px;
+          background: white;
+          border: 1px solid #e5e7eb;
+        }
+        .widget-item:hover {
+          background: #f9fafb;
+          border-color: #4338ca;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .widget-icon {
-          font-size: 24px;
-          margin-bottom: 10px;
+          font-size: 20px;
+          margin-right: 12px;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        .widget-title {
-          font-weight: 600;
-          margin-bottom: 5px;
+        .widget-info {
+          flex: 1;
         }
-        .widget-desc {
+        .widget-info h4 {
           font-size: 14px;
+          font-weight: 600;
+          margin: 0 0 2px 0;
+          color: #111827;
+        }
+        .widget-info p {
+          font-size: 12px;
           color: #6b7280;
+          margin: 0;
         }
-        .preview-area, .canvas {
-          border: 2px dashed #d1d5db;
+        .canvas-container {
+          background: white;
           border-radius: 8px;
-          padding: 40px;
-          text-align: center;
-          min-height: 300px;
-          margin-top: 20px;
-          background: #fafafa;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          margin-bottom: 30px;
+          overflow: hidden;
         }
-        
+        .canvas-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 15px 20px;
+          background: #f9fafb;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .canvas-title {
+          font-weight: 600;
+          font-size: 16px;
+          margin: 0;
+        }
+        .canvas {
+          padding: 40px;
+          min-height: 500px;
+          background: white;
+        }
         .canvas-empty {
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          height: 300px;
+          height: 400px;
           color: #6b7280;
+          background: #f9fafb;
+          border: 2px dashed #d1d5db;
+          border-radius: 8px;
         }
-        
         .canvas-empty i {
           font-size: 48px;
           margin-bottom: 20px;
           opacity: 0.5;
+        }
+        .canvas-empty h3 {
+          font-size: 20px;
+          font-weight: 600;
+          margin: 0 0 10px 0;
+          color: #374151;
+        }
+        .canvas-empty p {
+          font-size: 14px;
+          margin: 0;
+          color: #6b7280;
+          max-width: 300px;
+          text-align: center;
         }
         .widget-preview {
           margin: 20px 0;
@@ -230,17 +305,52 @@ app.get('/app/builder', (req, res) => {
           color: #6b7280;
           font-style: italic;
         }
+        /* Form elements */
+        .form-group {
+          margin-bottom: 15px;
+        }
+        .form-label {
+          display: block;
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 5px;
+          color: #374151;
+        }
+        .form-control {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 14px;
+          transition: all 0.2s;
+        }
+        .form-control:focus {
+          outline: none;
+          border-color: #4338ca;
+          box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.2);
+        }
+        
+        /* Buttons */
         .btn {
           background: #4338ca;
           color: white;
           border: none;
-          padding: 12px 24px;
+          padding: 10px 16px;
           border-radius: 6px;
           cursor: pointer;
-          font-weight: 600;
+          font-weight: 500;
+          font-size: 14px;
+          transition: all 0.2s;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .btn i {
+          margin-right: 6px;
         }
         .btn:hover {
           background: #3730a3;
+          transform: translateY(-1px);
         }
         .btn-secondary {
           background: #f3f4f6;
@@ -249,37 +359,55 @@ app.get('/app/builder', (req, res) => {
         .btn-secondary:hover {
           background: #e5e7eb;
         }
+        .btn-success {
+          background: #10b981;
+        }
+        .btn-success:hover {
+          background: #059669;
+        }
+        .btn-danger {
+          background: #ef4444;
+        }
+        .btn-danger:hover {
+          background: #dc2626;
+        }
         
         /* Widget element styles */
         .widget-element { 
-          margin: 10px 0; 
-          padding: 15px; 
+          margin: 15px 0; 
+          padding: 20px; 
           border: 1px solid #e5e7eb; 
           border-radius: 8px; 
           position: relative;
           background: white;
+          transition: all 0.2s;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .widget-element:hover { 
           border-color: #4338ca; 
+          box-shadow: 0 3px 10px rgba(0,0,0,0.08);
         }
         .widget-element:hover .widget-toolbar {
           opacity: 1;
+          transform: translateY(0);
         }
         .widget-element.selected { 
           border: 2px solid #4338ca; 
-          box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.3); 
+          box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.2), 0 3px 10px rgba(0,0,0,0.1); 
         }
         .widget-toolbar {
           position: absolute;
-          top: -10px;
-          right: 10px;
+          top: -15px;
+          right: 15px;
           background: white;
           border: 1px solid #e5e7eb;
           border-radius: 6px;
           display: flex;
           opacity: 0;
-          transition: opacity 0.2s;
+          transform: translateY(5px);
+          transition: all 0.2s;
           z-index: 10;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .toolbar-btn {
           background: none;
@@ -287,12 +415,21 @@ app.get('/app/builder', (req, res) => {
           padding: 8px;
           cursor: pointer;
           color: #6b7280;
+          font-size: 14px;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
         }
         .toolbar-btn:hover {
           color: #4338ca;
+          background: #f9fafb;
         }
         .toolbar-btn.delete:hover {
           color: #ef4444;
+          background: #fee2e2;
         }
         
         /* Toast notification */
@@ -303,12 +440,22 @@ app.get('/app/builder', (req, res) => {
           background: #10b981;
           color: white;
           padding: 12px 20px;
-          border-radius: 6px;
+          border-radius: 8px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           z-index: 1000;
           opacity: 0;
           transform: translateY(-20px);
           transition: all 0.3s;
+          font-size: 14px;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          min-width: 250px;
+        }
+        .toast:before {
+          content: '✓';
+          margin-right: 10px;
+          font-weight: bold;
         }
         .toast.show {
           opacity: 1;
@@ -317,74 +464,86 @@ app.get('/app/builder', (req, res) => {
         .toast.error {
           background: #ef4444;
         }
+        .toast.error:before {
+          content: '✕';
+        }
       </style>
     </head>
     <body>
       <!-- Header Bar -->
-      <div class="header-bar">
+      <div class="header">
         <div class="header-left">
-          <div class="header-title">
+          <button class="btn btn-secondary" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <div class="header-title" style="margin-left: 15px; font-weight: 600; font-size: 16px;">
             <i class="fas fa-hammer"></i> KingsBuilder Pro
           </div>
-          <div class="page-settings">
-            <div class="form-group">
-              <label>Page Title</label>
-              <input type="text" class="form-input" id="pageTitle" value="Untitled Page" placeholder="Enter page title">
+        </div>
+        <div class="header-center">
+          <div style="display: flex; gap: 15px; align-items: center;">
+            <div class="form-group" style="flex: 2; margin: 0;">
+              <input type="text" id="pageTitle" class="form-control" placeholder="Enter page title" value="Untitled Page" style="height: 38px;">
             </div>
-            <div class="form-group">
-              <label>Page URL</label>
-              <input type="text" class="form-input" id="pageUrl" value="untitled-page" placeholder="page-url-slug">
+            <div class="form-group" style="flex: 1; margin: 0; display: flex; align-items: center;">
+              <span style="color: #6b7280; margin-right: 5px; font-size: 14px;">/pages/</span>
+              <input type="text" id="pageUrl" class="form-control" placeholder="page-url" value="untitled-page" style="height: 38px;">
             </div>
-            <div class="form-group">
-              <label>Status</label>
-              <div class="status-selector">
-                <button class="status-btn" id="statusBtn" onclick="toggleStatus()">
-                  <i class="fas fa-circle status-draft"></i>
-                  <span>Draft</span>
-                </button>
+            <div class="status-selector" style="display: flex; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
+              <div class="status-option active" data-status="draft" style="padding: 8px 12px; cursor: pointer; background: #f3f4f6; font-size: 14px;">
+                <i class="fas fa-circle status-draft" style="color: #f59e0b; font-size: 10px; margin-right: 5px;"></i>
+                Draft
+              </div>
+              <div class="status-option" data-status="published" style="padding: 8px 12px; cursor: pointer; font-size: 14px;">
+                <i class="fas fa-circle" style="color: #10b981; font-size: 10px; margin-right: 5px;"></i>
+                Published
               </div>
             </div>
           </div>
         </div>
-        <div class="header-actions">
-          <button class="btn btn-secondary" onclick="goBack()">
-            <i class="fas fa-arrow-left"></i> Back
-          </button>
-          <button class="btn btn-secondary" onclick="previewPage()">
+        <div class="header-right">
+          <button class="btn btn-secondary" onclick="previewPage()" style="margin-right: 10px;">
             <i class="fas fa-eye"></i> Preview
           </button>
-          <button class="btn btn-primary" onclick="savePage()">
-            <i class="fas fa-save"></i> Save Page
+          <button class="btn btn-success" id="saveBtn" onclick="savePage()">
+            <i class="fas fa-save"></i> Save
           </button>
         </div>
       </div>
 
-      <div class="page-builder">
-        <!-- Left Sidebar -->
-        <div class="sidebar">
-          <!-- Widgets Section -->
-          <div class="sidebar-section">
-            <div class="sidebar-title">
-              <i class="fas fa-cube"></i> Widgets
-            </div>
-            <div class="widget-list">
+      <div class="container">
+        <div class="builder-container">
+          <!-- Left Sidebar -->
+          <div class="sidebar">
+            <!-- Widgets Section -->
+            <div class="widget-section">
+              <h3 class="widget-section-title">
+                <i class="fas fa-cube"></i> Widgets
+              </h3>
+              <div class="widget-list">
               <!-- Basic Widgets -->
               <div class="widget-item" draggable="true" data-widget="heading" onclick="addWidget('heading')">
-                <div class="widget-icon">📝</div>
+                <div class="widget-icon">
+                  <i class="fas fa-heading" style="color: #4338ca;"></i>
+                </div>
                 <div class="widget-info">
                   <h4>Heading</h4>
                   <p>Add titles and headings</p>
                 </div>
               </div>
               <div class="widget-item" draggable="true" data-widget="text" onclick="addWidget('text')">
-                <div class="widget-icon">📄</div>
+                <div class="widget-icon">
+                  <i class="fas fa-align-left" style="color: #4338ca;"></i>
+                </div>
                 <div class="widget-info">
                   <h4>Text Block</h4>
                   <p>Rich text content</p>
                 </div>
               </div>
               <div class="widget-item" draggable="true" data-widget="image" onclick="addWidget('image')">
-                <div class="widget-icon">🖼️</div>
+                <div class="widget-icon">
+                  <i class="fas fa-image" style="color: #4338ca;"></i>
+                </div>
                 <div class="widget-info">
                   <h4>Image</h4>
                   <p>Add images and galleries</p>
@@ -503,30 +662,35 @@ app.get('/app/builder', (req, res) => {
           </div>
         </div>
 
-        <!-- Main Canvas -->
-        <div class="canvas-area">
+        <!-- Main Content Area -->
+        <div class="main-content">
           <div class="canvas-container">
+            <div class="canvas-header">
+              <h3 class="canvas-title">Page Content</h3>
+              <div>
+                <button class="btn btn-secondary" onclick="clearCanvas()" style="font-size: 13px;">
+                  <i class="fas fa-trash"></i> Clear
+                </button>
+              </div>
+            </div>
             <div class="canvas" id="canvas" ondrop="handleCanvasDrop(event)" ondragover="handleCanvasDragOver(event)">
               <div class="canvas-empty" id="canvasEmpty">
                 <i class="fas fa-mouse-pointer"></i>
                 <h3>Start Building Your Page</h3>
-                <p>Drag widgets from the sidebar or choose a template to get started</p>
+                <p>Click widgets from the sidebar or choose a template to get started</p>
               </div>
               <div id="canvasContent"></div>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Widget Properties Panel -->
-      <div class="properties-panel" id="propertiesPanel">
-        <div class="properties-header">
-          <div class="properties-title">Widget Properties</div>
-          <button class="toolbar-btn" onclick="closeProperties()">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="properties-content" id="propertiesContent">
+        
+        <!-- Right Sidebar - Properties -->
+        <div class="sidebar-right" id="propertiesPanel">
+          <div class="widget-section">
+            <h3 class="widget-section-title">
+              <i class="fas fa-sliders-h"></i> Widget Properties
+            </h3>
+            <div class="properties-content" id="propertiesContent" style="padding: 15px;">
           <p>Select a widget to edit its properties</p>
         </div>
       </div>
