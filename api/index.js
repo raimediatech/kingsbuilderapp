@@ -1106,9 +1106,9 @@ app.get('/app/builder', (req, res) => {
           ).join('');
         }
         
-        function showToast(message, type = 'success') {
+        function showToast(message, type) {
           const toast = document.createElement('div');
-          toast.className = \`toast \${type === 'error' ? 'error' : ''} show\`;
+          toast.className = 'toast ' + (type === 'error' ? 'error' : '') + ' show';
           toast.textContent = message;
           document.body.appendChild(toast);
           
