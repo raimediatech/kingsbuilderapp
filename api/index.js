@@ -228,7 +228,10 @@ try {
       builderRoutes = require('./routes/builder');
     } catch (originalError) {
       console.error('Error loading original builder routes:', originalError);
-      throw originalError;
+      // Temporarily commenting out to test Remix version
+      console.log('Skipping builder routes due to syntax error - using Remix version instead');
+      const express = require('express');
+      builderRoutes = express.Router(); // Empty router
     }
   }
   

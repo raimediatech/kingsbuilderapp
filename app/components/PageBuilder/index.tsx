@@ -18,7 +18,13 @@ import {
   DividerMajor,
   DesktopMajor,
   TabletMajor,
-  MobileMajor
+  MobileMajor,
+  ProductsMajor,
+  CollectionsMajor,
+  PlayMajor,
+  CodeMajor,
+  FormsMajor,
+  SocialMajor
 } from "@shopify/polaris-icons";
 import "./PageBuilder.css";
 
@@ -119,6 +125,87 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
         return null;
       case "section":
         return [];
+      case "shopify-product":
+        return {
+          productId: "",
+          displayMode: "single",
+          showPrice: true,
+          showTitle: true,
+          showImage: true
+        };
+      case "shopify-collection":
+        return {
+          collectionId: "",
+          displayMode: "single",
+          showTitle: true,
+          showImage: true,
+          showProductCount: true
+        };
+      case "video":
+        return {
+          videoType: "youtube",
+          videoId: "",
+          videoUrl: "",
+          autoplay: false,
+          loop: false,
+          muted: false,
+          controls: true,
+          title: "Video",
+          width: "100%",
+          height: "400px"
+        };
+      case "custom-code":
+        return {
+          htmlContent: "<div>Custom HTML content</div>",
+          cssContent: "/* Custom CSS styles */",
+          jsContent: "// Custom JavaScript code",
+          height: "auto",
+          width: "100%"
+        };
+      case "form-builder":
+        return {
+          title: "Contact Form",
+          description: "Please fill out the form below to get in touch with us.",
+          fields: [
+            {
+              id: "name",
+              type: "text",
+              label: "Name",
+              placeholder: "Your name",
+              required: true
+            },
+            {
+              id: "email",
+              type: "email",
+              label: "Email",
+              placeholder: "Your email address",
+              required: true
+            },
+            {
+              id: "message",
+              type: "textarea",
+              label: "Message",
+              placeholder: "Your message",
+              required: true
+            }
+          ],
+          submitButtonText: "Submit",
+          successMessage: "Thank you for your submission!",
+          errorMessage: "There was an error submitting the form. Please try again.",
+          storeInShopify: true
+        };
+      case "social-media":
+        return {
+          platform: "facebook",
+          contentType: "post",
+          id: "",
+          username: "",
+          showHeader: true,
+          showFooter: true,
+          width: "100%",
+          height: "500px",
+          theme: "light"
+        };
       default:
         return "";
     }
@@ -187,6 +274,64 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
           maxWidth: "1200px",
           minHeight: "100px"
         };
+      case "shopify-product":
+        return {
+          ...commonSettings,
+          displayMode: "single",
+          showPrice: true,
+          showTitle: true,
+          showImage: true,
+          maxProducts: 4,
+          gridColumns: 2
+        };
+      case "shopify-collection":
+        return {
+          ...commonSettings,
+          displayMode: "single",
+          showTitle: true,
+          showImage: true,
+          showProductCount: true,
+          maxCollections: 4,
+          gridColumns: 2
+        };
+      case "video":
+        return {
+          ...commonSettings,
+          autoplay: false,
+          loop: false,
+          muted: false,
+          controls: true,
+          width: "100%",
+          height: "400px",
+          borderRadius: "0"
+        };
+      case "custom-code":
+        return {
+          ...commonSettings,
+          width: "100%",
+          height: "auto",
+          minHeight: "50px",
+          border: "1px solid #e1e3e5",
+          borderRadius: "4px"
+        };
+      case "form-builder":
+        return {
+          ...commonSettings,
+          width: "100%",
+          maxWidth: "600px",
+          backgroundColor: "#ffffff",
+          padding: "20px",
+          borderRadius: "8px",
+          border: "1px solid #e1e3e5"
+        };
+      case "social-media":
+        return {
+          ...commonSettings,
+          width: "100%",
+          height: "500px",
+          borderRadius: "4px",
+          border: "1px solid #e1e3e5"
+        };
       default:
         return commonSettings;
     }
@@ -219,6 +364,15 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
             settings: {
               ...el.settings,
               [settingField]: value
+            }
+          };
+        } else if (field.startsWith("content.")) {
+          const contentField = field.replace("content.", "");
+          return {
+            ...el,
+            content: {
+              ...(typeof el.content === 'object' ? el.content : {}),
+              [contentField]: value
             }
           };
         } else {
@@ -343,14 +497,26 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
   
   // Render the widget panel
   const renderWidgetPanel = () => {
-    const widgets = [
-      { type: "heading", title: "Heading", icon: TextMajor },
-      { type: "text", title: "Text", icon: TextMajor },
-      { type: "button", title: "Button", icon: ButtonMinor },
-      { type: "image", title: "Image", icon: ImageMajor },
-      { type: "divider", title: "Divider", icon: DividerMajor },
-      { type: "section", title: "Section", icon: SectionMajor },
+    const basicWidgets = [
+      { type: "heading", title: "Heading", icon: TextMajor, category: "basic" },
+      { type: "text", title: "Text", icon: TextMajor, category: "basic" },
+      { type: "button", title: "Button", icon: ButtonMinor, category: "basic" },
+      { type: "image", title: "Image", icon: ImageMajor, category: "basic" },
+      { type: "divider", title: "Divider", icon: DividerMajor, category: "basic" },
+      { type: "section", title: "Section", icon: SectionMajor, category: "basic" },
     ];
+    
+    const advancedWidgets = [
+      { type: "shopify-product", title: "Shopify Product", icon: ProductsMajor, category: "advanced" },
+      { type: "shopify-collection", title: "Shopify Collection", icon: CollectionsMajor, category: "advanced" },
+      { type: "video", title: "Video", icon: PlayMajor, category: "advanced" },
+      { type: "custom-code", title: "Custom Code", icon: CodeMajor, category: "advanced" },
+      { type: "form-builder", title: "Form Builder", icon: FormsMajor, category: "advanced" },
+      { type: "social-media", title: "Social Media", icon: SocialMajor, category: "advanced" },
+    ];
+    
+    const allWidgets = [...basicWidgets, ...advancedWidgets];
+    const widgetsToShow = activeTab === 0 ? basicWidgets : advancedWidgets;
     
     return (
       <Card>
@@ -360,14 +526,14 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
         <Tabs
           tabs={[
             { id: "basic", content: "Basic" },
-            { id: "layout", content: "Layout" }
+            { id: "advanced", content: "Advanced" }
           ]}
           selected={activeTab}
           onSelect={setActiveTab}
         />
         <Card.Section>
           <BlockStack gap="400">
-            {widgets.map((widget) => (
+            {widgetsToShow.map((widget) => (
               <div
                 key={widget.type}
                 className="widget-item"
@@ -463,6 +629,152 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
                 onChange={(value) => handleElementUpdate(selectedElement.id, "settings.textColor", value)}
                 type="color"
               />
+            ) : null}
+            
+            {selectedElement.type === "shopify-product" ? (
+              <>
+                <TextField
+                  label="Product ID"
+                  value={selectedElement.content?.productId || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.productId", value)}
+                  helpText="Enter the Shopify product ID"
+                />
+                <TextField
+                  label="Display Mode"
+                  value={selectedElement.content?.displayMode || "single"}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.displayMode", value)}
+                  helpText="single, grid, or list"
+                />
+              </>
+            ) : null}
+            
+            {selectedElement.type === "shopify-collection" ? (
+              <>
+                <TextField
+                  label="Collection ID"
+                  value={selectedElement.content?.collectionId || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.collectionId", value)}
+                  helpText="Enter the Shopify collection ID"
+                />
+                <TextField
+                  label="Display Mode"
+                  value={selectedElement.content?.displayMode || "single"}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.displayMode", value)}
+                  helpText="single or grid"
+                />
+              </>
+            ) : null}
+            
+            {selectedElement.type === "video" ? (
+              <>
+                <TextField
+                  label="Video Type"
+                  value={selectedElement.content?.videoType || "youtube"}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.videoType", value)}
+                  helpText="youtube, vimeo, or custom"
+                />
+                <TextField
+                  label="Video ID"
+                  value={selectedElement.content?.videoId || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.videoId", value)}
+                  helpText="YouTube or Vimeo video ID"
+                />
+                <TextField
+                  label="Custom Video URL"
+                  value={selectedElement.content?.videoUrl || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.videoUrl", value)}
+                  helpText="For custom video sources"
+                />
+                <TextField
+                  label="Width"
+                  value={selectedElement.content?.width || "100%"}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.width", value)}
+                />
+                <TextField
+                  label="Height"
+                  value={selectedElement.content?.height || "400px"}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.height", value)}
+                />
+              </>
+            ) : null}
+            
+            {selectedElement.type === "custom-code" ? (
+              <>
+                <TextField
+                  label="HTML Content"
+                  value={selectedElement.content?.htmlContent || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.htmlContent", value)}
+                  multiline={6}
+                  helpText="Enter your HTML code"
+                />
+                <TextField
+                  label="CSS Content"
+                  value={selectedElement.content?.cssContent || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.cssContent", value)}
+                  multiline={4}
+                  helpText="Enter your CSS styles"
+                />
+                <TextField
+                  label="JavaScript Content"
+                  value={selectedElement.content?.jsContent || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.jsContent", value)}
+                  multiline={4}
+                  helpText="Enter your JavaScript code"
+                />
+              </>
+            ) : null}
+            
+            {selectedElement.type === "form-builder" ? (
+              <>
+                <TextField
+                  label="Form Title"
+                  value={selectedElement.content?.title || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.title", value)}
+                />
+                <TextField
+                  label="Form Description"
+                  value={selectedElement.content?.description || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.description", value)}
+                  multiline={3}
+                />
+                <TextField
+                  label="Submit Button Text"
+                  value={selectedElement.content?.submitButtonText || "Submit"}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.submitButtonText", value)}
+                />
+                <Text variant="bodyMd" as="p" color="subdued">
+                  Form fields: {selectedElement.content?.fields?.length || 0} fields configured
+                </Text>
+              </>
+            ) : null}
+            
+            {selectedElement.type === "social-media" ? (
+              <>
+                <TextField
+                  label="Platform"
+                  value={selectedElement.content?.platform || "facebook"}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.platform", value)}
+                  helpText="facebook, twitter, instagram, youtube, etc."
+                />
+                <TextField
+                  label="Content Type"
+                  value={selectedElement.content?.contentType || "post"}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.contentType", value)}
+                  helpText="post, profile, feed, timeline, video, page"
+                />
+                <TextField
+                  label="Content ID"
+                  value={selectedElement.content?.id || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.id", value)}
+                  helpText="Post ID, video ID, etc."
+                />
+                <TextField
+                  label="Username/Handle"
+                  value={selectedElement.content?.username || ""}
+                  onChange={(value) => handleElementUpdate(selectedElement.id, "content.username", value)}
+                  helpText="Social media username or handle"
+                />
+              </>
             ) : null}
             
             <Button destructive onClick={() => handleElementDelete(selectedElement.id)}>
@@ -613,6 +925,173 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
                   Empty Section - Drag elements here
                 </Text>
               )}
+            </div>
+          </div>
+        );
+      
+      case "shopify-product":
+        return (
+          <div 
+            key={element.id} 
+            className="builder-element" 
+            style={elementStyle}
+            onClick={() => handleElementSelect(element)}
+          >
+            <div style={{ 
+              padding: "20px", 
+              border: "2px dashed #e1e3e5", 
+              borderRadius: "8px",
+              textAlign: "center",
+              backgroundColor: "#f9f9f9"
+            }}>
+              <ProductsMajor style={{ width: "48px", height: "48px", margin: "0 auto 10px", color: "#6b7280" }} />
+              <Text variant="headingMd" as="h3">Shopify Product</Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                Product ID: {element.content?.productId || "Not selected"}
+              </Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                Display: {element.content?.displayMode || "single"}
+              </Text>
+            </div>
+          </div>
+        );
+      
+      case "shopify-collection":
+        return (
+          <div 
+            key={element.id} 
+            className="builder-element" 
+            style={elementStyle}
+            onClick={() => handleElementSelect(element)}
+          >
+            <div style={{ 
+              padding: "20px", 
+              border: "2px dashed #e1e3e5", 
+              borderRadius: "8px",
+              textAlign: "center",
+              backgroundColor: "#f9f9f9"
+            }}>
+              <CollectionsMajor style={{ width: "48px", height: "48px", margin: "0 auto 10px", color: "#6b7280" }} />
+              <Text variant="headingMd" as="h3">Shopify Collection</Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                Collection ID: {element.content?.collectionId || "Not selected"}
+              </Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                Display: {element.content?.displayMode || "single"}
+              </Text>
+            </div>
+          </div>
+        );
+      
+      case "video":
+        return (
+          <div 
+            key={element.id} 
+            className="builder-element" 
+            style={elementStyle}
+            onClick={() => handleElementSelect(element)}
+          >
+            <div style={{ 
+              padding: "20px", 
+              border: "2px dashed #e1e3e5", 
+              borderRadius: "8px",
+              textAlign: "center",
+              backgroundColor: "#f9f9f9",
+              width: element.content?.width || "100%",
+              height: element.content?.height || "400px"
+            }}>
+              <PlayMajor style={{ width: "48px", height: "48px", margin: "0 auto 10px", color: "#6b7280" }} />
+              <Text variant="headingMd" as="h3">Video Widget</Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                Source: {element.content?.videoType || "youtube"}
+              </Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                {element.content?.videoId ? `ID: ${element.content.videoId}` : "No video selected"}
+              </Text>
+            </div>
+          </div>
+        );
+      
+      case "custom-code":
+        return (
+          <div 
+            key={element.id} 
+            className="builder-element" 
+            style={elementStyle}
+            onClick={() => handleElementSelect(element)}
+          >
+            <div style={{ 
+              padding: "20px", 
+              border: "2px dashed #e1e3e5", 
+              borderRadius: "8px",
+              textAlign: "center",
+              backgroundColor: "#f9f9f9"
+            }}>
+              <CodeMajor style={{ width: "48px", height: "48px", margin: "0 auto 10px", color: "#6b7280" }} />
+              <Text variant="headingMd" as="h3">Custom Code</Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                HTML: {element.content?.htmlContent ? "✓" : "Empty"}
+              </Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                CSS: {element.content?.cssContent ? "✓" : "Empty"}
+              </Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                JS: {element.content?.jsContent ? "✓" : "Empty"}
+              </Text>
+            </div>
+          </div>
+        );
+      
+      case "form-builder":
+        return (
+          <div 
+            key={element.id} 
+            className="builder-element" 
+            style={elementStyle}
+            onClick={() => handleElementSelect(element)}
+          >
+            <div style={{ 
+              padding: "20px", 
+              border: "2px dashed #e1e3e5", 
+              borderRadius: "8px",
+              textAlign: "center",
+              backgroundColor: "#f9f9f9"
+            }}>
+              <FormsMajor style={{ width: "48px", height: "48px", margin: "0 auto 10px", color: "#6b7280" }} />
+              <Text variant="headingMd" as="h3">Form Builder</Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                Title: {element.content?.title || "Contact Form"}
+              </Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                Fields: {element.content?.fields?.length || 0}
+              </Text>
+            </div>
+          </div>
+        );
+      
+      case "social-media":
+        return (
+          <div 
+            key={element.id} 
+            className="builder-element" 
+            style={elementStyle}
+            onClick={() => handleElementSelect(element)}
+          >
+            <div style={{ 
+              padding: "20px", 
+              border: "2px dashed #e1e3e5", 
+              borderRadius: "8px",
+              textAlign: "center",
+              backgroundColor: "#f9f9f9"
+            }}>
+              <SocialMajor style={{ width: "48px", height: "48px", margin: "0 auto 10px", color: "#6b7280" }} />
+              <Text variant="headingMd" as="h3">Social Media</Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                Platform: {element.content?.platform || "facebook"}
+              </Text>
+              <Text variant="bodyMd" as="p" color="subdued">
+                Type: {element.content?.contentType || "post"}
+              </Text>
             </div>
           </div>
         );

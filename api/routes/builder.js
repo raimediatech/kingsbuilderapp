@@ -664,14 +664,18 @@ router.get('/:pageId', async (req, res) => {
               alert('You do not have permission to save changes.');
             });
           }
+          `}
           
-          function disabledFunction() {
-            // Placeholder for disabled functionality
+          ${canEdit ? `
+          // Continue with save functionality
+          ` : `
+          // Disabled functionality placeholder
+          function() {
             const elements = [];
           `}
-            
-            // Create page data object
-            const pageData = {
+          
+          // Create page data object
+          const pageData = {
               id: pageId,
               title: document.querySelector('.builder-title').textContent.trim().replace('Page Builder', '').trim() || 'Untitled Page',
               content: elements.map(el => {
@@ -740,10 +744,6 @@ router.get('/:pageId', async (req, res) => {
               alert('You do not have permission to publish pages.');
             });
           }
-          
-          function disabledPublishFunction() {
-            // Placeholder for disabled functionality
-            const elements = [];
           `}
             
             // Create page data object
