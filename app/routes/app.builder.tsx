@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData, useSearchParams } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -19,8 +21,50 @@ import {
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import PageBuilder from "../components/PageBuilder";
+import { authenticate } from "~/shopify.server";
+import { getShopifyPages, getShopifyPageById } from "~/utils/shopify-api.server";
 
-// Mock data for demo purposes
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { session } = await authenticate.admin(request);
+  const url = new URL(request.url);
+  const pageId = url.searchParams.get("pageId");
+  
+  try {
+    // Get all pages from Shopify
+    const response = await getShopifyPages(session);
+    const pages = response.data?.pages?.edges?.map((edge: any) => edge.node) || [];
+    
+    let specificPage = null;
+    if (pageId) {
+      try {
+        const pageResponse = await getShopifyPageById(session, pageId);
+        specificPage = pageResponse.data?.page;
+      } catch (error) {
+        console.error("Error loading specific page:", error);
+      }
+    }
+    
+    return json({
+      pages,
+      specificPage,
+      pageId,
+      shopDomain: session.shop,
+      accessToken: session.accessToken,
+    });
+  } catch (error) {
+    console.error("Error loading pages:", error);
+    return json({ 
+      error: "Failed to load pages",
+      pages: [],
+      specificPage: null,
+      pageId,
+      shopDomain: session.shop,
+      accessToken: session.accessToken,
+    }, { status: 500 });
+  }
+}
+
+// Mock data for demo purposes (fallback)
 const MOCK_PAGES = [
   { id: "1", title: "Home Page", body: "<h1>Home Page</h1>", url: "#", handle: "home" },
   { id: "2", title: "About Us", body: "<h1>About Us</h1>", url: "#", handle: "about-us" },
@@ -28,7 +72,8 @@ const MOCK_PAGES = [
 ];
 
 export default function Builder() {
-  const [pages, setPages] = useState(MOCK_PAGES);
+  const { pages: initialPages, specificPage, pageId, shopDomain, accessToken } = useLoaderData<typeof loader>();
+  const [pages, setPages] = useState<any[]>(initialPages || MOCK_PAGES);
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isBuilderMode, setIsBuilderMode] = useState(false);
@@ -78,28 +123,23 @@ export default function Builder() {
     }).join('\n');
   };
 
-  // Fetch pages from API
+  // Auto-open page builder if pageId is provided
   useEffect(() => {
-    const fetchPages = async () => {
-      try {
-        setIsLoading(true);
-        // In a real app, you would fetch from your API
-        // const response = await fetch('/api/pages?shop=your-shop.myshopify.com');
-        // const data = await response.json();
-        // setPages(data);
-        
-        // Using mock data for now
-        setPages(MOCK_PAGES);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error fetching pages:', err);
-        setError('Failed to load pages. Please try again.');
-        setIsLoading(false);
-      }
-    };
+    if (pageId && specificPage) {
+      setSelectedPage(specificPage);
+      setTitle(specificPage.title);
+      setContent(specificPage.body_html || '');
+      setHandle(specificPage.handle);
+      setIsBuilderMode(true);
+    }
+  }, [pageId, specificPage]);
 
-    fetchPages();
-  }, []);
+  // Update pages when loader data changes
+  useEffect(() => {
+    if (initialPages && initialPages.length > 0) {
+      setPages(initialPages);
+    }
+  }, [initialPages]);
 
   const handleCreatePage = () => {
     setTitle("");
