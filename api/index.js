@@ -173,17 +173,20 @@ app.get('/app/builder', (req, res) => {
         }
         .widget-list {
           padding: 10px;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
         }
         .widget-item {
           display: flex;
           align-items: center;
-          padding: 12px;
+          padding: 10px;
           border-radius: 6px;
           cursor: pointer;
           transition: all 0.2s;
-          margin-bottom: 8px;
           background: white;
           border: 1px solid #e5e7eb;
+          height: 100%;
         }
         .widget-item:hover {
           background: #f9fafb;
@@ -202,17 +205,24 @@ app.get('/app/builder', (req, res) => {
         }
         .widget-info {
           flex: 1;
+          overflow: hidden;
         }
         .widget-info h4 {
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
-          margin: 0 0 2px 0;
+          margin: 0;
           color: #111827;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .widget-info p {
-          font-size: 12px;
+          font-size: 11px;
           color: #6b7280;
           margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .canvas-container {
           background: white;
@@ -737,8 +747,24 @@ app.get('/app/builder', (req, res) => {
           if (pageId !== 'new') {
             const titleEl = document.getElementById('pageTitle');
             const urlEl = document.getElementById('pageUrl');
-            if (titleEl) titleEl.value = 'Page ' + pageId;
-            if (urlEl) urlEl.value = 'page-' + pageId;
+            
+            // Fetch the actual page title from API or use a better default
+            fetch(`/api/pages/${pageId}?shop=${shop}`)
+              .then(response => response.json())
+              .then(data => {
+                if (data && data.title) {
+                  if (titleEl) titleEl.value = data.title;
+                  if (urlEl) urlEl.value = data.handle || 'page-' + pageId;
+                } else {
+                  if (titleEl) titleEl.value = 'My Custom Page';
+                  if (urlEl) urlEl.value = 'my-custom-page';
+                }
+              })
+              .catch(err => {
+                console.error('Error fetching page details:', err);
+                if (titleEl) titleEl.value = 'My Custom Page';
+                if (urlEl) urlEl.value = 'my-custom-page';
+              });
           }
           
           // Initialize canvas rendering
@@ -1037,21 +1063,23 @@ app.get('/app/builder', (req, res) => {
           const panel = document.getElementById('propertiesPanel');
           const content = document.getElementById('propertiesContent');
           
-          let propertiesHTML = \`<h3>\${widget.name} Properties</h3>\`;
-          
-          // Build simple property editor
-          propertiesHTML += \`
-            <div class="property-group">
-              <label class="property-label">Content</label>
-              <textarea class="property-input" rows="4" onchange="updateWidgetContent(this.value)">\${widget.html}</textarea>
+          let propertiesHTML = \`
+            <div class="form-group">
+              <label class="form-label">\${widget.name} Content</label>
+              <textarea class="form-control" rows="6" onchange="updateWidgetContent(this.value)">\${widget.html}</textarea>
             </div>
-            <div class="property-group">
-              <button class="btn btn-primary" onclick="applyPropertyChanges()">Apply Changes</button>
+            <div class="form-group" style="margin-top: 20px;">
+              <button class="btn btn-success" onclick="applyPropertyChanges()">
+                <i class="fas fa-check"></i> Apply Changes
+              </button>
+              <button class="btn btn-secondary" onclick="closeProperties()" style="margin-left: 10px;">
+                <i class="fas fa-times"></i> Cancel
+              </button>
             </div>
           \`;
           
           content.innerHTML = propertiesHTML;
-          panel.classList.add('active');
+          panel.style.display = 'block';
         }
         
         function updateWidgetContent(content) {
@@ -1072,7 +1100,8 @@ app.get('/app/builder', (req, res) => {
         }
         
         function closeProperties() {
-          document.getElementById('propertiesPanel').classList.remove('active');
+          const panel = document.getElementById('propertiesPanel');
+          panel.style.display = 'none';
           document.querySelectorAll('.widget-element').forEach(el => el.classList.remove('selected'));
           selectedWidget = null;
         }
@@ -1248,7 +1277,7 @@ app.get('/app/builder', (req, res) => {
         }
         
         function goBack() {
-          window.location.href = '/pages?shop=' + shop;
+          window.location.href = '/api/pages?shop=' + shop;
         }
         
         function handleKeyboardShortcuts(e) {
@@ -1343,29 +1372,18 @@ app.get('/app/builder', (req, res) => {
         // Widget operations
         function selectWidget(index) {
           console.log('Selecting widget at index:', index);
+          document.querySelectorAll('.widget-element').forEach(el => el.classList.remove('selected'));
+          const selectedElement = document.querySelector('[data-widget-index="' + index + '"]');
+          if (selectedElement) {
+            selectedElement.classList.add('selected');
+          }
           selectedWidget = index;
-          // Highlight the selected widget
-          const widgets = document.querySelectorAll('.widget-element');
-          widgets.forEach((widget, i) => {
-            if (i === index) {
-              widget.classList.add('selected');
-            } else {
-              widget.classList.remove('selected');
-            }
-          });
+          openPropertiesPanel(pageContent[index]);
         }
         
         function editWidget(index) {
           console.log('Editing widget at index:', index);
-          const widget = pageContent[index];
-          if (!widget) return;
-          
-          const newContent = prompt('Edit ' + widget.name + ' content:', widget.html);
-          if (newContent !== null) {
-            widget.html = newContent;
-            renderCanvas();
-            showToast(widget.name + ' updated!', 'success');
-          }
+          selectWidget(index);
         }
         
         function duplicateWidget(index) {
