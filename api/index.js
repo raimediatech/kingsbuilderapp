@@ -462,31 +462,73 @@ app.get('/app/builder', (req, res) => {
         function initializePageBuilder() {
           // Load page title and URL from pageId if editing
           if (pageId !== 'new') {
-            document.getElementById('pageTitle').value = 'Page ' + pageId;
-            document.getElementById('pageUrl').value = 'page-' + pageId;
+            const titleEl = document.getElementById('pageTitle');
+            const urlEl = document.getElementById('pageUrl');
+            if (titleEl) titleEl.value = 'Page ' + pageId;
+            if (urlEl) urlEl.value = 'page-' + pageId;
           }
           
-          showToast('🚀 Professional Page Builder loaded! Drag widgets to canvas or click to add.', 'success');
+          // Initialize canvas rendering
+          renderCanvas();
+          
+          showToast('🚀 Page Builder loaded! Click widgets to add them.', 'success');
         }
         
         function setupEventListeners() {
-          // Widget drag and drop
-          const widgets = document.querySelectorAll('.widget-item');
-          widgets.forEach(widget => {
-            widget.addEventListener('dragstart', handleWidgetDragStart);
-            widget.addEventListener('click', handleWidgetClick);
-          });
-          
-          // Canvas drag and drop
-          const canvas = document.getElementById('canvas');
-          canvas.addEventListener('dragover', handleCanvasDragOver);
-          canvas.addEventListener('drop', handleCanvasDrop);
-          
-          // Page title and URL auto-sync
-          document.getElementById('pageTitle').addEventListener('input', syncPageUrl);
-          
-          // Keyboard shortcuts
-          document.addEventListener('keydown', handleKeyboardShortcuts);
+          console.log('Setting up event listeners...');
+          try {
+            // Widget click events - simple and reliable
+            const widgets = document.querySelectorAll('.widget-item');
+            console.log('Found widget items:', widgets.length);
+            
+            widgets.forEach(widget => {
+              widget.addEventListener('click', function() {
+                const widgetType = this.dataset.widget;
+                console.log('Widget clicked:', widgetType);
+                if (widgetType) {
+                  addWidget(widgetType);
+                }
+              });
+            });
+            
+            // Page title auto-sync
+            const titleInput = document.getElementById('pageTitle');
+            if (titleInput) {
+              titleInput.addEventListener('input', function() {
+                const title = this.value;
+                const url = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                const urlInput = document.getElementById('pageUrl');
+                if (urlInput) {
+                  urlInput.value = url;
+                }
+              });
+            }
+            
+            // Template button events
+            const templateBtns = document.querySelectorAll('.template-btn');
+            templateBtns.forEach(btn => {
+              btn.addEventListener('click', function() {
+                const templateType = this.dataset.template;
+                if (templateType) {
+                  applyTemplate(templateType);
+                }
+              });
+            });
+            
+            // Simple keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+              if (e.ctrlKey || e.metaKey) {
+                if (e.key === 's') {
+                  e.preventDefault();
+                  savePage();
+                }
+              }
+            });
+            
+            console.log('Event listeners set up successfully');
+          } catch (error) {
+            console.error('Error setting up event listeners:', error);
+          }
         }
         
         function handleWidgetDragStart(e) {
