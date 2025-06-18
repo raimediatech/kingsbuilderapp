@@ -31,7 +31,7 @@ app.use((req, res, next) => {
   // Set security headers for Shopify iframe embedding
   res.setHeader(
     "Content-Security-Policy",
-    "frame-ancestors 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.shopify.com https://cdnjs.cloudflare.com; connect-src 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com;"
+    "frame-ancestors 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.shopify.com https://cdnjs.cloudflare.com https://unpkg.com; connect-src 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com;"
   );
   
   // Set Access-Control-Allow headers for cross-origin requests
@@ -168,6 +168,44 @@ app.get('/app/builder', (req, res) => {
           text-align: center;
           min-height: 300px;
           margin-top: 20px;
+          background: #fafafa;
+        }
+        .widget-preview {
+          margin: 20px 0;
+          padding: 20px;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          position: relative;
+          background: white;
+          cursor: move;
+          transition: all 0.2s;
+        }
+        .widget-preview:hover {
+          border-color: #4338ca;
+          box-shadow: 0 4px 12px rgba(67, 56, 202, 0.15);
+        }
+        .widget-controls {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          display: flex;
+          gap: 5px;
+        }
+        .widget-control-btn {
+          background: #ef4444;
+          color: white;
+          border: none;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          cursor: pointer;
+        }
+        .widget-control-btn.edit {
+          background: #3b82f6;
+        }
+        .empty-state {
+          color: #6b7280;
+          font-style: italic;
         }
         .btn {
           background: #4338ca;
@@ -280,21 +318,13 @@ app.get('/app/builder', (req, res) => {
       </div>
       
       <script>
-        // Initialize App Bridge
-        const AppBridge = window['app-bridge'];
-        const { createApp } = AppBridge;
-        const { TitleBar } = AppBridge.actions;
-        
-        const app = createApp({
-          apiKey: 'your-api-key',
-          host: new URLSearchParams(window.location.search).get('host'),
-          forceRedirect: true,
-        });
-        
         // Store current state
         let pageContent = [];
         const shop = "${shop}";
         const pageId = "${pageId || 'new'}";
+        
+        // Initialize page content
+        pageContent = [];
         
         // Load existing page content if editing
         if (pageId !== 'new') {
@@ -331,18 +361,82 @@ app.get('/app/builder', (req, res) => {
         
         function renderPreview() {
           const previewContent = document.getElementById('page-content');
-          previewContent.innerHTML = pageContent.map(widget => 
-            \`<div style="margin: 20px 0; padding: 20px; border: 1px dashed #d1d5db; border-radius: 8px; position: relative;">
-              <div style="position: absolute; top: 5px; right: 5px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;" onclick="removeWidget(\${pageContent.indexOf(widget)})">✕</div>
+          
+          if (pageContent.length === 0) {
+            previewContent.innerHTML = '<div class="empty-state">Click on widgets above to add them to your page</div>';
+            return;
+          }
+          
+          previewContent.innerHTML = pageContent.map((widget, index) => 
+            \`<div class="widget-preview" draggable="true" data-widget-index="\${index}" 
+                 ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" 
+                 ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
+              <div class="widget-controls">
+                <button class="widget-control-btn edit" onclick="editWidget(\${index})" title="Edit">✎</button>
+                <button class="widget-control-btn" onclick="duplicateWidget(\${index})" title="Duplicate">⧉</button>
+                <button class="widget-control-btn" onclick="removeWidget(\${index})" title="Delete">✕</button>
+              </div>
+              <div class="widget-label" style="font-size: 12px; color: #6b7280; margin-bottom: 10px; font-weight: 600;">\${widget.name}</div>
               \${widget.html}
             </div>\`
           ).join('');
         }
         
+        // Drag and drop functionality
+        let draggedElement = null;
+        
+        function handleDragStart(event) {
+          draggedElement = event.target;
+          event.target.style.opacity = '0.5';
+        }
+        
+        function handleDragOver(event) {
+          event.preventDefault();
+        }
+        
+        function handleDrop(event) {
+          event.preventDefault();
+          if (draggedElement !== event.target) {
+            const draggedIndex = parseInt(draggedElement.dataset.widgetIndex);
+            const targetIndex = parseInt(event.target.closest('.widget-preview').dataset.widgetIndex);
+            
+            // Swap elements in array
+            const draggedWidget = pageContent[draggedIndex];
+            pageContent.splice(draggedIndex, 1);
+            pageContent.splice(targetIndex, 0, draggedWidget);
+            
+            renderPreview();
+            showToast('Widget moved!');
+          }
+        }
+        
+        function handleDragEnd(event) {
+          event.target.style.opacity = '1';
+          draggedElement = null;
+        }
+        
         function removeWidget(index) {
+          const widget = pageContent[index];
           pageContent.splice(index, 1);
           renderPreview();
-          showToast('Widget removed');
+          showToast(\`\${widget.name} removed\`);
+        }
+        
+        function duplicateWidget(index) {
+          const widget = {...pageContent[index]};
+          pageContent.splice(index + 1, 0, widget);
+          renderPreview();
+          showToast(\`\${widget.name} duplicated\`);
+        }
+        
+        function editWidget(index) {
+          const widget = pageContent[index];
+          const newContent = prompt(\`Edit \${widget.name} content:\`, widget.html);
+          if (newContent !== null) {
+            widget.html = newContent;
+            renderPreview();
+            showToast(\`\${widget.name} updated\`);
+          }
         }
         
         function loadPageContent() {
@@ -351,27 +445,53 @@ app.get('/app/builder', (req, res) => {
         }
         
         function savePage() {
-          const htmlContent = pageContent.map(widget => widget.html).join('\\n');
+          if (pageContent.length === 0) {
+            showToast('Add some widgets before saving!');
+            return;
+          }
           
-          // In a real implementation, this would save to Shopify
-          fetch('/api/pages/save', {
+          const htmlContent = pageContent.map(widget => widget.html).join('\\n\\n');
+          const saveButton = document.querySelector('.btn:not(.btn-secondary)');
+          
+          // Show loading state
+          saveButton.textContent = '💾 Saving...';
+          saveButton.disabled = true;
+          
+          // Save to API
+          fetch('/api/pages', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'X-Shopify-Shop-Domain': shop
             },
             body: JSON.stringify({
-              pageId: pageId,
+              pageId: pageId === 'new' ? null : pageId,
               shop: shop,
-              content: htmlContent,
+              title: \`Page \${new Date().toLocaleString()}\`,
+              body_html: htmlContent,
+              handle: \`page-\${Date.now()}\`,
               widgets: pageContent
             })
           })
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to save page');
+            }
+            return response.json();
+          })
           .then(data => {
             showToast('Page saved successfully! 🎉');
+            saveButton.textContent = '💾 Page Saved!';
+            setTimeout(() => {
+              saveButton.textContent = '💾 Save Page';
+              saveButton.disabled = false;
+            }, 2000);
           })
           .catch(error => {
-            showToast('Error saving page: ' + error.message);
+            console.error('Save error:', error);
+            showToast('Error saving page. Please try again.');
+            saveButton.textContent = '💾 Save Page';
+            saveButton.disabled = false;
           });
         }
         
@@ -391,8 +511,31 @@ app.get('/app/builder', (req, res) => {
           }, 3000);
         }
         
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+          if (event.ctrlKey || event.metaKey) {
+            switch(event.key) {
+              case 's':
+                event.preventDefault();
+                savePage();
+                break;
+              case 'z':
+                event.preventDefault();
+                if (pageContent.length > 0) {
+                  const lastWidget = pageContent.pop();
+                  renderPreview();
+                  showToast(\`Undid: \${lastWidget.name}\`);
+                }
+                break;
+            }
+          }
+        });
+        
+        // Initialize preview
+        renderPreview();
+        
         // Initialize with welcome message
-        showToast('Page Builder loaded! 🚀');
+        showToast('🚀 Page Builder loaded! Click widgets to add them, drag to reorder. Ctrl+S to save, Ctrl+Z to undo.');
       </script>
     </body>
     </html>
