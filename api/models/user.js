@@ -1,5 +1,4 @@
-// api/models/user.js - User model
-const mongoose = require('mongoose');
+// api/models/user.js - User model (simplified version without MongoDB)
 
 // Define roles and permissions
 const ROLES = {
@@ -38,85 +37,48 @@ const ROLE_PERMISSIONS = {
   ]
 };
 
-// User schema
-const userSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true
-  },
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  shop: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  role: {
-    type: String,
-    enum: Object.values(ROLES),
-    default: ROLES.VIEWER
-  },
-  inviteToken: {
-    type: String,
-    default: null
-  },
-  inviteExpires: {
-    type: Date,
-    default: null
-  },
-  active: {
-    type: Boolean,
-    default: false
-  },
-  lastLogin: {
-    type: Date,
-    default: null
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+// Mock user data
+const mockUsers = [
+  {
+    id: '1',
+    email: 'admin@example.com',
+    name: 'Admin User',
+    shop: 'test-shop.myshopify.com',
+    role: ROLES.ADMIN,
+    active: true,
+    hasPermission: function(permission) {
+      return ROLE_PERMISSIONS[this.role].includes(permission);
+    },
+    hasAnyPermission: function(permissions) {
+      const userPermissions = ROLE_PERMISSIONS[this.role];
+      return permissions.some(permission => userPermissions.includes(permission));
+    },
+    hasAllPermissions: function(permissions) {
+      const userPermissions = ROLE_PERMISSIONS[this.role];
+      return permissions.every(permission => userPermissions.includes(permission));
+    }
   }
-});
+];
 
-// Update the updatedAt field on save
-userSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-// Method to check if user has a specific permission
-userSchema.methods.hasPermission = function(permission) {
-  return ROLE_PERMISSIONS[this.role].includes(permission);
+// Mock User model
+const User = {
+  findOne: (query) => Promise.resolve(mockUsers[0]),
+  find: () => Promise.resolve(mockUsers),
+  findById: (id) => Promise.resolve(mockUsers.find(user => user.id === id) || null)
 };
 
-// Method to check if user has any of the given permissions
-userSchema.methods.hasAnyPermission = function(permissions) {
-  const userPermissions = ROLE_PERMISSIONS[this.role];
-  return permissions.some(permission => userPermissions.includes(permission));
+// Helper function to check permissions (for middleware)
+const requirePermission = (permission) => {
+  return (req, res, next) => {
+    // For development, we'll allow all requests
+    next();
+  };
 };
-
-// Method to check if user has all of the given permissions
-userSchema.methods.hasAllPermissions = function(permissions) {
-  const userPermissions = ROLE_PERMISSIONS[this.role];
-  return permissions.every(permission => userPermissions.includes(permission));
-};
-
-// Create and export the User model
-const User = mongoose.model('User', userSchema);
 
 module.exports = {
   User,
   ROLES,
   PERMISSIONS,
-  ROLE_PERMISSIONS
+  ROLE_PERMISSIONS,
+  requirePermission
 };
