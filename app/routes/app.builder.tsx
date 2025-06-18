@@ -42,6 +42,42 @@ export default function Builder() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Function to convert page builder data to HTML
+  const convertPageDataToHTML = (pageData) => {
+    if (!pageData || !pageData.content || !Array.isArray(pageData.content)) {
+      return '';
+    }
+    
+    return pageData.content.map(element => {
+      const styles = element.settings || {};
+      const styleString = Object.entries(styles)
+        .filter(([key, value]) => value && value !== 'transparent' && value !== '#000000')
+        .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
+        .join('; ');
+      
+      const styleAttr = styleString ? ` style="${styleString}"` : '';
+      
+      switch (element.type) {
+        case 'heading':
+          const level = styles.level || 'h2';
+          return `<${level}${styleAttr}>${element.content || ''}</${level}>`;
+        case 'text':
+          return `<p${styleAttr}>${element.content || ''}</p>`;
+        case 'button':
+          const link = styles.buttonLink || '#';
+          return `<a href="${link}" style="display: inline-block; padding: 8px 16px; text-decoration: none; border-radius: ${styles.buttonRadius || '4px'}; background-color: ${styles.buttonColor || '#2c6ecb'}; color: ${styles.buttonTextColor || '#ffffff'}; ${styleString}">${element.content || 'Button'}</a>`;
+        case 'image':
+          return `<img src="${element.content || ''}" alt="${styles.altText || ''}"${styleAttr} />`;
+        case 'divider':
+          return `<hr${styleAttr} />`;
+        case 'section':
+          return `<div${styleAttr}>${element.content && Array.isArray(element.content) ? element.content.map(child => convertPageDataToHTML({content: [child]})).join('') : ''}</div>`;
+        default:
+          return `<div${styleAttr}>${element.content || ''}</div>`;
+      }
+    }).join('\n');
+  };
+
   // Fetch pages from API
   useEffect(() => {
     const fetchPages = async () => {
@@ -204,14 +240,17 @@ export default function Builder() {
     try {
       setIsLoading(true);
       
+      // Convert page builder data to HTML
+      const htmlContent = convertPageDataToHTML(pageData);
+      
       // Call our API to save the page
-      const response = await fetch(`/api/pages/${selectedPage.id}`, {
+      const response = await fetch(`/api/pages?id=${selectedPage.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           title: selectedPage.title,
           handle: selectedPage.handle,
-          content: pageData
+          content: htmlContent
         })
       });
       
@@ -224,15 +263,14 @@ export default function Builder() {
       // Update local state
       const updatedPages = pages.map(p => 
         p.id === selectedPage.id 
-          ? { ...p, pageBuilderData: pageData } 
+          ? { ...p, pageBuilderData: pageData, body: htmlContent } 
           : p
       );
       setPages(updatedPages);
       
-      setToastMessage(`Page "${selectedPage.title}" has been updated successfully.`);
+      setToastMessage(`Page "${selectedPage.title}" has been saved successfully.`);
       setToastError(false);
       setShowToast(true);
-      setIsBuilderMode(false);
       setIsLoading(false);
     } catch (err) {
       console.error('Error saving page:', err);
@@ -247,14 +285,22 @@ export default function Builder() {
     try {
       setIsLoading(true);
       
-      // Call our API to publish the page
-      const response = await fetch(`/api/pages/${selectedPage.id}/publish`, {
-        method: 'POST',
+      // First save the page if there's new data
+      if (pageData) {
+        await handleSaveBuilderPage(pageData);
+      }
+      
+      // Convert page builder data to HTML
+      const htmlContent = pageData ? convertPageDataToHTML(pageData) : selectedPage.body;
+      
+      // Call our API to publish the page (same as save for now)
+      const response = await fetch(`/api/pages?id=${selectedPage.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           title: selectedPage.title,
           handle: selectedPage.handle,
-          content: pageData || selectedPage.pageBuilderData || selectedPage.body
+          content: htmlContent
         })
       });
       
@@ -267,7 +313,7 @@ export default function Builder() {
       // Update local state
       const updatedPages = pages.map(p => 
         p.id === selectedPage.id 
-          ? { ...p, published_at: new Date().toISOString() } 
+          ? { ...p, published_at: new Date().toISOString(), body: htmlContent } 
           : p
       );
       setPages(updatedPages);
@@ -275,7 +321,6 @@ export default function Builder() {
       setToastMessage(`Page "${selectedPage.title}" has been published successfully.`);
       setToastError(false);
       setShowToast(true);
-      setIsBuilderMode(false);
       setIsLoading(false);
     } catch (err) {
       console.error('Error publishing page:', err);
@@ -392,6 +437,7 @@ export default function Builder() {
                 content: selectedPage.pageBuilderData || []
               }}
               onSave={handleSaveBuilderPage}
+              onPublish={handlePublishPage}
             />
           </div>
         </Page>

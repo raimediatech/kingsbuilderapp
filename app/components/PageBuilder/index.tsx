@@ -291,16 +291,30 @@ export default function PageBuilder({ initialPage = null, onSave, onPublish }) {
             <Button onClick={handleSave}>
               Save
             </Button>
-            <Button primary onClick={() => {
-              handleSave();
-              // If there's an onPublish prop, call it
-              if (typeof onPublish === 'function') {
-                onPublish({
+            <Button primary onClick={async () => {
+              try {
+                const pageData = {
                   content: pageElements,
                   settings: {
                     viewMode
                   }
-                });
+                };
+                
+                // If there's an onPublish prop, call it
+                if (typeof onPublish === 'function') {
+                  await onPublish(pageData);
+                  setToastMessage("Page published successfully");
+                  setToastError(false);
+                  setShowToast(true);
+                } else {
+                  // Fallback to just saving
+                  await handleSave();
+                }
+              } catch (error) {
+                console.error('Error publishing page:', error);
+                setToastMessage('Error publishing page. Please try again.');
+                setToastError(true);
+                setShowToast(true);
               }
             }}>
               Publish

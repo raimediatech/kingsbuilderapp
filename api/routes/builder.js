@@ -577,7 +577,7 @@ router.get('/:pageId', async (req, res) => {
           // Page data
           const pageId = '${pageId}';
           const shop = '${shop}';
-          const userEmail = '${userEmail || ''}';
+          const userEmail = '${userEmail || ""}';
 
           // Save button functionality
           ${canEdit ? `
