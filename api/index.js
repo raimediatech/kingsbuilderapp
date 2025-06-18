@@ -229,6 +229,216 @@ app.get('/app/builder', (req, res) => {
       </style>
     </head>
     <body>
+      <!-- Header Bar -->
+      <div class="header-bar">
+        <div class="header-left">
+          <div class="header-title">
+            <i class="fas fa-hammer"></i> KingsBuilder Pro
+          </div>
+          <div class="page-settings">
+            <div class="form-group">
+              <label>Page Title</label>
+              <input type="text" class="form-input" id="pageTitle" value="Untitled Page" placeholder="Enter page title">
+            </div>
+            <div class="form-group">
+              <label>Page URL</label>
+              <input type="text" class="form-input" id="pageUrl" value="untitled-page" placeholder="page-url-slug">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <div class="status-selector">
+                <button class="status-btn" id="statusBtn" onclick="toggleStatus()">
+                  <i class="fas fa-circle status-draft"></i>
+                  <span>Draft</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <button class="btn btn-secondary" onclick="previewPage()">
+            <i class="fas fa-eye"></i> Preview
+          </button>
+          <button class="btn btn-primary" onclick="savePage()">
+            <i class="fas fa-save"></i> Save Page
+          </button>
+        </div>
+      </div>
+
+      <div class="page-builder">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+          <!-- Widgets Section -->
+          <div class="sidebar-section">
+            <div class="sidebar-title">
+              <i class="fas fa-cube"></i> Widgets
+            </div>
+            <div class="widget-list">
+              <!-- Basic Widgets -->
+              <div class="widget-item" draggable="true" data-widget="heading">
+                <div class="widget-icon">📝</div>
+                <div class="widget-info">
+                  <h4>Heading</h4>
+                  <p>Add titles and headings</p>
+                </div>
+              </div>
+              <div class="widget-item" draggable="true" data-widget="text">
+                <div class="widget-icon">📄</div>
+                <div class="widget-info">
+                  <h4>Text Block</h4>
+                  <p>Rich text content</p>
+                </div>
+              </div>
+              <div class="widget-item" draggable="true" data-widget="image">
+                <div class="widget-icon">🖼️</div>
+                <div class="widget-info">
+                  <h4>Image</h4>
+                  <p>Add images and galleries</p>
+                </div>
+              </div>
+              <div class="widget-item" draggable="true" data-widget="button">
+                <div class="widget-icon">🔘</div>
+                <div class="widget-info">
+                  <h4>Button</h4>
+                  <p>Call-to-action buttons</p>
+                </div>
+              </div>
+              <div class="widget-item" draggable="true" data-widget="video">
+                <div class="widget-icon">📹</div>
+                <div class="widget-info">
+                  <h4>Video</h4>
+                  <p>Embed videos</p>
+                </div>
+              </div>
+              <div class="widget-item" draggable="true" data-widget="divider">
+                <div class="widget-icon">➖</div>
+                <div class="widget-info">
+                  <h4>Divider</h4>
+                  <p>Section separators</p>
+                </div>
+              </div>
+              
+              <!-- Advanced Widgets -->
+              <div class="widget-item" draggable="true" data-widget="hero">
+                <div class="widget-icon">🎯</div>
+                <div class="widget-info">
+                  <h4>Hero Section</h4>
+                  <p>Header with image/video</p>
+                </div>
+              </div>
+              <div class="widget-item" draggable="true" data-widget="gallery">
+                <div class="widget-icon">🖼️</div>
+                <div class="widget-info">
+                  <h4>Image Gallery</h4>
+                  <p>Photo galleries</p>
+                </div>
+              </div>
+              <div class="widget-item" draggable="true" data-widget="testimonials">
+                <div class="widget-icon">💬</div>
+                <div class="widget-info">
+                  <h4>Testimonials</h4>
+                  <p>Customer reviews</p>
+                </div>
+              </div>
+              <div class="widget-item" draggable="true" data-widget="pricing">
+                <div class="widget-icon">💰</div>
+                <div class="widget-info">
+                  <h4>Pricing Table</h4>
+                  <p>Product pricing</p>
+                </div>
+              </div>
+              <div class="widget-item" draggable="true" data-widget="features">
+                <div class="widget-icon">⭐</div>
+                <div class="widget-info">
+                  <h4>Features Grid</h4>
+                  <p>Feature highlights</p>
+                </div>
+              </div>
+              <div class="widget-item" draggable="true" data-widget="contact">
+                <div class="widget-icon">📧</div>
+                <div class="widget-info">
+                  <h4>Contact Form</h4>
+                  <p>Lead capture forms</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Templates Section -->
+          <div class="sidebar-section">
+            <div class="sidebar-title">
+              <i class="fas fa-layer-group"></i> Page Templates
+            </div>
+            <div class="template-list">
+              <!-- Theme Templates -->
+              <div class="template-item" onclick="applyTemplate('landing')">
+                <div class="template-name">Landing Page</div>
+                <div class="template-desc">Hero + Features + CTA</div>
+              </div>
+              <div class="template-item" onclick="applyTemplate('about')">
+                <div class="template-name">About Us</div>
+                <div class="template-desc">Company story + Team</div>
+              </div>
+              <div class="template-item" onclick="applyTemplate('services')">
+                <div class="template-name">Services</div>
+                <div class="template-desc">Service grid + Pricing</div>
+              </div>
+              <div class="template-item" onclick="applyTemplate('contact')">
+                <div class="template-name">Contact</div>
+                <div class="template-desc">Contact form + Map</div>
+              </div>
+              
+              <!-- KingsBuilder App Templates -->
+              <div class="template-item" onclick="applyTemplate('ecommerce')">
+                <div class="template-name">E-commerce Store <span class="template-type">(KB)</span></div>
+                <div class="template-desc">Product showcase + Cart</div>
+              </div>
+              <div class="template-item" onclick="applyTemplate('portfolio')">
+                <div class="template-name">Portfolio <span class="template-type">(KB)</span></div>
+                <div class="template-desc">Gallery + Projects</div>
+              </div>
+              <div class="template-item" onclick="applyTemplate('blog')">
+                <div class="template-name">Blog Layout <span class="template-type">(KB)</span></div>
+                <div class="template-desc">Article grid + Sidebar</div>
+              </div>
+              <div class="template-item" onclick="applyTemplate('restaurant')">
+                <div class="template-name">Restaurant Menu <span class="template-type">(KB)</span></div>
+                <div class="template-desc">Menu + Reservations</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Canvas -->
+        <div class="canvas-area">
+          <div class="canvas-container">
+            <div class="canvas" id="canvas" ondrop="handleCanvasDrop(event)" ondragover="handleCanvasDragOver(event)">
+              <div class="canvas-empty" id="canvasEmpty">
+                <i class="fas fa-mouse-pointer"></i>
+                <h3>Start Building Your Page</h3>
+                <p>Drag widgets from the sidebar or choose a template to get started</p>
+              </div>
+              <div id="canvasContent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Widget Properties Panel -->
+      <div class="properties-panel" id="propertiesPanel">
+        <div class="properties-header">
+          <div class="properties-title">Widget Properties</div>
+          <button class="toolbar-btn" onclick="closeProperties()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="properties-content" id="propertiesContent">
+          <p>Select a widget to edit its properties</p>
+        </div>
+      </div>
       <div class="container">
         <div class="header">
           <div>
@@ -316,245 +526,578 @@ app.get('/app/builder', (req, res) => {
           </div>
         </div>
       </div>
-      
+
       <script>
-        // Global variables - declare at the top
+        // Global variables
         var pageContent = [];
+        var selectedWidget = null;
         var shop = "${shop}";
         var pageId = "${pageId || 'new'}";
+        var currentStatus = 'draft';
+        var draggedWidget = null;
         
-        // Initialize when DOM is ready
+        // Initialize page builder
         document.addEventListener('DOMContentLoaded', function() {
-          // Initialize page content
-          pageContent = [];
-          
-          // Load existing page content if editing
+          initializePageBuilder();
+          setupEventListeners();
           if (pageId !== 'new') {
-            loadPageContent();
-          } else {
-            renderPreview();
+            loadExistingPage();
           }
-          
-          // Show welcome message
-          showToast('🚀 Page Builder loaded! Click widgets to add them, drag to reorder. Ctrl+S to save, Ctrl+Z to undo.');
         });
         
-        function addWidget(type) {
-          try {
-            const widget = createWidget(type);
-            pageContent.push(widget);
-            renderPreview();
-            
-            // Show success message
-            showToast(\`\${widget.name} widget added!\`);
-          } catch (error) {
-            console.error('Error adding widget:', error);
-            showToast('Error adding widget. Please try again.');
+        function initializePageBuilder() {
+          // Load page title and URL from pageId if editing
+          if (pageId !== 'new') {
+            document.getElementById('pageTitle').value = 'Page ' + pageId;
+            document.getElementById('pageUrl').value = 'page-' + pageId;
           }
+          
+          showToast('🚀 Professional Page Builder loaded! Drag widgets to canvas or click to add.', 'success');
+        }
+        
+        function setupEventListeners() {
+          // Widget drag and drop
+          const widgets = document.querySelectorAll('.widget-item');
+          widgets.forEach(widget => {
+            widget.addEventListener('dragstart', handleWidgetDragStart);
+            widget.addEventListener('click', handleWidgetClick);
+          });
+          
+          // Canvas drag and drop
+          const canvas = document.getElementById('canvas');
+          canvas.addEventListener('dragover', handleCanvasDragOver);
+          canvas.addEventListener('drop', handleCanvasDrop);
+          
+          // Page title and URL auto-sync
+          document.getElementById('pageTitle').addEventListener('input', syncPageUrl);
+          
+          // Keyboard shortcuts
+          document.addEventListener('keydown', handleKeyboardShortcuts);
+        }
+        
+        function handleWidgetDragStart(e) {
+          draggedWidget = e.target.dataset.widget;
+          e.dataTransfer.effectAllowed = 'copy';
+        }
+        
+        function handleWidgetClick(e) {
+          const widgetType = e.currentTarget.dataset.widget;
+          addWidgetToCanvas(widgetType);
+        }
+        
+        function handleCanvasDragOver(e) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        }
+        
+        function handleCanvasDrop(e) {
+          e.preventDefault();
+          if (draggedWidget) {
+            addWidgetToCanvas(draggedWidget);
+            draggedWidget = null;
+          }
+        }
+        
+        function addWidgetToCanvas(widgetType) {
+          const widget = createWidget(widgetType);
+          pageContent.push(widget);
+          renderCanvas();
+          showToast(\`\${widget.name} added to page!\`, 'success');
         }
         
         function createWidget(type) {
           const widgets = {
-            heading: { name: 'Heading', html: '<h2>Your Heading Here</h2>' },
-            text: { name: 'Text Block', html: '<p>Your text content goes here. Edit this to add your own content.</p>' },
-            image: { name: 'Image', html: '<img src="https://via.placeholder.com/600x300" alt="Placeholder" style="max-width: 100%; height: auto;">' },
-            button: { name: 'Button', html: '<button style="background: #4338ca; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer;">Click Me</button>' },
-            video: { name: 'Video', html: '<iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe>' },
-            divider: { name: 'Divider', html: '<hr style="border: 1px solid #e5e7eb; margin: 20px 0;">' },
-            hero: { name: 'Hero Section', html: '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 20px; text-align: center; border-radius: 8px;"><h1>Welcome to Our Store</h1><p style="font-size: 18px; margin: 20px 0;">Discover amazing products and services</p><button style="background: white; color: #4338ca; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Shop Now</button></div>' },
-            gallery: { name: 'Image Gallery', html: '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"><img src="https://via.placeholder.com/200x200" style="width: 100%; border-radius: 8px;"><img src="https://via.placeholder.com/200x200" style="width: 100%; border-radius: 8px;"><img src="https://via.placeholder.com/200x200" style="width: 100%; border-radius: 8px;"><img src="https://via.placeholder.com/200x200" style="width: 100%; border-radius: 8px;"></div>' },
-            testimonials: { name: 'Testimonials', html: '<div style="background: #f9fafb; padding: 40px 20px; border-radius: 8px; text-align: center;"><blockquote style="font-size: 18px; font-style: italic; margin: 0 0 20px;">"This product changed my life! Amazing quality and service."</blockquote><cite style="font-weight: bold;">- Happy Customer</cite></div>' },
-            pricing: { name: 'Pricing Table', html: '<div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 30px; text-align: center; max-width: 300px; margin: 0 auto;"><h3>Premium Plan</h3><div style="font-size: 36px; font-weight: bold; color: #4338ca; margin: 20px 0;">$29<span style="font-size: 18px; color: #6b7280;">/month</span></div><ul style="list-style: none; padding: 0; margin: 20px 0;"><li>✓ All features included</li><li>✓ 24/7 support</li><li>✓ Free updates</li></ul><button style="background: #4338ca; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; width: 100%;">Get Started</button></div>' },
-            features: { name: 'Features Grid', html: '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;"><div style="text-align: center;"><div style="background: #4338ca; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 15px;">⚡</div><h3>Fast Performance</h3><p>Lightning-fast loading times</p></div><div style="text-align: center;"><div style="background: #4338ca; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 15px;">🔒</div><h3>Secure</h3><p>Bank-level security</p></div><div style="text-align: center;"><div style="background: #4338ca; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 15px;">📱</div><h3>Mobile Ready</h3><p>Responsive on all devices</p></div></div>' },
-            contact: { name: 'Contact Form', html: '<form style="max-width: 500px; margin: 0 auto;"><div style="margin-bottom: 20px;"><label style="display: block; margin-bottom: 5px; font-weight: bold;">Name</label><input type="text" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px;"></div><div style="margin-bottom: 20px;"><label style="display: block; margin-bottom: 5px; font-weight: bold;">Email</label><input type="email" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px;"></div><div style="margin-bottom: 20px;"><label style="display: block; margin-bottom: 5px; font-weight: bold;">Message</label><textarea style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; min-height: 100px;"></textarea></div><button type="submit" style="background: #4338ca; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer;">Send Message</button></form>' }
+            heading: {
+              name: 'Heading',
+              type: 'heading',
+              properties: {
+                text: 'Your Heading Here',
+                level: 'h2',
+                color: '#1f2937',
+                textAlign: 'left'
+              },
+              html: '<h2 style="color: #1f2937; text-align: left;">Your Heading Here</h2>'
+            },
+            text: {
+              name: 'Text Block',
+              type: 'text',
+              properties: {
+                content: 'Your text content goes here. Edit this to add your own content.',
+                color: '#374151',
+                fontSize: '16px',
+                textAlign: 'left'
+              },
+              html: '<p style="color: #374151; font-size: 16px; text-align: left;">Your text content goes here. Edit this to add your own content.</p>'
+            },
+            image: {
+              name: 'Image',
+              type: 'image',
+              properties: {
+                src: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=300&fit=crop',
+                alt: 'Placeholder Image',
+                width: '100%',
+                borderRadius: '8px'
+              },
+              html: '<img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=300&fit=crop" alt="Placeholder Image" style="width: 100%; border-radius: 8px;">'
+            },
+            button: {
+              name: 'Button',
+              type: 'button',
+              properties: {
+                text: 'Click Me',
+                bgColor: '#4338ca',
+                textColor: '#ffffff',
+                borderRadius: '6px',
+                padding: '12px 24px',
+                link: '#'
+              },
+              html: '<a href="#" style="display: inline-block; background: #4338ca; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600;">Click Me</a>'
+            },
+            video: {
+              name: 'Video',
+              type: 'video',
+              properties: {
+                url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+                width: '100%',
+                height: '315px'
+              },
+              html: '<iframe width="100%" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen style="border-radius: 8px;"></iframe>'
+            },
+            divider: {
+              name: 'Divider',
+              type: 'divider',
+              properties: {
+                style: 'solid',
+                color: '#e5e7eb',
+                thickness: '1px',
+                margin: '20px 0'
+              },
+              html: '<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">'
+            },
+            hero: {
+              name: 'Hero Section',
+              type: 'hero',
+              properties: {
+                title: 'Welcome to Our Store',
+                subtitle: 'Discover amazing products and services',
+                buttonText: 'Shop Now',
+                buttonLink: '#',
+                bgColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                textColor: '#ffffff'
+              },
+              html: '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 80px 40px; text-align: center; border-radius: 12px;"><h1 style="font-size: 48px; margin-bottom: 20px;">Welcome to Our Store</h1><p style="font-size: 20px; margin-bottom: 30px; opacity: 0.9;">Discover amazing products and services</p><a href="#" style="display: inline-block; background: white; color: #4338ca; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px;">Shop Now</a></div>'
+            },
+            gallery: {
+              name: 'Image Gallery',
+              type: 'gallery',
+              properties: {
+                columns: 3,
+                gap: '15px',
+                borderRadius: '8px'
+              },
+              html: '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;"><img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&h=200&fit=crop" style="width: 100%; border-radius: 8px;"><img src="https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=300&h=200&fit=crop" style="width: 100%; border-radius: 8px;"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop" style="width: 100%; border-radius: 8px;"></div>'
+            },
+            testimonials: {
+              name: 'Testimonials',
+              type: 'testimonials',
+              properties: {
+                quote: 'This product changed my life! Amazing quality and service.',
+                author: 'Happy Customer',
+                bgColor: '#f8fafc',
+                textColor: '#1f2937'
+              },
+              html: '<div style="background: #f8fafc; padding: 40px; border-radius: 12px; text-align: center; border-left: 4px solid #4338ca;"><blockquote style="font-size: 20px; font-style: italic; margin: 0 0 20px; color: #1f2937;">"This product changed my life! Amazing quality and service."</blockquote><cite style="font-weight: bold; color: #4338ca;">- Happy Customer</cite></div>'
+            },
+            pricing: {
+              name: 'Pricing Table',
+              type: 'pricing',
+              properties: {
+                title: 'Premium Plan',
+                price: '$29',
+                period: '/month',
+                features: ['All features included', '24/7 support', 'Free updates'],
+                buttonText: 'Get Started',
+                buttonLink: '#'
+              },
+              html: '<div style="border: 2px solid #e5e7eb; border-radius: 12px; padding: 40px; text-align: center; max-width: 350px; margin: 0 auto; background: white;"><h3 style="font-size: 24px; margin-bottom: 20px;">Premium Plan</h3><div style="font-size: 48px; font-weight: bold; color: #4338ca; margin: 20px 0;">$29<span style="font-size: 18px; color: #6b7280;">/month</span></div><ul style="list-style: none; padding: 0; margin: 30px 0; text-align: left;"><li style="padding: 8px 0; color: #374151;"><i class="fas fa-check" style="color: #10b981; margin-right: 10px;"></i>All features included</li><li style="padding: 8px 0; color: #374151;"><i class="fas fa-check" style="color: #10b981; margin-right: 10px;"></i>24/7 support</li><li style="padding: 8px 0; color: #374151;"><i class="fas fa-check" style="color: #10b981; margin-right: 10px;"></i>Free updates</li></ul><a href="#" style="display: block; background: #4338ca; color: white; padding: 16px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Get Started</a></div>'
+            },
+            features: {
+              name: 'Features Grid',
+              type: 'features',
+              properties: {
+                columns: 3,
+                gap: '30px'
+              },
+              html: '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;"><div style="text-align: center; padding: 30px;"><div style="background: #4338ca; color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px;"><i class="fas fa-bolt"></i></div><h3 style="margin-bottom: 15px;">Fast Performance</h3><p style="color: #6b7280;">Lightning-fast loading times for better user experience</p></div><div style="text-align: center; padding: 30px;"><div style="background: #4338ca; color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px;"><i class="fas fa-shield-alt"></i></div><h3 style="margin-bottom: 15px;">Secure</h3><p style="color: #6b7280;">Bank-level security to protect your data</p></div><div style="text-align: center; padding: 30px;"><div style="background: #4338ca; color: white; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px;"><i class="fas fa-mobile-alt"></i></div><h3 style="margin-bottom: 15px;">Mobile Ready</h3><p style="color: #6b7280;">Fully responsive design for all devices</p></div></div>'
+            },
+            contact: {
+              name: 'Contact Form',
+              type: 'contact',
+              properties: {
+                title: 'Get In Touch',
+                subtitle: 'We would love to hear from you',
+                buttonText: 'Send Message',
+                bgColor: '#ffffff'
+              },
+              html: '<div style="background: white; padding: 40px; border-radius: 12px; border: 1px solid #e5e7eb;"><h2 style="text-align: center; margin-bottom: 10px;">Get In Touch</h2><p style="text-align: center; color: #6b7280; margin-bottom: 30px;">We would love to hear from you</p><form style="max-width: 600px; margin: 0 auto;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;"><div><label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Name</label><input type="text" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px;" placeholder="Your name"></div><div><label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Email</label><input type="email" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px;" placeholder="your@email.com"></div></div><div style="margin-bottom: 20px;"><label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Message</label><textarea style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px; min-height: 120px; resize: vertical;" placeholder="Your message here..."></textarea></div><button type="submit" style="width: 100%; background: #4338ca; color: white; padding: 16px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Send Message</button></form></div>'
+            }
           };
           
           return widgets[type] || { name: 'Unknown', html: '<p>Widget not found</p>' };
         }
         
-        function renderPreview() {
-          const previewContent = document.getElementById('page-content');
+        // Initialize page builder when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+          initializePageBuilder();
+          setupEventListeners();
+          if (pageId !== 'new') {
+            loadExistingPage();
+          }
+        });
+        
+        function initializePageBuilder() {
+          // Load page title and URL from pageId if editing
+          if (pageId !== 'new') {
+            document.getElementById('pageTitle').value = 'Page ' + pageId;
+            document.getElementById('pageUrl').value = 'page-' + pageId;
+          }
           
-          if (!pageContent || pageContent.length === 0) {
-            previewContent.innerHTML = '<div class="empty-state">Click on widgets above to add them to your page</div>';
+          renderCanvas();
+          showToast('🚀 Professional Page Builder loaded! Ready to build amazing pages.', 'success');
+        }
+        
+        function setupEventListeners() {
+          // Widget drag and drop
+          const widgets = document.querySelectorAll('.widget-item');
+          widgets.forEach(widget => {
+            widget.addEventListener('dragstart', handleWidgetDragStart);
+            widget.addEventListener('click', handleWidgetClick);
+          });
+          
+          // Page title and URL auto-sync
+          document.getElementById('pageTitle').addEventListener('input', syncPageUrl);
+          
+          // Keyboard shortcuts
+          document.addEventListener('keydown', handleKeyboardShortcuts);
+        }
+        
+        function handleWidgetDragStart(e) {
+          draggedWidget = e.target.dataset.widget;
+          e.dataTransfer.effectAllowed = 'copy';
+        }
+        
+        function handleWidgetClick(e) {
+          const widgetType = e.currentTarget.dataset.widget;
+          addWidgetToCanvas(widgetType);
+        }
+        
+        function handleCanvasDragOver(e) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        }
+        
+        function handleCanvasDrop(e) {
+          e.preventDefault();
+          if (draggedWidget) {
+            addWidgetToCanvas(draggedWidget);
+            draggedWidget = null;
+          }
+        }
+        
+        function addWidgetToCanvas(widgetType) {
+          const widget = createWidget(widgetType);
+          pageContent.push(widget);
+          renderCanvas();
+          showToast(\`\${widget.name} added to page!\`, 'success');
+        }
+        
+        // Render the canvas with all widgets
+        function renderCanvas() {
+          const canvasContent = document.getElementById('canvasContent');
+          const canvasEmpty = document.getElementById('canvasEmpty');
+          
+          if (pageContent.length === 0) {
+            canvasEmpty.style.display = 'flex';
+            canvasContent.innerHTML = '';
             return;
           }
           
-          previewContent.innerHTML = pageContent.map((widget, index) => 
-            \`<div class="widget-preview" draggable="true" data-widget-index="\${index}" 
-                 ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" 
-                 ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">
-              <div class="widget-controls">
-                <button class="widget-control-btn edit" onclick="editWidget(\${index})" title="Edit">✎</button>
-                <button class="widget-control-btn" onclick="duplicateWidget(\${index})" title="Duplicate">⧉</button>
-                <button class="widget-control-btn" onclick="removeWidget(\${index})" title="Delete">✕</button>
+          canvasEmpty.style.display = 'none';
+          canvasContent.innerHTML = pageContent.map((widget, index) => 
+            \`<div class="widget-element" data-widget-index="\${index}" onclick="selectWidget(\${index})">
+              <div class="widget-toolbar">
+                <button class="toolbar-btn" onclick="editWidget(\${index})" title="Edit Properties">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="toolbar-btn" onclick="duplicateWidget(\${index})" title="Duplicate">
+                  <i class="fas fa-copy"></i>
+                </button>
+                <button class="toolbar-btn" onclick="moveWidgetUp(\${index})" title="Move Up">
+                  <i class="fas fa-arrow-up"></i>
+                </button>
+                <button class="toolbar-btn" onclick="moveWidgetDown(\${index})" title="Move Down">
+                  <i class="fas fa-arrow-down"></i>
+                </button>
+                <button class="toolbar-btn delete" onclick="removeWidget(\${index})" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
-              <div class="widget-label" style="font-size: 12px; color: #6b7280; margin-bottom: 10px; font-weight: 600;">\${widget.name}</div>
               \${widget.html}
             </div>\`
           ).join('');
         }
         
-        // Drag and drop functionality
-        let draggedElement = null;
-        
-        function handleDragStart(event) {
-          draggedElement = event.target;
-          event.target.style.opacity = '0.5';
+        // Complete page builder functions with professional UI
+        function selectWidget(index) {
+          document.querySelectorAll('.widget-element').forEach(el => el.classList.remove('selected'));
+          document.querySelector('[data-widget-index="' + index + '"]').classList.add('selected');
+          selectedWidget = index;
+          openPropertiesPanel(pageContent[index]);
         }
         
-        function handleDragOver(event) {
-          event.preventDefault();
+        function openPropertiesPanel(widget) {
+          const panel = document.getElementById('propertiesPanel');
+          const content = document.getElementById('propertiesContent');
+          
+          let propertiesHTML = \`<h3>\${widget.name} Properties</h3>\`;
+          
+          // Build simple property editor
+          propertiesHTML += \`
+            <div class="property-group">
+              <label class="property-label">Content</label>
+              <textarea class="property-input" rows="4" onchange="updateWidgetContent(this.value)">\${widget.html}</textarea>
+            </div>
+            <div class="property-group">
+              <button class="btn btn-primary" onclick="applyPropertyChanges()">Apply Changes</button>
+            </div>
+          \`;
+          
+          content.innerHTML = propertiesHTML;
+          panel.classList.add('active');
         }
         
-        function handleDrop(event) {
-          event.preventDefault();
-          if (draggedElement !== event.target) {
-            const draggedIndex = parseInt(draggedElement.dataset.widgetIndex);
-            const targetIndex = parseInt(event.target.closest('.widget-preview').dataset.widgetIndex);
-            
-            // Swap elements in array
-            const draggedWidget = pageContent[draggedIndex];
-            pageContent.splice(draggedIndex, 1);
-            pageContent.splice(targetIndex, 0, draggedWidget);
-            
-            renderPreview();
-            showToast('Widget moved!');
+        function updateWidgetContent(content) {
+          if (selectedWidget !== null) {
+            tempWidgetContent = content;
           }
         }
         
-        function handleDragEnd(event) {
-          event.target.style.opacity = '1';
-          draggedElement = null;
+        var tempWidgetContent = '';
+        
+        function applyPropertyChanges() {
+          if (selectedWidget !== null && tempWidgetContent) {
+            pageContent[selectedWidget].html = tempWidgetContent;
+            renderCanvas();
+            showToast('Widget updated!', 'success');
+            closeProperties();
+          }
         }
         
-        function removeWidget(index) {
-          if (!pageContent || index < 0 || index >= pageContent.length) {
-            showToast('Error: Widget not found');
-            return;
-          }
-          const widget = pageContent[index];
-          pageContent.splice(index, 1);
-          renderPreview();
-          showToast(\`\${widget.name} removed\`);
-        }
-        
-        function duplicateWidget(index) {
-          if (!pageContent || index < 0 || index >= pageContent.length) {
-            showToast('Error: Widget not found');
-            return;
-          }
-          const widget = {...pageContent[index]};
-          pageContent.splice(index + 1, 0, widget);
-          renderPreview();
-          showToast(\`\${widget.name} duplicated\`);
+        function closeProperties() {
+          document.getElementById('propertiesPanel').classList.remove('active');
+          document.querySelectorAll('.widget-element').forEach(el => el.classList.remove('selected'));
+          selectedWidget = null;
         }
         
         function editWidget(index) {
-          if (!pageContent || index < 0 || index >= pageContent.length) {
-            showToast('Error: Widget not found');
-            return;
-          }
+          selectWidget(index);
+        }
+        
+        function duplicateWidget(index) {
+          const widget = JSON.parse(JSON.stringify(pageContent[index]));
+          pageContent.splice(index + 1, 0, widget);
+          renderCanvas();
+          showToast(\`\${widget.name} duplicated!\`, 'success');
+        }
+        
+        function removeWidget(index) {
           const widget = pageContent[index];
-          const newContent = prompt(\`Edit \${widget.name} content:\`, widget.html);
-          if (newContent !== null) {
-            widget.html = newContent;
-            renderPreview();
-            showToast(\`\${widget.name} updated\`);
+          pageContent.splice(index, 1);
+          renderCanvas();
+          closeProperties();
+          showToast(\`\${widget.name} removed!\`, 'success');
+        }
+        
+        function moveWidgetUp(index) {
+          if (index > 0) {
+            [pageContent[index], pageContent[index - 1]] = [pageContent[index - 1], pageContent[index]];
+            renderCanvas();
           }
         }
         
-        function loadPageContent() {
-          // In a real implementation, this would fetch the page content from the API
-          showToast('Loading page content...');
+        function moveWidgetDown(index) {
+          if (index < pageContent.length - 1) {
+            [pageContent[index], pageContent[index + 1]] = [pageContent[index + 1], pageContent[index]];
+            renderCanvas();
+          }
+        }
+        
+        function syncPageUrl() {
+          const title = document.getElementById('pageTitle').value;
+          const url = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          document.getElementById('pageUrl').value = url;
+        }
+        
+        function toggleStatus() {
+          const statusBtn = document.getElementById('statusBtn');
+          const icon = statusBtn.querySelector('i');
+          const text = statusBtn.querySelector('span');
+          
+          if (currentStatus === 'draft') {
+            currentStatus = 'published';
+            icon.className = 'fas fa-circle status-published';
+            text.textContent = 'Published';
+          } else {
+            currentStatus = 'draft';
+            icon.className = 'fas fa-circle status-draft';
+            text.textContent = 'Draft';
+          }
+        }
+        
+        function applyTemplate(templateType) {
+          const templates = {
+            landing: ['hero', 'features', 'testimonials', 'button'],
+            about: ['heading', 'text', 'image', 'features'],
+            services: ['heading', 'features', 'pricing', 'contact'],
+            contact: ['heading', 'text', 'contact'],
+            ecommerce: ['hero', 'gallery', 'pricing', 'testimonials'],
+            portfolio: ['heading', 'text', 'gallery', 'contact'],
+            blog: ['heading', 'features', 'divider', 'text'],
+            restaurant: ['hero', 'gallery', 'pricing', 'contact']
+          };
+          
+          if (templates[templateType]) {
+            pageContent = templates[templateType].map(widgetType => createWidget(widgetType));
+            renderCanvas();
+            showToast(\`\${templateType.charAt(0).toUpperCase() + templateType.slice(1)} template applied!\`, 'success');
+          }
         }
         
         function savePage() {
-          if (!pageContent || pageContent.length === 0) {
-            showToast('Add some widgets before saving!');
+          const title = document.getElementById('pageTitle').value;
+          const url = document.getElementById('pageUrl').value;
+          
+          if (!title.trim()) {
+            showToast('Please enter a page title!', 'error');
             return;
           }
           
+          if (pageContent.length === 0) {
+            showToast('Add some content before saving!', 'error');
+            return;
+          }
+          
+          const saveBtn = document.querySelector('.btn-primary');
+          const originalText = saveBtn.innerHTML;
+          saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+          saveBtn.disabled = true;
+          
           const htmlContent = pageContent.map(widget => widget.html).join('\\n\\n');
-          const saveButton = document.querySelector('.btn:not(.btn-secondary)');
           
-          // Show loading state
-          saveButton.textContent = '💾 Saving...';
-          saveButton.disabled = true;
-          
-          // Save to API
           fetch('/api/pages', {
-            method: 'POST',
+            method: pageId === 'new' ? 'POST' : 'PUT',
             headers: {
               'Content-Type': 'application/json',
               'X-Shopify-Shop-Domain': shop
             },
             body: JSON.stringify({
-              pageId: pageId === 'new' ? null : pageId,
-              shop: shop,
-              title: \`Page \${new Date().toLocaleString()}\`,
+              id: pageId === 'new' ? null : pageId,
+              title: title,
+              handle: url,
               body_html: htmlContent,
-              handle: \`page-\${Date.now()}\`,
+              published: currentStatus === 'published',
+              shop: shop,
               widgets: pageContent
             })
           })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Failed to save page');
-            }
-            return response.json();
-          })
+          .then(response => response.json())
           .then(data => {
-            showToast('Page saved successfully! 🎉');
-            saveButton.textContent = '💾 Page Saved!';
-            setTimeout(() => {
-              saveButton.textContent = '💾 Save Page';
-              saveButton.disabled = false;
-            }, 2000);
+            if (data.success) {
+              showToast('✅ Page saved successfully!', 'success');
+              if (pageId === 'new') {
+                pageId = data.pageId;
+                window.history.replaceState({}, '', window.location.pathname + '?pageId=' + pageId + '&shop=' + shop);
+              }
+            } else {
+              throw new Error(data.error || 'Failed to save page');
+            }
           })
           .catch(error => {
             console.error('Save error:', error);
-            showToast('Error saving page. Please try again.');
-            saveButton.textContent = '💾 Save Page';
-            saveButton.disabled = false;
+            showToast('❌ Error saving page: ' + error.message, 'error');
+          })
+          .finally(() => {
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
           });
+        }
+        
+        function loadExistingPage() {
+          showToast('Loading page content...', 'success');
+        }
+        
+        function previewPage() {
+          const htmlContent = pageContent.map(widget => widget.html).join('\\n\\n');
+          const previewWindow = window.open('', '_blank');
+          previewWindow.document.write(\`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Page Preview</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; line-height: 1.6; }
+                * { box-sizing: border-box; }
+              </style>
+            </head>
+            <body>
+              \${htmlContent}
+            </body>
+            </html>
+          \`);
         }
         
         function goBack() {
           window.location.href = '/pages?shop=' + shop;
         }
         
-        function showToast(message) {
-          // Simple toast notification
-          const toast = document.createElement('div');
-          toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 6px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
-          toast.textContent = message;
-          document.body.appendChild(toast);
-          
-          setTimeout(() => {
-            document.body.removeChild(toast);
-          }, 3000);
-        }
-        
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(event) {
-          if (event.ctrlKey || event.metaKey) {
-            switch(event.key) {
+        function handleKeyboardShortcuts(e) {
+          if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
               case 's':
-                event.preventDefault();
+                e.preventDefault();
                 savePage();
                 break;
               case 'z':
-                event.preventDefault();
-                if (pageContent && pageContent.length > 0) {
-                  const lastWidget = pageContent.pop();
-                  renderPreview();
-                  showToast(\`Undid: \${lastWidget.name}\`);
+                e.preventDefault();
+                if (pageContent.length > 0) {
+                  removeWidget(pageContent.length - 1);
                 }
                 break;
             }
           }
-        });
+          
+          if (e.key === 'Escape') {
+            closeProperties();
+          }
+        }
+        
+        function showToast(message, type = 'success') {
+          const toast = document.createElement('div');
+          toast.className = \`toast \${type === 'error' ? 'error' : ''} show\`;
+          toast.textContent = message;
+          document.body.appendChild(toast);
+          
+          setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+              if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+              }
+            }, 300);
+          }, 3000);
+        }
       </script>
     </body>
     </html>
