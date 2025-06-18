@@ -66,8 +66,8 @@ export default function Pages() {
       });
       
       if (result.success && result.page) {
-        // Redirect to the builder
-        window.location.href = `/builder/${result.page.id}?shop=${shopDomain}`;
+        // Redirect to the page builder
+        window.location.href = `/app/builder?pageId=${result.page.id}&shop=${shopDomain}`;
       } else {
         setError("Failed to create page");
       }
@@ -129,7 +129,7 @@ export default function Pages() {
               </p>
               <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
                 <Link 
-                  to={`/builder/${page.id}?shop=${shopDomain}`}
+                  to={`/app/builder?pageId=${page.id}&shop=${shopDomain}`}
                   style={{ 
                     backgroundColor: "#000", 
                     color: "#fff", 

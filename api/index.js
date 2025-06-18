@@ -215,31 +215,8 @@ try {
   console.error('Error loading users routes:', error);
 }
 
-// Import builder routes
-try {
-  // Try to load the fixed builder routes first
-  let builderRoutes;
-  try {
-    builderRoutes = require('./routes/builder-fixed');
-    console.log('Using fixed builder routes');
-  } catch (fixedError) {
-    console.log('Fixed builder routes not found, falling back to original routes');
-    try {
-      builderRoutes = require('./routes/builder');
-    } catch (originalError) {
-      console.error('Error loading original builder routes:', originalError);
-      // Temporarily commenting out to test Remix version
-      console.log('Skipping builder routes due to syntax error - using Remix version instead');
-      const express = require('express');
-      builderRoutes = express.Router(); // Empty router
-    }
-  }
-  
-  app.use('/builder', builderRoutes);
-  console.log('Builder routes registered successfully');
-} catch (error) {
-  console.error('Error loading builder routes:', error);
-}
+// Static builder routes removed - using Remix page builder only
+console.log('Static builder routes removed - using Remix page builder only');
 
 // Import settings routes
 try {

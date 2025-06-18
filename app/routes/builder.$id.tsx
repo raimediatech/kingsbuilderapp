@@ -49,8 +49,8 @@ export default function PageBuilder() {
       localStorage.setItem('shopifyToken', accessToken);
     }
     
-    // Redirect to the builder page in the Express app
-    window.location.href = `/builder/${pageId}?shop=${shopDomain}`;
+    // Redirect to the Remix page builder
+    window.location.href = `/app/builder?pageId=${pageId}&shop=${shopDomain}`;
   }, [pageId, shopDomain, accessToken, login]);
   
   return (
