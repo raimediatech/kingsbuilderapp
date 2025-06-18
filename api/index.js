@@ -82,10 +82,168 @@ app.get('/app', (req, res) => {
   }
 });
 
-// App builder route
-app.get('/app/builder', (req, res) => {
+// Pages list route
+app.get('/api/pages', (req, res) => {
   const shop = req.query.shop || req.cookies?.shopOrigin;
-  const pageId = req.query.pageId;
+  
+  if (!shop) {
+    return res.redirect('/install');
+  }
+  
+  // Serve the pages list interface
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>KingsBuilder - Pages</title>
+      <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@12.0.0/build/esm/styles.css" />
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+          background-color: #f6f6f7;
+        }
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+        .btn {
+          background: #4338ca;
+          color: white;
+          border: none;
+          padding: 10px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 500;
+          font-size: 14px;
+          display: inline-flex;
+          align-items: center;
+        }
+        .btn i {
+          margin-right: 6px;
+        }
+        .pages-list {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          overflow: hidden;
+        }
+        .page-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 15px 20px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .page-item:last-child {
+          border-bottom: none;
+        }
+        .page-info h3 {
+          margin: 0 0 5px 0;
+          font-size: 16px;
+        }
+        .page-url {
+          color: #6b7280;
+          font-size: 14px;
+        }
+        .page-actions {
+          display: flex;
+          gap: 10px;
+        }
+        .action-btn {
+          background: none;
+          border: 1px solid #e5e7eb;
+          border-radius: 4px;
+          padding: 6px 10px;
+          cursor: pointer;
+          font-size: 14px;
+          color: #374151;
+        }
+        .action-btn:hover {
+          background: #f9fafb;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Pages</h1>
+          <a href="/api/builder?pageId=new&shop=${shop}" class="btn">
+            <i class="fas fa-plus"></i> Create Page
+          </a>
+        </div>
+        
+        <div class="pages-list">
+          <div class="page-item">
+            <div class="page-info">
+              <h3>Home Page</h3>
+              <div class="page-url">/pages/home</div>
+            </div>
+            <div class="page-actions">
+              <a href="/api/builder?pageId=1&shop=${shop}" class="action-btn">
+                <i class="fas fa-edit"></i> Edit
+              </a>
+              <button class="action-btn">
+                <i class="fas fa-eye"></i> View
+              </button>
+            </div>
+          </div>
+          
+          <div class="page-item">
+            <div class="page-info">
+              <h3>About Us</h3>
+              <div class="page-url">/pages/about</div>
+            </div>
+            <div class="page-actions">
+              <a href="/api/builder?pageId=2&shop=${shop}" class="action-btn">
+                <i class="fas fa-edit"></i> Edit
+              </a>
+              <button class="action-btn">
+                <i class="fas fa-eye"></i> View
+              </button>
+            </div>
+          </div>
+          
+          <div class="page-item">
+            <div class="page-info">
+              <h3>Contact Us</h3>
+              <div class="page-url">/pages/contact</div>
+            </div>
+            <div class="page-actions">
+              <a href="/api/builder?pageId=3&shop=${shop}" class="action-btn">
+                <i class="fas fa-edit"></i> Edit
+              </a>
+              <button class="action-btn">
+                <i class="fas fa-eye"></i> View
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <script>
+        // You can add JavaScript here to fetch pages dynamically
+      </script>
+    </body>
+    </html>
+  `);
+});
+
+// App builder route
+app.get('/api/builder', (req, res) => {
+  const shop = req.query.shop || req.cookies?.shopOrigin;
+  const pageId = req.query.pageId || 'new';
   
   if (!shop) {
     return res.redirect('/install');
