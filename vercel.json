@@ -69,10 +69,7 @@
       "dest": "/public/install.html"
     },
 
-    {
-      "src": "/analytics",
-      "dest": "/public/analytics.html"
-    },
+
     {
       "handle": "filesystem"
     },
