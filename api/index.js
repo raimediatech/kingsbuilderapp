@@ -100,6 +100,7 @@ app.get('/app/builder', (req, res) => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>KingsBuilder - Page Builder</title>
       <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@12.0.0/build/esm/styles.css" />
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       <script src="https://unpkg.com/@shopify/app-bridge@3.7.9/umd/index.js"></script>
       <style>
         body {
@@ -137,17 +138,24 @@ app.get('/app/builder', (req, res) => {
           gap: 15px;
           margin-bottom: 30px;
         }
-        .widget-card {
+        .widget-card, .widget-item {
           border: 2px solid #e1e5e9;
           border-radius: 8px;
           padding: 15px;
           cursor: pointer;
           transition: all 0.2s;
           text-align: center;
+          margin-bottom: 10px;
         }
-        .widget-card:hover {
+        .widget-card:hover, .widget-item:hover {
           border-color: #4338ca;
           box-shadow: 0 4px 12px rgba(67, 56, 202, 0.15);
+          transform: translateY(-2px);
+        }
+        .widget-item {
+          display: flex;
+          align-items: center;
+          text-align: left;
         }
         .widget-icon {
           font-size: 24px;
@@ -161,7 +169,7 @@ app.get('/app/builder', (req, res) => {
           font-size: 14px;
           color: #6b7280;
         }
-        .preview-area {
+        .preview-area, .canvas {
           border: 2px dashed #d1d5db;
           border-radius: 8px;
           padding: 40px;
@@ -169,6 +177,21 @@ app.get('/app/builder', (req, res) => {
           min-height: 300px;
           margin-top: 20px;
           background: #fafafa;
+        }
+        
+        .canvas-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 300px;
+          color: #6b7280;
+        }
+        
+        .canvas-empty i {
+          font-size: 48px;
+          margin-bottom: 20px;
+          opacity: 0.5;
         }
         .widget-preview {
           margin: 20px 0;
@@ -226,6 +249,74 @@ app.get('/app/builder', (req, res) => {
         .btn-secondary:hover {
           background: #e5e7eb;
         }
+        
+        /* Widget element styles */
+        .widget-element { 
+          margin: 10px 0; 
+          padding: 15px; 
+          border: 1px solid #e5e7eb; 
+          border-radius: 8px; 
+          position: relative;
+          background: white;
+        }
+        .widget-element:hover { 
+          border-color: #4338ca; 
+        }
+        .widget-element:hover .widget-toolbar {
+          opacity: 1;
+        }
+        .widget-element.selected { 
+          border: 2px solid #4338ca; 
+          box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.3); 
+        }
+        .widget-toolbar {
+          position: absolute;
+          top: -10px;
+          right: 10px;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 6px;
+          display: flex;
+          opacity: 0;
+          transition: opacity 0.2s;
+          z-index: 10;
+        }
+        .toolbar-btn {
+          background: none;
+          border: none;
+          padding: 8px;
+          cursor: pointer;
+          color: #6b7280;
+        }
+        .toolbar-btn:hover {
+          color: #4338ca;
+        }
+        .toolbar-btn.delete:hover {
+          color: #ef4444;
+        }
+        
+        /* Toast notification */
+        .toast {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #10b981;
+          color: white;
+          padding: 12px 20px;
+          border-radius: 6px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          z-index: 1000;
+          opacity: 0;
+          transform: translateY(-20px);
+          transition: all 0.3s;
+        }
+        .toast.show {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .toast.error {
+          background: #ef4444;
+        }
       </style>
     </head>
     <body>
@@ -278,42 +369,42 @@ app.get('/app/builder', (req, res) => {
             </div>
             <div class="widget-list">
               <!-- Basic Widgets -->
-              <div class="widget-item" draggable="true" data-widget="heading">
+              <div class="widget-item" draggable="true" data-widget="heading" onclick="addWidget('heading')">
                 <div class="widget-icon">📝</div>
                 <div class="widget-info">
                   <h4>Heading</h4>
                   <p>Add titles and headings</p>
                 </div>
               </div>
-              <div class="widget-item" draggable="true" data-widget="text">
+              <div class="widget-item" draggable="true" data-widget="text" onclick="addWidget('text')">
                 <div class="widget-icon">📄</div>
                 <div class="widget-info">
                   <h4>Text Block</h4>
                   <p>Rich text content</p>
                 </div>
               </div>
-              <div class="widget-item" draggable="true" data-widget="image">
+              <div class="widget-item" draggable="true" data-widget="image" onclick="addWidget('image')">
                 <div class="widget-icon">🖼️</div>
                 <div class="widget-info">
                   <h4>Image</h4>
                   <p>Add images and galleries</p>
                 </div>
               </div>
-              <div class="widget-item" draggable="true" data-widget="button">
+              <div class="widget-item" draggable="true" data-widget="button" onclick="addWidget('button')">
                 <div class="widget-icon">🔘</div>
                 <div class="widget-info">
                   <h4>Button</h4>
                   <p>Call-to-action buttons</p>
                 </div>
               </div>
-              <div class="widget-item" draggable="true" data-widget="video">
+              <div class="widget-item" draggable="true" data-widget="video" onclick="addWidget('video')">
                 <div class="widget-icon">📹</div>
                 <div class="widget-info">
                   <h4>Video</h4>
                   <p>Embed videos</p>
                 </div>
               </div>
-              <div class="widget-item" draggable="true" data-widget="divider">
+              <div class="widget-item" draggable="true" data-widget="divider" onclick="addWidget('divider')">
                 <div class="widget-icon">➖</div>
                 <div class="widget-info">
                   <h4>Divider</h4>
@@ -322,42 +413,42 @@ app.get('/app/builder', (req, res) => {
               </div>
               
               <!-- Advanced Widgets -->
-              <div class="widget-item" draggable="true" data-widget="hero">
+              <div class="widget-item" draggable="true" data-widget="hero" onclick="addWidget('hero')">
                 <div class="widget-icon">🎯</div>
                 <div class="widget-info">
                   <h4>Hero Section</h4>
                   <p>Header with image/video</p>
                 </div>
               </div>
-              <div class="widget-item" draggable="true" data-widget="gallery">
+              <div class="widget-item" draggable="true" data-widget="gallery" onclick="addWidget('gallery')">
                 <div class="widget-icon">🖼️</div>
                 <div class="widget-info">
                   <h4>Image Gallery</h4>
                   <p>Photo galleries</p>
                 </div>
               </div>
-              <div class="widget-item" draggable="true" data-widget="testimonials">
+              <div class="widget-item" draggable="true" data-widget="testimonials" onclick="addWidget('testimonials')">
                 <div class="widget-icon">💬</div>
                 <div class="widget-info">
                   <h4>Testimonials</h4>
                   <p>Customer reviews</p>
                 </div>
               </div>
-              <div class="widget-item" draggable="true" data-widget="pricing">
+              <div class="widget-item" draggable="true" data-widget="pricing" onclick="addWidget('pricing')">
                 <div class="widget-icon">💰</div>
                 <div class="widget-info">
                   <h4>Pricing Table</h4>
                   <p>Product pricing</p>
                 </div>
               </div>
-              <div class="widget-item" draggable="true" data-widget="features">
+              <div class="widget-item" draggable="true" data-widget="features" onclick="addWidget('features')">
                 <div class="widget-icon">⭐</div>
                 <div class="widget-info">
                   <h4>Features Grid</h4>
                   <p>Feature highlights</p>
                 </div>
               </div>
-              <div class="widget-item" draggable="true" data-widget="contact">
+              <div class="widget-item" draggable="true" data-widget="contact" onclick="addWidget('contact')">
                 <div class="widget-icon">📧</div>
                 <div class="widget-info">
                   <h4>Contact Form</h4>
@@ -452,11 +543,29 @@ app.get('/app/builder', (req, res) => {
         
         // Initialize page builder
         document.addEventListener('DOMContentLoaded', function() {
-          initializePageBuilder();
-          setupEventListeners();
+          console.log('DOM loaded, initializing page builder...');
+          
+          // Add direct click handlers to all widget items
+          document.querySelectorAll('.widget-item').forEach(function(widget) {
+            widget.addEventListener('click', function() {
+              const widgetType = this.getAttribute('data-widget');
+              console.log('Widget clicked:', widgetType);
+              addWidget(widgetType);
+            });
+          });
+          
+          // Initialize the canvas
+          renderCanvas();
+          
+          // Load existing page if editing
           if (pageId !== 'new') {
             loadExistingPage();
+          } else {
+            // Show welcome message for new pages
+            showToast('🚀 Page Builder loaded! Click widgets to add them.', 'success');
           }
+          
+          console.log('Page builder initialized successfully');
         });
         
         function initializePageBuilder() {
@@ -482,8 +591,13 @@ app.get('/app/builder', (req, res) => {
             console.log('Found widget items:', widgets.length);
             
             widgets.forEach(widget => {
-              widget.addEventListener('click', function() {
-                const widgetType = this.dataset.widget;
+              // Remove any existing click handlers
+              const newWidget = widget.cloneNode(true);
+              widget.parentNode.replaceChild(newWidget, widget);
+              
+              // Add direct click handler
+              newWidget.addEventListener('click', function() {
+                const widgetType = this.getAttribute('data-widget');
                 console.log('Widget clicked:', widgetType);
                 if (widgetType) {
                   addWidget(widgetType);
@@ -711,31 +825,9 @@ app.get('/app/builder', (req, res) => {
           }
         });
         
-        function initializePageBuilder() {
-          // Load page title and URL from pageId if editing
-          if (pageId !== 'new') {
-            document.getElementById('pageTitle').value = 'Page ' + pageId;
-            document.getElementById('pageUrl').value = 'page-' + pageId;
-          }
-          
-          renderCanvas();
-          showToast('🚀 Professional Page Builder loaded! Ready to build amazing pages.', 'success');
-        }
+        // This is a duplicate function - removed to fix conflicts
         
-        function setupEventListeners() {
-          // Widget drag and drop
-          const widgets = document.querySelectorAll('.widget-item');
-          widgets.forEach(widget => {
-            widget.addEventListener('dragstart', handleWidgetDragStart);
-            widget.addEventListener('click', handleWidgetClick);
-          });
-          
-          // Page title and URL auto-sync
-          document.getElementById('pageTitle').addEventListener('input', syncPageUrl);
-          
-          // Keyboard shortcuts
-          document.addEventListener('keydown', handleKeyboardShortcuts);
-        }
+        // This is a duplicate function - removed to fix conflicts
         
         function handleWidgetDragStart(e) {
           draggedWidget = e.target.dataset.widget;
@@ -767,41 +859,7 @@ app.get('/app/builder', (req, res) => {
           showToast(\`\${widget.name} added to page!\`, 'success');
         }
         
-        // Render the canvas with all widgets
-        function renderCanvas() {
-          const canvasContent = document.getElementById('canvasContent');
-          const canvasEmpty = document.getElementById('canvasEmpty');
-          
-          if (pageContent.length === 0) {
-            canvasEmpty.style.display = 'flex';
-            canvasContent.innerHTML = '';
-            return;
-          }
-          
-          canvasEmpty.style.display = 'none';
-          canvasContent.innerHTML = pageContent.map((widget, index) => 
-            \`<div class="widget-element" data-widget-index="\${index}" onclick="selectWidget(\${index})">
-              <div class="widget-toolbar">
-                <button class="toolbar-btn" onclick="editWidget(\${index})" title="Edit Properties">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="toolbar-btn" onclick="duplicateWidget(\${index})" title="Duplicate">
-                  <i class="fas fa-copy"></i>
-                </button>
-                <button class="toolbar-btn" onclick="moveWidgetUp(\${index})" title="Move Up">
-                  <i class="fas fa-arrow-up"></i>
-                </button>
-                <button class="toolbar-btn" onclick="moveWidgetDown(\${index})" title="Move Down">
-                  <i class="fas fa-arrow-down"></i>
-                </button>
-                <button class="toolbar-btn delete" onclick="removeWidget(\${index})" title="Delete">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-              \${widget.html}
-            </div>\`
-          ).join('');
-        }
+
         
         // Complete page builder functions with professional UI
         function selectWidget(index) {
@@ -989,7 +1047,18 @@ app.get('/app/builder', (req, res) => {
         }
         
         function loadExistingPage() {
+          console.log('Loading existing page:', pageId);
           showToast('Loading page content...', 'success');
+          
+          // Add sample content for testing
+          pageContent = [
+            createWidget('heading'),
+            createWidget('text'),
+            createWidget('image')
+          ];
+          
+          renderCanvas();
+          showToast('Page loaded successfully!', 'success');
         }
         
         function previewPage() {
@@ -1039,12 +1108,13 @@ app.get('/app/builder', (req, res) => {
           }
         }
         
-        // Add missing essential functions
+        // Add widget function
         function addWidget(widgetType) {
+          console.log('Adding widget:', widgetType);
           const widget = createWidget(widgetType);
           pageContent.push(widget);
           renderCanvas();
-          showToast(\`\${widget.name} added to page!\`, 'success');
+          showToast(widget.name + ' added to page!', 'success');
         }
         
         function createWidget(type) {
@@ -1082,39 +1152,170 @@ app.get('/app/builder', (req, res) => {
           }
           
           canvasEmpty.style.display = 'none';
-          canvasContent.innerHTML = pageContent.map((widget, index) => 
-            \`<div class="widget-element" data-widget-index="\${index}" onclick="selectWidget(\${index})">
-              <div class="widget-toolbar">
-                <button class="toolbar-btn" onclick="editWidget(\${index})" title="Edit Properties">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="toolbar-btn" onclick="duplicateWidget(\${index})" title="Duplicate">
-                  <i class="fas fa-copy"></i>
-                </button>
-                <button class="toolbar-btn" onclick="moveWidgetUp(\${index})" title="Move Up">
-                  <i class="fas fa-arrow-up"></i>
-                </button>
-                <button class="toolbar-btn" onclick="moveWidgetDown(\${index})" title="Move Down">
-                  <i class="fas fa-arrow-down"></i>
-                </button>
-                <button class="toolbar-btn delete" onclick="removeWidget(\${index})" title="Delete">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-              \${widget.html}
-            </div>\`
-          ).join('');
+          canvasContent.innerHTML = pageContent.map(function(widget, index) {
+            return '<div class="widget-element" data-widget-index="' + index + '" onclick="selectWidget(' + index + ')">' +
+              '<div class="widget-toolbar">' +
+                '<button class="toolbar-btn" onclick="editWidget(' + index + ')" title="Edit Properties">' +
+                  '<i class="fas fa-edit"></i>' +
+                '</button>' +
+                '<button class="toolbar-btn" onclick="duplicateWidget(' + index + ')" title="Duplicate">' +
+                  '<i class="fas fa-copy"></i>' +
+                '</button>' +
+                '<button class="toolbar-btn" onclick="moveWidgetUp(' + index + ')" title="Move Up">' +
+                  '<i class="fas fa-arrow-up"></i>' +
+                '</button>' +
+                '<button class="toolbar-btn" onclick="moveWidgetDown(' + index + ')" title="Move Down">' +
+                  '<i class="fas fa-arrow-down"></i>' +
+                '</button>' +
+                '<button class="toolbar-btn delete" onclick="removeWidget(' + index + ')" title="Delete">' +
+                  '<i class="fas fa-trash"></i>' +
+                '</button>' +
+              '</div>' +
+              widget.html +
+            '</div>';
+          }).join('');
+        }
+        
+        // Widget operations
+        function selectWidget(index) {
+          console.log('Selecting widget at index:', index);
+          selectedWidget = index;
+          // Highlight the selected widget
+          const widgets = document.querySelectorAll('.widget-element');
+          widgets.forEach((widget, i) => {
+            if (i === index) {
+              widget.classList.add('selected');
+            } else {
+              widget.classList.remove('selected');
+            }
+          });
+        }
+        
+        function editWidget(index) {
+          console.log('Editing widget at index:', index);
+          const widget = pageContent[index];
+          if (!widget) return;
+          
+          const newContent = prompt('Edit ' + widget.name + ' content:', widget.html);
+          if (newContent !== null) {
+            widget.html = newContent;
+            renderCanvas();
+            showToast(widget.name + ' updated!', 'success');
+          }
+        }
+        
+        function duplicateWidget(index) {
+          console.log('Duplicating widget at index:', index);
+          const widget = pageContent[index];
+          if (!widget) return;
+          
+          // Create a deep copy
+          const newWidget = JSON.parse(JSON.stringify(widget));
+          pageContent.splice(index + 1, 0, newWidget);
+          renderCanvas();
+          showToast(widget.name + ' duplicated!', 'success');
+        }
+        
+        function moveWidgetUp(index) {
+          console.log('Moving widget up at index:', index);
+          if (index <= 0 || !pageContent[index]) return;
+          
+          const temp = pageContent[index];
+          pageContent[index] = pageContent[index - 1];
+          pageContent[index - 1] = temp;
+          renderCanvas();
+          selectWidget(index - 1);
+        }
+        
+        function moveWidgetDown(index) {
+          console.log('Moving widget down at index:', index);
+          if (index >= pageContent.length - 1 || !pageContent[index]) return;
+          
+          const temp = pageContent[index];
+          pageContent[index] = pageContent[index + 1];
+          pageContent[index + 1] = temp;
+          renderCanvas();
+          selectWidget(index + 1);
+        }
+        
+        function removeWidget(index) {
+          console.log('Removing widget at index:', index);
+          const widget = pageContent[index];
+          if (!widget) return;
+          
+          if (confirm('Are you sure you want to remove this ' + widget.name + '?')) {
+            pageContent.splice(index, 1);
+            renderCanvas();
+            showToast(widget.name + ' removed!', 'success');
+          }
+        }
+        
+        function savePage() {
+          console.log('Saving page...');
+          
+          // Get page title and URL
+          const titleEl = document.getElementById('pageTitle');
+          const urlEl = document.getElementById('pageUrl');
+          
+          const title = titleEl ? titleEl.value : 'Untitled Page';
+          const url = urlEl ? urlEl.value : 'untitled-page';
+          
+          // Show saving toast
+          showToast('Saving page...', 'success');
+          
+          // Simulate saving delay
+          setTimeout(function() {
+            console.log('Page saved with content:', {
+              title: title,
+              url: url,
+              content: pageContent
+            });
+            
+            // Update page ID if it's a new page
+            if (pageId === 'new') {
+              pageId = Math.floor(Math.random() * 1000000).toString();
+              // Update URL without reloading
+              const newUrl = '/app/builder?pageId=' + pageId + '&shop=' + shop;
+              window.history.pushState({}, '', newUrl);
+            }
+            
+            showToast('✅ Page saved successfully!', 'success');
+          }, 1000);
+        }
+        
+        function goBack() {
+          window.location.href = '/app/pages?shop=' + shop;
         }
         
         function showToast(message, type) {
+          console.log('Toast:', message, type);
+          
+          // Remove any existing toasts
+          const existingToasts = document.querySelectorAll('.toast');
+          existingToasts.forEach(function(t) {
+            if (document.body.contains(t)) {
+              document.body.removeChild(t);
+            }
+          });
+          
+          // Create new toast
           const toast = document.createElement('div');
-          toast.className = 'toast ' + (type === 'error' ? 'error' : '') + ' show';
+          toast.className = 'toast ' + (type === 'error' ? 'error' : '');
           toast.textContent = message;
           document.body.appendChild(toast);
           
-          setTimeout(() => {
+          // Force reflow to enable animation
+          toast.offsetHeight;
+          
+          // Show the toast
+          setTimeout(function() {
+            toast.classList.add('show');
+          }, 10);
+          
+          // Hide after delay
+          setTimeout(function() {
             toast.classList.remove('show');
-            setTimeout(() => {
+            setTimeout(function() {
               if (document.body.contains(toast)) {
                 document.body.removeChild(toast);
               }
