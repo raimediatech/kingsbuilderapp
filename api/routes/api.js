@@ -9,6 +9,12 @@ try {
   PageVersion = require('../models/pageVersion');
 } catch (error) {
   console.log('MongoDB models not available, version history will be disabled');
+  // Create a mock PageVersion model
+  PageVersion = {
+    findOne: () => Promise.resolve(null),
+    find: () => ({ sort: () => Promise.resolve([]) }),
+    create: () => Promise.resolve({ _id: 'mock-id' })
+  };
 }
 
 // Get page by ID

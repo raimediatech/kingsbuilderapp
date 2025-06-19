@@ -1,12 +1,49 @@
 // api/database.js - Simple database models for KingsBuilder
-// Using mock data for Vercel deployment
+const { MongoClient } = require('mongodb');
+require('dotenv').config();
+
+// Use the DATABASE_URL from environment variables
+const DATABASE_URL = process.env.DATABASE_URL || process.env.MONGODB_URI;
 let db = null;
 let client = null;
 
-// Mock database connection function
-async function connectToDatabase() {
-  console.log('Using mock database for Vercel deployment');
-  return null;
+// Connect to database with retry logic and graceful failure
+async function connectToDatabase(retryCount = 3, retryDelay = 2000) {
+  try {
+    if (db) return db;
+    
+    console.log('Connecting to MongoDB...');
+
+    if (!DATABASE_URL) {
+      console.error('No MongoDB connection string provided in environment variables');
+      console.log('Using mock database for now');
+      return null;
+    }
+
+    try {
+      // Create a new MongoClient
+      client = new MongoClient(DATABASE_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000
+      });
+
+      // Connect the client to the server
+      await client.connect();
+      db = client.db('kingsbuilder');
+      console.log('Connected to MongoDB successfully');
+      return db;
+    } catch (error) {
+      console.error('Failed to connect to MongoDB:', error.message);
+      console.log('Using mock database');
+      return null;
+    }
+  } catch (error) {
+    console.error('Unexpected error in database connection:', error);
+    console.log('Using mock database');
+    return null;
+  }
 }
 
 // Page Model

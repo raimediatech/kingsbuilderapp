@@ -8,6 +8,12 @@ try {
   Template = require('../models/template');
 } catch (error) {
   console.log('MongoDB models not available, templates will use local storage');
+  // Create a mock Template model
+  Template = {
+    findOne: () => Promise.resolve(null),
+    find: () => Promise.resolve([]),
+    create: () => Promise.resolve({ _id: 'mock-id' })
+  };
 }
 
 // In-memory templates storage as fallback
