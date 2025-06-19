@@ -1,5 +1,5 @@
 // start.js - Simple script to start the app
-const app = require('./api/simple-index');
+const app = require('./api/index');
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {

@@ -1,65 +1,12 @@
 // api/database.js - Simple database models for KingsBuilder
-const { MongoClient } = require('mongodb');
-require('dotenv').config();
-
-// Use the DATABASE_URL from environment variables
-const DATABASE_URL = process.env.DATABASE_URL || process.env.MONGODB_URI;
+// Using mock data for Vercel deployment
 let db = null;
 let client = null;
 
-// Connect to database with retry logic and graceful failure
-async function connectToDatabase(retryCount = 3, retryDelay = 2000) {
-  try {
-    if (db) return db;
-    
-    console.log('Connecting to MongoDB...');
-
-    if (!DATABASE_URL) {
-      console.error('No MongoDB connection string provided in environment variables');
-      console.log('Using mock database for now');
-      return null;
-    }
-
-    // Create a promise that will resolve with the database or reject after timeout
-    const dbPromise = new Promise(async (resolve, reject) => {
-      try {
-        client = new MongoClient(DATABASE_URL, {
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-          serverSelectionTimeoutMS: 3000, // 3 second timeout
-          connectTimeoutMS: 3000,
-          socketTimeoutMS: 5000
-        });
-
-        await client.connect();
-        db = client.db('kingsbuilder');
-
-        // Test the connection with a simple query
-        await db.command({ ping: 1 });
-        console.log('Connected to MongoDB successfully');
-        resolve(db);
-      } catch (connectionError) {
-        console.error(`Failed to connect to MongoDB:`, connectionError);
-        console.log('Using mock database');
-        resolve(null); // Resolve with null instead of rejecting to avoid crashing
-      }
-    });
-
-    // Create a timeout promise
-    const timeoutPromise = new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('MongoDB connection timeout reached - using mock data');
-        resolve(null);
-      }, 3000); // 3 second timeout
-    });
-
-    // Race the database connection against the timeout
-    return Promise.race([dbPromise, timeoutPromise]);
-  } catch (error) {
-    console.error('Unexpected error in database connection:', error);
-    console.log('Using mock database');
-    return null;
-  }
+// Mock database connection function
+async function connectToDatabase() {
+  console.log('Using mock database for Vercel deployment');
+  return null;
 }
 
 // Page Model
