@@ -467,6 +467,45 @@ app.get('/app/builder', (req, res) => {
         .toast.error:before {
           content: '✕';
         }
+        
+        /* Properties Panel Styles */
+        .property-group {
+          margin-bottom: 20px;
+        }
+        .property-label {
+          display: block;
+          font-size: 14px;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 8px;
+        }
+        .property-input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 14px;
+          font-family: inherit;
+          transition: all 0.2s;
+          resize: vertical;
+          min-height: 100px;
+        }
+        .property-input:focus {
+          outline: none;
+          border-color: #4338ca;
+          box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.2);
+        }
+        #propertiesPanel {
+          transition: all 0.3s ease;
+        }
+        #propertiesPanel .widget-section-title {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        #propertiesPanel .widget-section-title i {
+          margin-right: 8px;
+        }
       </style>
     </head>
     <body>
@@ -1037,16 +1076,29 @@ app.get('/app/builder', (req, res) => {
           const panel = document.getElementById('propertiesPanel');
           const content = document.getElementById('propertiesContent');
           
-          let propertiesHTML = \`<h3>\${widget.name} Properties</h3>\`;
+          // Reset temporary properties
+          tempWidgetProperties = {};
           
-          // Build simple property editor
-          propertiesHTML += \`
-            <div class="property-group">
-              <label class="property-label">Content</label>
-              <textarea class="property-input" rows="4" onchange="updateWidgetContent(this.value)">\${widget.html}</textarea>
+          let propertiesHTML = \`
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 style="margin: 0; color: #1f2937;">\${widget.name} Properties</h3>
+              <button class="toolbar-btn" onclick="closeProperties()" title="Close Properties">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
-            <div class="property-group">
-              <button class="btn btn-primary" onclick="applyPropertyChanges()">Apply Changes</button>
+          \`;
+          
+          // Build widget-specific property editor
+          propertiesHTML += buildWidgetProperties(widget);
+          
+          propertiesHTML += \`
+            <div class="property-group" style="margin-top: 30px;">
+              <button class="btn btn-success" onclick="applyPropertyChanges()" style="width: 100%;">
+                <i class="fas fa-check"></i> Apply Changes
+              </button>
+              <button class="btn btn-secondary" onclick="closeProperties()" style="width: 100%; margin-top: 10px;">
+                <i class="fas fa-times"></i> Cancel
+              </button>
             </div>
           \`;
           
@@ -1054,27 +1106,167 @@ app.get('/app/builder', (req, res) => {
           panel.classList.add('active');
         }
         
-        function updateWidgetContent(content) {
-          if (selectedWidget !== null) {
-            tempWidgetContent = content;
+        function buildWidgetProperties(widget) {
+          const widgetType = getWidgetType(widget);
+          let html = '';
+          
+          switch(widgetType) {
+            case 'heading':
+              const headingText = extractTextFromHTML(widget.html);
+              const headingTag = widget.html.match(/<(h[1-6])/i)?.[1] || 'h2';
+              html += \`
+                <div class="property-group">
+                  <label class="property-label">Heading Text</label>
+                  <input type="text" class="property-input" id="headingText" value="\${headingText}" onchange="updateWidgetProperty('text', this.value)">
+                </div>
+                <div class="property-group">
+                  <label class="property-label">Heading Size</label>
+                  <select class="property-input" id="headingSize" onchange="updateWidgetProperty('size', this.value)">
+                    <option value="h1" \${headingTag === 'h1' ? 'selected' : ''}>H1 - Largest</option>
+                    <option value="h2" \${headingTag === 'h2' ? 'selected' : ''}>H2 - Large</option>
+                    <option value="h3" \${headingTag === 'h3' ? 'selected' : ''}>H3 - Medium</option>
+                    <option value="h4" \${headingTag === 'h4' ? 'selected' : ''}>H4 - Small</option>
+                  </select>
+                </div>
+              \`;
+              break;
+              
+            case 'text':
+              const textContent = extractTextFromHTML(widget.html);
+              html += \`
+                <div class="property-group">
+                  <label class="property-label">Text Content</label>
+                  <textarea class="property-input" id="textContent" rows="4" onchange="updateWidgetProperty('text', this.value)">\${textContent}</textarea>
+                </div>
+              \`;
+              break;
+              
+            case 'button':
+              const buttonText = extractTextFromHTML(widget.html);
+              const buttonHref = widget.html.match(/href="([^"]*)"/)?.[1] || '#';
+              html += \`
+                <div class="property-group">
+                  <label class="property-label">Button Text</label>
+                  <input type="text" class="property-input" id="buttonText" value="\${buttonText}" onchange="updateWidgetProperty('text', this.value)">
+                </div>
+                <div class="property-group">
+                  <label class="property-label">Button Link</label>
+                  <input type="text" class="property-input" id="buttonHref" value="\${buttonHref}" onchange="updateWidgetProperty('href', this.value)" placeholder="https://example.com">
+                </div>
+              \`;
+              break;
+              
+            case 'image':
+              const imageSrc = widget.html.match(/src="([^"]*)"/)?.[1] || '';
+              const imageAlt = widget.html.match(/alt="([^"]*)"/)?.[1] || '';
+              html += \`
+                <div class="property-group">
+                  <label class="property-label">Image URL</label>
+                  <input type="text" class="property-input" id="imageSrc" value="\${imageSrc}" onchange="updateWidgetProperty('src', this.value)" placeholder="https://example.com/image.jpg">
+                </div>
+                <div class="property-group">
+                  <label class="property-label">Alt Text</label>
+                  <input type="text" class="property-input" id="imageAlt" value="\${imageAlt}" onchange="updateWidgetProperty('alt', this.value)" placeholder="Describe the image">
+                </div>
+              \`;
+              break;
+              
+            default:
+              // Fallback to raw HTML editor for unknown widget types
+              html += \`
+                <div class="property-group">
+                  <label class="property-label">HTML Content</label>
+                  <textarea class="property-input" id="rawContent" rows="6" onchange="updateWidgetProperty('html', this.value)">\${widget.html}</textarea>
+                </div>
+              \`;
           }
+          
+          return html;
         }
         
-        var tempWidgetContent = '';
+        function getWidgetType(widget) {
+          if (widget.html.includes('<h')) return 'heading';
+          if (widget.html.includes('<p>')) return 'text';
+          if (widget.html.includes('<a ') && widget.html.includes('Click Me')) return 'button';
+          if (widget.html.includes('<img')) return 'image';
+          return 'unknown';
+        }
+        
+        function extractTextFromHTML(html) {
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          return tempDiv.textContent || tempDiv.innerText || '';
+        }
+        
+        var tempWidgetProperties = {};
+        
+        function updateWidgetProperty(property, value) {
+          tempWidgetProperties[property] = value;
+        }
         
         function applyPropertyChanges() {
-          if (selectedWidget !== null && tempWidgetContent) {
-            pageContent[selectedWidget].html = tempWidgetContent;
-            renderCanvas();
-            showToast('Widget updated!', 'success');
-            closeProperties();
+          if (selectedWidget === null) return;
+          
+          const widget = pageContent[selectedWidget];
+          const widgetType = getWidgetType(widget);
+          
+          let newHTML = widget.html;
+          
+          // Apply changes based on widget type
+          switch(widgetType) {
+            case 'heading':
+              if (tempWidgetProperties.text !== undefined) {
+                const size = tempWidgetProperties.size || 'h2';
+                newHTML = \`<\${size} style="color: #1f2937; margin: 20px 0;">\${tempWidgetProperties.text}</\${size}>\`;
+              }
+              break;
+              
+            case 'text':
+              if (tempWidgetProperties.text !== undefined) {
+                newHTML = \`<p style="color: #374151; line-height: 1.6; margin: 15px 0;">\${tempWidgetProperties.text}</p>\`;
+              }
+              break;
+              
+            case 'button':
+              if (tempWidgetProperties.text !== undefined || tempWidgetProperties.href !== undefined) {
+                const text = tempWidgetProperties.text || extractTextFromHTML(widget.html);
+                const href = tempWidgetProperties.href || widget.html.match(/href="([^"]*)"/)?.[1] || '#';
+                newHTML = \`<a href="\${href}" style="display: inline-block; background: #4338ca; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 10px 0;">\${text}</a>\`;
+              }
+              break;
+              
+            case 'image':
+              if (tempWidgetProperties.src !== undefined || tempWidgetProperties.alt !== undefined) {
+                const src = tempWidgetProperties.src || widget.html.match(/src="([^"]*)"/)?.[1] || '';
+                const alt = tempWidgetProperties.alt || widget.html.match(/alt="([^"]*)"/)?.[1] || '';
+                newHTML = \`<img src="\${src}" alt="\${alt}" style="width: 100%; border-radius: 8px; margin: 10px 0;">\`;
+              }
+              break;
+              
+            default:
+              if (tempWidgetProperties.html !== undefined) {
+                newHTML = tempWidgetProperties.html;
+              }
           }
+          
+          // Update the widget
+          pageContent[selectedWidget].html = newHTML;
+          renderCanvas();
+          showToast(widget.name + ' updated successfully!', 'success');
+          
+          // Reset temporary properties
+          tempWidgetProperties = {};
+          closeProperties();
         }
         
         function closeProperties() {
           document.getElementById('propertiesPanel').classList.remove('active');
           document.querySelectorAll('.widget-element').forEach(el => el.classList.remove('selected'));
           selectedWidget = null;
+          tempWidgetProperties = {};
+          
+          // Reset properties panel to default state
+          document.getElementById('propertiesContent').innerHTML = '<p style="color: #6b7280; text-align: center; padding: 20px;">Select a widget to edit its properties</p>';
         }
         
         function editWidget(index) {
@@ -1341,31 +1533,10 @@ app.get('/app/builder', (req, res) => {
         }
         
         // Widget operations
-        function selectWidget(index) {
-          console.log('Selecting widget at index:', index);
-          selectedWidget = index;
-          // Highlight the selected widget
-          const widgets = document.querySelectorAll('.widget-element');
-          widgets.forEach((widget, i) => {
-            if (i === index) {
-              widget.classList.add('selected');
-            } else {
-              widget.classList.remove('selected');
-            }
-          });
-        }
-        
         function editWidget(index) {
           console.log('Editing widget at index:', index);
-          const widget = pageContent[index];
-          if (!widget) return;
-          
-          const newContent = prompt('Edit ' + widget.name + ' content:', widget.html);
-          if (newContent !== null) {
-            widget.html = newContent;
-            renderCanvas();
-            showToast(widget.name + ' updated!', 'success');
-          }
+          // Use the existing selectWidget function which opens the properties panel
+          selectWidget(index);
         }
         
         function duplicateWidget(index) {
