@@ -180,11 +180,9 @@ class KingsDashboard {
             this.renderPages();
             
         } catch (error) {
-            console.error('❌ Error loading pages:', error);
-            this.showError('Failed to load pages from Shopify: ' + error.message);
+            console.log('⚠️ Could not connect to Shopify, loading demo data:', error.message);
             
-            // Fallback to demo data for now
-            console.log('📝 Loading demo data as fallback...');
+            // Load demo data with connection option
             this.loadDemoPages();
         } finally {
             this.hideLoading();
@@ -265,17 +263,92 @@ class KingsDashboard {
             pagesGrid.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">
-                        <i class="fas fa-key"></i>
+                        <i class="fas fa-crown"></i>
                     </div>
-                    <h3>Authentication Required</h3>
-                    <p>Please install the app to access your Shopify pages</p>
-                    <button class="btn btn-primary" onclick="window.open('/install', '_blank')">
-                        <i class="fas fa-download"></i>
-                        Install KingsBuilder
+                    <h3>Connect Your Shopify Store</h3>
+                    <p>Grant permission to KingsBuilder to access your store pages</p>
+                    <button class="btn btn-primary" onclick="kingsbuilderDashboard.authenticateShopify()">
+                        <i class="fas fa-link"></i>
+                        Connect to Shopify
                     </button>
+                    <div class="auth-info">
+                        <small>
+                            <i class="fas fa-shield-alt"></i>
+                            Secure connection - We only access pages data
+                        </small>
+                    </div>
                 </div>
             `;
         }
+    }
+    
+    authenticateShopify() {
+        console.log('🔐 Starting Shopify authentication...');
+        
+        // Get shop domain from URL params or prompt user
+        let shopDomain = this.getShopDomain();
+        
+        if (!shopDomain) {
+            shopDomain = prompt('Enter your Shopify store domain (e.g., mystore.myshopify.com):');
+            if (!shopDomain) return;
+            
+            // Clean up domain
+            shopDomain = shopDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+            if (!shopDomain.includes('.')) {
+                shopDomain += '.myshopify.com';
+            }
+        }
+        
+        // Start OAuth flow
+        this.startOAuthFlow(shopDomain);
+    }
+    
+    getShopDomain() {
+        // Try to get shop domain from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        let shop = urlParams.get('shop');
+        
+        if (shop) {
+            // Clean up shop domain
+            shop = shop.replace(/^https?:\/\//, '').replace(/\/$/, '');
+            if (!shop.includes('.')) {
+                shop += '.myshopify.com';
+            }
+            return shop;
+        }
+        
+        // Try to get from localStorage
+        return localStorage.getItem('kingsbuilder_shop_domain');
+    }
+    
+    startOAuthFlow(shopDomain) {
+        console.log('🚀 Starting OAuth for shop:', shopDomain);
+        
+        // Store shop domain
+        localStorage.setItem('kingsbuilder_shop_domain', shopDomain);
+        
+        // Build OAuth URL
+        const clientId = 'kingsbuilder-app'; // Your app's client ID
+        const scopes = 'read_content,write_content,read_pages,write_pages';
+        const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
+        const state = this.generateState();
+        
+        localStorage.setItem('oauth_state', state);
+        
+        const oauthUrl = `https://${shopDomain}/admin/oauth/authorize?` +
+            `client_id=${clientId}&` +
+            `scope=${scopes}&` +
+            `redirect_uri=${redirectUri}&` +
+            `state=${state}&` +
+            `response_type=code`;
+        
+        console.log('🔗 Redirecting to OAuth URL');
+        window.location.href = oauthUrl;
+    }
+    
+    generateState() {
+        return Math.random().toString(36).substring(2, 15) + 
+               Math.random().toString(36).substring(2, 15);
     }
     
     formatDate(dateString) {
@@ -290,6 +363,26 @@ class KingsDashboard {
     renderPages() {
         const pagesGrid = document.getElementById('pagesGrid');
         if (!pagesGrid) return;
+        
+        // Add connection banner if we're showing demo data
+        const hasShopifyConnection = localStorage.getItem('shopify_access_token');
+        const connectionBanner = !hasShopifyConnection && this.pages.some(p => p.isDemo) ? `
+            <div class="connection-banner">
+                <div class="banner-content">
+                    <div class="banner-icon">
+                        <i class="fab fa-shopify"></i>
+                    </div>
+                    <div class="banner-text">
+                        <h4>Connect to Your Shopify Store</h4>
+                        <p>You're viewing demo pages. Connect your Shopify store to manage your real pages.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="kingsbuilderDashboard.authenticateShopify()">
+                        <i class="fas fa-link"></i>
+                        Connect Shopify
+                    </button>
+                </div>
+            </div>
+        ` : '';
         
         if (this.pages.length === 0) {
             pagesGrid.innerHTML = `
@@ -354,7 +447,7 @@ class KingsDashboard {
             `;
         }).join('');
         
-        pagesGrid.innerHTML = pagesHTML;
+        pagesGrid.innerHTML = connectionBanner + pagesHTML;
         
         // Add summary stats
         this.updatePageStats();
