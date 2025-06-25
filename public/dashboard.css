@@ -7,9 +7,9 @@
 }
 
 :root {
-    --primary-color: #667eea;
-    --primary-dark: #5a67d8;
-    --secondary-color: #764ba2;
+    --primary-color: #000000;
+    --primary-dark: #1a1a1a;
+    --secondary-color: #3d3d3d;
     --success-color: #10b981;
     --warning-color: #f59e0b;
     --error-color: #ef4444;
@@ -186,7 +186,7 @@ body.dashboard-body {
 .content-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 24px;
 }
 
@@ -194,6 +194,19 @@ body.dashboard-body {
     font-size: 24px;
     font-weight: 600;
     color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.page-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .content-actions {
@@ -259,11 +272,54 @@ body.dashboard-body {
     padding: 20px;
     transition: all 0.2s ease;
     cursor: pointer;
+    position: relative;
 }
 
 .page-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
+}
+
+.page-card.shopify {
+    border-left: 4px solid #95c93d;
+}
+
+.page-card.kingsbuilder {
+    border-left: 4px solid #667eea;
+}
+
+.page-card.demo {
+    border-left: 4px solid #f59e0b;
+    opacity: 0.8;
+}
+
+.page-type-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.stat-item i {
+    font-size: 14px;
 }
 
 .page-preview {

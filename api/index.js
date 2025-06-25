@@ -72,6 +72,193 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// API endpoint to get real Shopify pages
+app.get('/api/shopify/pages', async (req, res) => {
+  try {
+    const shop = req.query.shop || req.cookies?.shopOrigin;
+    const accessToken = req.cookies?.accessToken;
+    
+    if (!shop || !accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop or access token missing',
+        requiresAuth: true 
+      });
+    }
+    
+    console.log('📄 Fetching pages from Shopify for shop:', shop);
+    
+    // Fetch pages from Shopify API
+    const response = await fetch(`https://${shop}/admin/api/2023-10/pages.json`, {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Shopify API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`✅ Found ${data.pages.length} pages in Shopify store`);
+    
+    // Transform Shopify pages to our format
+    const transformedPages = data.pages.map(page => ({
+      id: page.id,
+      title: page.title,
+      handle: page.handle,
+      content: page.body_html,
+      status: page.published_at ? 'published' : 'draft',
+      lastModified: page.updated_at,
+      createdAt: page.created_at,
+      author: page.author,
+      shopifyUrl: `https://${shop}/admin/pages/${page.id}`,
+      frontendUrl: `https://${shop.replace('.myshopify.com', '')}.com/pages/${page.handle}`,
+      views: Math.floor(Math.random() * 2000) + 100, // Placeholder - would need analytics integration
+      conversions: Math.floor(Math.random() * 50) + 5 // Placeholder
+    }));
+    
+    res.json({
+      success: true,
+      pages: transformedPages,
+      total: transformedPages.length,
+      shop: shop
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching Shopify pages:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch pages from Shopify',
+      message: error.message 
+    });
+  }
+});
+
+// API endpoint to get real Shopify products
+app.get('/api/shopify/products', async (req, res) => {
+  try {
+    const shop = req.query.shop || req.cookies?.shopOrigin;
+    const accessToken = req.cookies?.accessToken;
+    const limit = req.query.limit || 50;
+    
+    if (!shop || !accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop or access token missing',
+        requiresAuth: true 
+      });
+    }
+    
+    console.log('🛍️ Fetching products from Shopify for shop:', shop);
+    
+    const response = await fetch(`https://${shop}/admin/api/2023-10/products.json?limit=${limit}&status=active`, {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Shopify API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`✅ Found ${data.products.length} products in Shopify store`);
+    
+    const transformedProducts = data.products.map(product => ({
+      id: product.id,
+      title: product.title,
+      handle: product.handle,
+      description: product.body_html,
+      vendor: product.vendor,
+      productType: product.product_type,
+      status: product.status,
+      images: product.images.map(img => ({
+        id: img.id,
+        src: img.src,
+        alt: img.alt
+      })),
+      variants: product.variants.map(variant => ({
+        id: variant.id,
+        title: variant.title,
+        price: variant.price,
+        compareAtPrice: variant.compare_at_price,
+        sku: variant.sku
+      })),
+      tags: product.tags.split(',').map(tag => tag.trim()),
+      createdAt: product.created_at,
+      updatedAt: product.updated_at
+    }));
+    
+    res.json({
+      success: true,
+      products: transformedProducts,
+      total: transformedProducts.length,
+      shop: shop
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching Shopify products:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch products from Shopify',
+      message: error.message 
+    });
+  }
+});
+
+// API endpoint to get shop information
+app.get('/api/shopify/shop', async (req, res) => {
+  try {
+    const shop = req.query.shop || req.cookies?.shopOrigin;
+    const accessToken = req.cookies?.accessToken;
+    
+    if (!shop || !accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop or access token missing',
+        requiresAuth: true 
+      });
+    }
+    
+    console.log('🏪 Fetching shop info for:', shop);
+    
+    const response = await fetch(`https://${shop}/admin/api/2023-10/shop.json`, {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Shopify API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Shop info retrieved:', data.shop.name);
+    
+    res.json({
+      success: true,
+      shop: {
+        id: data.shop.id,
+        name: data.shop.name,
+        domain: data.shop.myshopify_domain,
+        email: data.shop.email,
+        currency: data.shop.currency,
+        timezone: data.shop.iana_timezone,
+        planName: data.shop.plan_name,
+        createdAt: data.shop.created_at,
+        country: data.shop.country_name,
+        province: data.shop.province
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching shop info:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch shop information',
+      message: error.message 
+    });
+  }
+});
+
 // App route for Shopify admin
 app.get('/app', (req, res) => {
   const shop = req.query.shop || req.cookies?.shopOrigin;

@@ -93,41 +93,127 @@ class KingsBuilder {
     }
     
     initDragAndDrop() {
-        // Widget items drag start
-        document.querySelectorAll('.widget-item').forEach(item => {
-            item.addEventListener('dragstart', (e) => {
+        console.log('🎯 Initializing drag and drop...');
+        
+        // Widget items drag start - use event delegation since widgets might not exist yet
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('widget-item')) {
                 const widgetType = e.target.getAttribute('data-widget');
+                console.log('🎪 Drag started for widget:', widgetType);
+                
                 e.dataTransfer.setData('text/plain', widgetType);
                 e.dataTransfer.effectAllowed = 'copy';
-            });
+                e.target.classList.add('dragging');
+            }
+        });
+        
+        document.addEventListener('dragend', (e) => {
+            if (e.target.classList.contains('widget-item')) {
+                e.target.classList.remove('dragging');
+            }
         });
         
         // Canvas drop zones
+        this.setupCanvasDropZone();
+    }
+    
+    setupCanvasDropZone() {
         const canvasFrame = document.querySelector('.canvas-frame');
-        if (canvasFrame) {
-            canvasFrame.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'copy';
+        if (!canvasFrame) {
+            console.warn('⚠️ Canvas frame not found, retrying in 500ms...');
+            setTimeout(() => this.setupCanvasDropZone(), 500);
+            return;
+        }
+        
+        console.log('🎯 Setting up canvas drop zone');
+        
+        canvasFrame.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+            
+            if (!canvasFrame.classList.contains('drag-over')) {
                 canvasFrame.classList.add('drag-over');
-            });
+                console.log('📥 Drag over canvas');
+            }
+        });
+        
+        canvasFrame.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             
-            canvasFrame.addEventListener('dragleave', (e) => {
-                if (!canvasFrame.contains(e.relatedTarget)) {
-                    canvasFrame.classList.remove('drag-over');
-                }
-            });
+            // Only remove drag-over if we're leaving the canvas entirely
+            const rect = canvasFrame.getBoundingClientRect();
+            const x = e.clientX;
+            const y = e.clientY;
             
-            canvasFrame.addEventListener('drop', (e) => {
-                e.preventDefault();
+            if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
                 canvasFrame.classList.remove('drag-over');
+                console.log('📤 Drag leave canvas');
+            }
+        });
+        
+        canvasFrame.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('🎯 Drop event triggered');
+            canvasFrame.classList.remove('drag-over');
+            
+            const widgetType = e.dataTransfer.getData('text/plain');
+            if (!widgetType) {
+                console.warn('⚠️ No widget type found in drop data');
+                return;
+            }
+            
+            const rect = canvasFrame.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            console.log(`🎪 Dropping widget "${widgetType}" at position (${x}, ${y})`);
+            this.addWidget(widgetType, { x, y });
+        });
+        
+        // Add visual feedback for drop zones
+        this.addDropZoneStyles();
+    }
+    
+    addDropZoneStyles() {
+        // Add CSS for drag over effect if not already added
+        if (!document.getElementById('dragDropStyles')) {
+            const style = document.createElement('style');
+            style.id = 'dragDropStyles';
+            style.textContent = `
+                .canvas-frame.drag-over {
+                    background: linear-gradient(45deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%),
+                                linear-gradient(-45deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%),
+                                linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.05) 75%),
+                                linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.05) 75%);
+                    background-size: 20px 20px;
+                    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+                    border: 2px dashed var(--primary-color);
+                    animation: dropZoneAnimation 2s linear infinite;
+                }
                 
-                const widgetType = e.dataTransfer.getData('text/plain');
-                const rect = canvasFrame.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+                @keyframes dropZoneAnimation {
+                    0% { background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+                    100% { background-position: 20px 20px, 20px 30px, 30px 10px, 10px 20px; }
+                }
                 
-                this.addWidget(widgetType, { x, y });
-            });
+                .widget-item.dragging {
+                    opacity: 0.5;
+                    transform: rotate(2deg) scale(0.95);
+                }
+                
+                .widget-item {
+                    cursor: grab;
+                }
+                
+                .widget-item:active {
+                    cursor: grabbing;
+                }
+            `;
+            document.head.appendChild(style);
         }
     }
     
@@ -255,7 +341,7 @@ class KingsBuilder {
                 content: 'Click Me',
                 href: '#',
                 styles: {
-                    backgroundColor: '#667eea',
+                    backgroundColor: '#000000',
                     color: '#ffffff',
                     padding: '12px 24px',
                     borderRadius: '8px',

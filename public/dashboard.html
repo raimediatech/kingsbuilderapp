@@ -59,17 +59,28 @@
             <!-- Pages Tab -->
             <div class="tab-content active" id="pagesTab">
                 <div class="content-header">
-                    <h2>Your Pages</h2>
+                    <div class="header-left">
+                        <h2>Your Pages</h2>
+                        <div id="pageStats" class="page-stats">
+                            <!-- Page stats will be populated by JavaScript -->
+                        </div>
+                    </div>
                     <div class="content-actions">
                         <div class="search-box">
                             <i class="fas fa-search"></i>
                             <input type="text" placeholder="Search pages..." id="searchPages">
                         </div>
-                        <select class="filter-select">
+                        <select class="filter-select" id="pageFilter">
                             <option value="all">All Pages</option>
+                            <option value="shopify">🛍️ Shopify Pages</option>
+                            <option value="kingsbuilder">👑 KingsBuilder Pages</option>
                             <option value="published">Published</option>
                             <option value="draft">Draft</option>
                         </select>
+                        <button class="btn btn-primary" id="createPageBtn">
+                            <i class="fas fa-plus"></i>
+                            Create Page
+                        </button>
                     </div>
                 </div>
 

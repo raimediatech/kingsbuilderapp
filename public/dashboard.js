@@ -134,42 +134,156 @@ class KingsDashboard {
         this.showLoading();
         
         try {
-            // Mock data for now - replace with API call
-            await this.delay(500);
+            console.log('📄 Loading real Shopify pages...');
             
-            this.pages = [
-                {
-                    id: 1,
-                    title: 'Homepage Hero Section',
-                    status: 'published',
-                    lastModified: '2024-01-15',
-                    views: 1234,
-                    conversions: 45
+            // Get shop from URL or detect it
+            const shop = this.getShopOrigin();
+            
+            // Fetch real pages from Shopify API
+            const response = await fetch(`/api/shopify/pages?shop=${shop}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
-                {
-                    id: 2,
-                    title: 'Product Landing Page',
-                    status: 'draft',
-                    lastModified: '2024-01-14',
-                    views: 892,
-                    conversions: 23
-                },
-                {
-                    id: 3,
-                    title: 'About Us Page',
-                    status: 'published',
-                    lastModified: '2024-01-13',
-                    views: 567,
-                    conversions: 12
+                credentials: 'include' // Include cookies for auth
+            });
+            
+            if (!response.ok) {
+                if (response.status === 401) {
+                    // Need authentication
+                    console.log('🔐 Authentication required');
+                    this.showAuthRequired();
+                    return;
                 }
-            ];
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log(`✅ Loaded ${data.pages.length} real Shopify pages`);
+            
+            this.pages = data.pages.map(page => ({
+                id: page.id,
+                title: page.title,
+                status: page.status,
+                lastModified: this.formatDate(page.lastModified),
+                views: page.views,
+                conversions: page.conversions,
+                handle: page.handle,
+                shopifyUrl: page.shopifyUrl,
+                frontendUrl: page.frontendUrl,
+                isShopifyPage: true
+            }));
+            
+            // Also load KingsBuilder created pages
+            await this.loadKingsBuilderPages();
             
             this.renderPages();
+            
         } catch (error) {
-            console.error('Error loading pages:', error);
-            this.showError('Failed to load pages');
+            console.error('❌ Error loading pages:', error);
+            this.showError('Failed to load pages from Shopify: ' + error.message);
+            
+            // Fallback to demo data for now
+            console.log('📝 Loading demo data as fallback...');
+            this.loadDemoPages();
         } finally {
             this.hideLoading();
+        }
+    }
+    
+    async loadKingsBuilderPages() {
+        try {
+            // Load pages created with KingsBuilder (from our database)
+            console.log('📋 Loading KingsBuilder created pages...');
+            
+            const response = await fetch('/api/pages', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const kingsBuilderPages = data.pages || [];
+                
+                // Add to pages array with different styling
+                kingsBuilderPages.forEach(page => {
+                    this.pages.push({
+                        ...page,
+                        isKingsBuilderPage: true,
+                        status: page.published ? 'published' : 'draft'
+                    });
+                });
+                
+                console.log(`✅ Loaded ${kingsBuilderPages.length} KingsBuilder pages`);
+            }
+        } catch (error) {
+            console.log('⚠️ Could not load KingsBuilder pages:', error.message);
+        }
+    }
+    
+    loadDemoPages() {
+        console.log('📋 Loading demo pages...');
+        this.pages = [
+            {
+                id: 'demo-1',
+                title: '🛍️ [DEMO] Homepage Hero Section',
+                status: 'published',
+                lastModified: '2024-01-15',
+                views: 1234,
+                conversions: 45,
+                isDemo: true
+            },
+            {
+                id: 'demo-2', 
+                title: '🛍️ [DEMO] Product Landing Page',
+                status: 'draft',
+                lastModified: '2024-01-14',
+                views: 892,
+                conversions: 23,
+                isDemo: true
+            },
+            {
+                id: 'demo-3',
+                title: '🛍️ [DEMO] About Us Page', 
+                status: 'published',
+                lastModified: '2024-01-13',
+                views: 567,
+                conversions: 12,
+                isDemo: true
+            }
+        ];
+        
+        this.renderPages();
+    }
+    
+    showAuthRequired() {
+        const pagesGrid = document.getElementById('pagesGrid');
+        if (pagesGrid) {
+            pagesGrid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h3>Authentication Required</h3>
+                    <p>Please install the app to access your Shopify pages</p>
+                    <button class="btn btn-primary" onclick="window.open('/install', '_blank')">
+                        <i class="fas fa-download"></i>
+                        Install KingsBuilder
+                    </button>
+                </div>
+            `;
+        }
+    }
+    
+    formatDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        } catch (e) {
+            return dateString;
         }
     }
     
@@ -183,42 +297,94 @@ class KingsDashboard {
                     <div class="empty-icon">
                         <i class="fas fa-file-plus"></i>
                     </div>
-                    <h3>No Pages Yet</h3>
-                    <p>Create your first page to get started</p>
+                    <h3>No Pages Found</h3>
+                    <p>Create your first page with KingsBuilder or check if you have pages in your Shopify store</p>
                     <button class="btn btn-primary" onclick="dashboard.showCreatePageModal()">
                         <i class="fas fa-plus"></i>
-                        Create Your First Page
+                        Create New Page
                     </button>
                 </div>
             `;
             return;
         }
         
-        const pagesHTML = this.pages.map(page => `
-            <div class="page-card" onclick="dashboard.editPage(${page.id})">
-                <div class="page-preview">
-                    <i class="fas fa-file-alt"></i>
+        const pagesHTML = this.pages.map(page => {
+            const pageType = page.isShopifyPage ? 'shopify' : page.isKingsBuilderPage ? 'kingsbuilder' : 'demo';
+            const typeIcon = page.isShopifyPage ? 'fab fa-shopify' : page.isKingsBuilderPage ? 'fas fa-crown' : 'fas fa-flask';
+            const typeLabel = page.isShopifyPage ? 'Shopify Page' : page.isKingsBuilderPage ? 'KingsBuilder Page' : 'Demo Page';
+            const typeColor = page.isShopifyPage ? '#95c93d' : page.isKingsBuilderPage ? '#667eea' : '#f59e0b';
+            
+            return `
+                <div class="page-card ${pageType}" onclick="dashboard.editPage('${page.id}')">
+                    <div class="page-preview">
+                        <i class="${typeIcon}" style="color: ${typeColor}"></i>
+                    </div>
+                    <div class="page-type-badge" style="background: ${typeColor}">
+                        ${typeLabel}
+                    </div>
+                    <h3>${page.title}</h3>
+                    <div class="page-meta">
+                        <span class="page-status ${page.status}">${page.status}</span>
+                        <span class="page-date">${page.lastModified}</span>
+                    </div>
+                    <p>${page.views || 0} views • ${page.conversions || 0} conversions</p>
+                    <div class="page-actions">
+                        ${page.isShopifyPage ? `
+                            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.open('${page.shopifyUrl}', '_blank')">
+                                <i class="fas fa-external-link-alt"></i>
+                                Shopify
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.open('${page.frontendUrl}', '_blank')">
+                                <i class="fas fa-eye"></i>
+                                View
+                            </button>
+                        ` : ''}
+                        ${page.isKingsBuilderPage || page.isDemo ? `
+                            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); dashboard.duplicatePage('${page.id}')">
+                                <i class="fas fa-copy"></i>
+                                Duplicate
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); dashboard.editPage('${page.id}')">
+                            <i class="fas fa-edit"></i>
+                            ${page.isShopifyPage ? 'Edit with KB' : 'Edit'}
+                        </button>
+                    </div>
                 </div>
-                <h3>${page.title}</h3>
-                <div class="page-meta">
-                    <span class="page-status ${page.status}">${page.status}</span>
-                    <span class="page-date">${page.lastModified}</span>
-                </div>
-                <p>${page.views} views • ${page.conversions} conversions</p>
-                <div class="page-actions">
-                    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); dashboard.duplicatePage(${page.id})">
-                        <i class="fas fa-copy"></i>
-                        Duplicate
-                    </button>
-                    <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); dashboard.editPage(${page.id})">
-                        <i class="fas fa-edit"></i>
-                        Edit
-                    </button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         
         pagesGrid.innerHTML = pagesHTML;
+        
+        // Add summary stats
+        this.updatePageStats();
+    }
+    
+    updatePageStats() {
+        const shopifyPages = this.pages.filter(p => p.isShopifyPage).length;
+        const kingsBuilderPages = this.pages.filter(p => p.isKingsBuilderPage).length;
+        const totalPages = this.pages.length;
+        
+        console.log(`📊 Page Stats - Shopify: ${shopifyPages}, KingsBuilder: ${kingsBuilderPages}, Total: ${totalPages}`);
+        
+        // Update header stats if exists
+        const statsContainer = document.getElementById('pageStats');
+        if (statsContainer) {
+            statsContainer.innerHTML = `
+                <span class="stat-item">
+                    <i class="fab fa-shopify"></i>
+                    ${shopifyPages} Shopify Pages
+                </span>
+                <span class="stat-item">
+                    <i class="fas fa-crown"></i>
+                    ${kingsBuilderPages} KingsBuilder Pages
+                </span>
+                <span class="stat-item">
+                    <i class="fas fa-chart-line"></i>
+                    ${totalPages} Total Pages
+                </span>
+            `;
+        }
     }
     
     async loadTemplates() {
