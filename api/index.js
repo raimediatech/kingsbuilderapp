@@ -31,13 +31,16 @@ app.use((req, res, next) => {
   // Set security headers for Shopify iframe embedding
   res.setHeader(
     "Content-Security-Policy",
-    "frame-ancestors 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.shopify.com https://cdnjs.cloudflare.com https://unpkg.com; connect-src 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com;"
+    "frame-ancestors 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.shopify.com https://cdnjs.cloudflare.com https://unpkg.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; connect-src 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com;"
   );
+  
+  // Set X-Frame-Options to allow Shopify domains
+  res.setHeader('X-Frame-Options', 'ALLOW-FROM https://admin.shopify.com');
   
   // Set Access-Control-Allow headers for cross-origin requests
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email, x-shopify-shop-domain, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email, x-shopify-shop-domain, Authorization, X-Shopify-Access-Token, X-Shopify-Shop-Domain');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -1743,6 +1746,108 @@ try {
 // Install route
 app.get('/install', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/install.html'));
+});
+
+// OAuth callback route
+app.get('/auth/callback', async (req, res) => {
+  const { code, shop, state } = req.query;
+  
+  if (!code || !shop) {
+    return res.status(400).send('Missing required parameters');
+  }
+  
+  try {
+    console.log('🔐 Processing OAuth callback for shop:', shop);
+    
+    // Exchange code for access token
+    const tokenResponse = await fetch(`https://${shop}/admin/oauth/access_token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: process.env.SHOPIFY_API_KEY || '128d69fb5441ba3eda3ae4694c71b175',
+        client_secret: process.env.SHOPIFY_API_SECRET || 'afeae79dd0ffd5246cea63915511b267',
+        code: code
+      })
+    });
+    
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to exchange code for token');
+    }
+    
+    const tokenData = await tokenResponse.json();
+    console.log('✅ Access token obtained for shop:', shop);
+    
+    // Store token in session/database
+    req.session = req.session || {};
+    req.session.shopOrigin = shop;
+    req.session.accessToken = tokenData.access_token;
+    
+    // Set cookies for future requests
+    res.cookie('shopOrigin', shop, { maxAge: 24 * 60 * 60 * 1000 }); // 24 hours
+    res.cookie('accessToken', tokenData.access_token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
+    
+    // Create webhook for app uninstall (optional)
+    try {
+      await createUninstallWebhook(shop, tokenData.access_token);
+    } catch (webhookError) {
+      console.warn('⚠️  Could not create uninstall webhook:', webhookError.message);
+    }
+    
+    // Redirect to dashboard
+    res.redirect(`/dashboard?shop=${shop}&installed=true`);
+    
+  } catch (error) {
+    console.error('❌ OAuth callback error:', error);
+    res.status(500).send(`
+      <html>
+        <body>
+          <h1>Installation Error</h1>
+          <p>There was an error installing KingsBuilder. Please try again.</p>
+          <p>Error: ${error.message}</p>
+          <a href="/install">Try Again</a>
+        </body>
+      </html>
+    `);
+  }
+});
+
+// Function to create uninstall webhook
+async function createUninstallWebhook(shop, accessToken) {
+  const webhook = {
+    webhook: {
+      topic: 'app/uninstalled',
+      address: `${process.env.SHOPIFY_APP_URL || 'https://kingsbuilderapp.vercel.app'}/webhooks/app/uninstalled`,
+      format: 'json'
+    }
+  };
+  
+  const response = await fetch(`https://${shop}/admin/api/2023-10/webhooks.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': accessToken
+    },
+    body: JSON.stringify(webhook)
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to create webhook');
+  }
+  
+  console.log('📡 Uninstall webhook created for shop:', shop);
+}
+
+// Webhook handler for app uninstall
+app.post('/webhooks/app/uninstalled', (req, res) => {
+  const shop = req.get('X-Shopify-Shop-Domain');
+  console.log('🗑️  App uninstalled from shop:', shop);
+  
+  // Clean up shop data here
+  // Remove access tokens, user data, etc.
+  
+  res.status(200).send('OK');
 });
 
 // Import dashboard routes
