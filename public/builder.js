@@ -1,64 +1,102 @@
-// KingsBuilder Page Builder JavaScript
+// KingsBuilder - Visual Page Builder JavaScript
+// Created by Kingsmen Marketing Agency
 
 class KingsBuilder {
     constructor() {
         this.currentDevice = 'desktop';
         this.selectedElement = null;
-        this.widgets = [];
+        this.elements = [];
         this.history = [];
         this.historyIndex = -1;
         this.zoomLevel = 1;
         this.isLoading = false;
+        this.clipboard = null;
+        this.isDragging = false;
+        this.navigatorVisible = false;
+        this.navigatorDocked = false;
+        this.panelMinimized = false;
         
         this.init();
     }
     
     init() {
-        console.log('🎯 KingsBuilder Page Builder Initializing...');
+        console.log('👑 KingsBuilder - Visual Page Builder Initializing...');
+        console.log('🏢 Created by Kingsmen Marketing Agency');
         
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initializeBuilder());
+        } else {
+            this.initializeBuilder();
+        }
+    }
+    
+    initializeBuilder() {
         // Initialize event listeners
         this.initEventListeners();
         
         // Initialize drag and drop
         this.initDragAndDrop();
         
-        // Initialize Shopify App Bridge if available
-        this.initShopifyBridge();
+        // Initialize context menu
+        this.initContextMenu();
+        
+        // Initialize navigator
+        this.initNavigator();
+        
+        // Initialize keyboard shortcuts
+        this.initKeyboardShortcuts();
         
         // Load page data if editing existing page
         this.loadPageData();
         
-        console.log('✅ KingsBuilder Page Builder Ready!');
+        // Save initial state
+        this.saveState();
+        
+        console.log('✅ KingsBuilder Ready!');
     }
     
     initEventListeners() {
-        // Device selector
-        document.querySelectorAll('.device-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const device = e.target.getAttribute('data-device');
-                this.switchDevice(device);
+        // Panel navigation tabs
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.closest('.nav-tab').getAttribute('data-tab');
+                this.switchTab(tabName);
             });
         });
         
         // Toolbar buttons
-        const undoBtn = document.getElementById('undoBtn');
-        const redoBtn = document.getElementById('redoBtn');
-        const zoomInBtn = document.getElementById('zoomInBtn');
-        const zoomOutBtn = document.getElementById('zoomOutBtn');
-        const previewBtn = document.getElementById('previewBtn');
-        const publishBtn = document.getElementById('publishBtn');
-        const exitBtn = document.getElementById('exitBtn');
+        this.bindToolbarEvents();
         
-        if (undoBtn) undoBtn.addEventListener('click', () => this.undo());
-        if (redoBtn) redoBtn.addEventListener('click', () => this.redo());
-        if (zoomInBtn) zoomInBtn.addEventListener('click', () => this.zoomIn());
-        if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => this.zoomOut());
-        if (previewBtn) previewBtn.addEventListener('click', () => this.preview());
-        if (publishBtn) publishBtn.addEventListener('click', () => this.publish());
-        if (exitBtn) exitBtn.addEventListener('click', () => this.exit());
+        // Device switcher
+        document.querySelectorAll('.device-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const device = e.target.closest('.device-btn').getAttribute('data-device');
+                this.switchDevice(device);
+            });
+        });
+        
+        // Panel controls
+        this.bindPanelControls();
+        
+        // Category toggles
+        document.querySelectorAll('.category-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const category = header.closest('.category');
+                category.classList.toggle('active');
+            });
+        });
+        
+        // Back to elements button
+        const backBtn = document.getElementById('backToElements');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                this.switchTab('elements');
+            });
+        }
         
         // Canvas click handler
-        const canvas = document.getElementById('canvas');
+        const canvas = document.getElementById('kingsbuilder-canvas');
         if (canvas) {
             canvas.addEventListener('click', (e) => {
                 if (e.target === canvas || e.target.classList.contains('canvas-frame')) {
@@ -67,53 +105,139 @@ class KingsBuilder {
             });
         }
         
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                switch (e.key) {
-                    case 'z':
-                        e.preventDefault();
-                        e.shiftKey ? this.redo() : this.undo();
-                        break;
-                    case 's':
-                        e.preventDefault();
-                        this.savePage();
-                        break;
-                    case 'p':
-                        e.preventDefault();
-                        this.preview();
-                        break;
+        // Search functionality
+        const searchInput = document.getElementById('elementsSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filterElements(e.target.value);
+            });
+        }
+    }
+    
+    bindToolbarEvents() {
+        const toolbar = document.getElementById('kingsbuilder-toolbar');
+        if (!toolbar) return;
+        
+        // Add element button
+        const addElementBtn = document.getElementById('addElementBtn');
+        if (addElementBtn) {
+            addElementBtn.addEventListener('click', () => {
+                if (this.panelMinimized) {
+                    this.togglePanel();
                 }
-            }
-            if (e.key === 'Delete' && this.selectedElement) {
-                e.preventDefault();
-                this.deleteSelectedElement();
-            }
+                this.switchTab('elements');
+            });
+        }
+        
+        // Preview button
+        const previewBtn = document.getElementById('previewBtn');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', () => this.preview());
+        }
+        
+        // Publish button
+        const publishBtn = document.getElementById('publishBtn');
+        if (publishBtn) {
+            publishBtn.addEventListener('click', () => this.publish());
+        }
+        
+        // Exit button
+        const exitBtn = document.getElementById('exitBtn');
+        if (exitBtn) {
+            exitBtn.addEventListener('click', () => this.exit());
+        }
+        
+        // Zoom controls
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        if (zoomInBtn) zoomInBtn.addEventListener('click', () => this.zoomIn());
+        if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => this.zoomOut());
+    }
+    
+    bindPanelControls() {
+        // Panel minimize
+        const minimizeBtn = document.getElementById('panelMinimize');
+        if (minimizeBtn) {
+            minimizeBtn.addEventListener('click', () => this.togglePanel());
+        }
+        
+        // Footer tools
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const navigatorBtn = document.getElementById('navigatorBtn');
+        
+        if (undoBtn) undoBtn.addEventListener('click', () => this.undo());
+        if (redoBtn) redoBtn.addEventListener('click', () => this.redo());
+        if (navigatorBtn) navigatorBtn.addEventListener('click', () => this.toggleNavigator());
+    }
+    
+    switchTab(tabName) {
+        // Update nav tabs
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.classList.remove('active');
         });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.querySelector(`.tab-content[data-tab="${tabName}"]`).classList.add('active');
+        
+        console.log(`🔄 Switched to ${tabName} tab`);
+    }
+    
+    switchDevice(device) {
+        // Update device buttons
+        document.querySelectorAll('.device-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-device="${device}"]`).classList.add('active');
+        
+        // Update canvas
+        const canvas = document.getElementById('kingsbuilder-canvas');
+        canvas.className = `kingsbuilder-canvas ${device}`;
+        
+        this.currentDevice = device;
+        console.log(`📱 Switched to ${device} view`);
+    }
+    
+    togglePanel() {
+        const panel = document.getElementById('kingsbuilder-panel');
+        panel.classList.toggle('minimized');
+        this.panelMinimized = !this.panelMinimized;
+        
+        const minimizeBtn = document.getElementById('panelMinimize');
+        const icon = minimizeBtn.querySelector('i');
+        icon.className = this.panelMinimized ? 'fas fa-plus' : 'fas fa-minus';
+        
+        console.log(`📋 Panel ${this.panelMinimized ? 'minimized' : 'expanded'}`);
     }
     
     initDragAndDrop() {
-        console.log('🎯 Initializing drag and drop...');
+        console.log('🎯 Initializing enhanced drag and drop...');
         
-        // Widget items drag start - use event delegation since widgets might not exist yet
+        // Element items drag start
         document.addEventListener('dragstart', (e) => {
-            if (e.target.classList.contains('widget-item')) {
-                const widgetType = e.target.getAttribute('data-widget');
-                console.log('🎪 Drag started for widget:', widgetType);
+            if (e.target.classList.contains('element-item')) {
+                const elementType = e.target.getAttribute('data-element');
+                console.log('🎪 Drag started for element:', elementType);
                 
-                e.dataTransfer.setData('text/plain', widgetType);
+                e.dataTransfer.setData('text/plain', elementType);
                 e.dataTransfer.effectAllowed = 'copy';
                 e.target.classList.add('dragging');
+                this.isDragging = true;
             }
         });
         
         document.addEventListener('dragend', (e) => {
-            if (e.target.classList.contains('widget-item')) {
+            if (e.target.classList.contains('element-item')) {
                 e.target.classList.remove('dragging');
+                this.isDragging = false;
             }
         });
         
-        // Canvas drop zones
+        // Canvas drop zone
         this.setupCanvasDropZone();
     }
     
@@ -125,7 +249,7 @@ class KingsBuilder {
             return;
         }
         
-        console.log('🎯 Setting up canvas drop zone');
+        console.log('🎯 Setting up enhanced canvas drop zone');
         
         canvasFrame.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -142,7 +266,6 @@ class KingsBuilder {
             e.preventDefault();
             e.stopPropagation();
             
-            // Only remove drag-over if we're leaving the canvas entirely
             const rect = canvasFrame.getBoundingClientRect();
             const x = e.clientX;
             const y = e.clientY;
@@ -160,9 +283,9 @@ class KingsBuilder {
             console.log('🎯 Drop event triggered');
             canvasFrame.classList.remove('drag-over');
             
-            const widgetType = e.dataTransfer.getData('text/plain');
-            if (!widgetType) {
-                console.warn('⚠️ No widget type found in drop data');
+            const elementType = e.dataTransfer.getData('text/plain');
+            if (!elementType) {
+                console.warn('⚠️ No element type found in drop data');
                 return;
             }
             
@@ -170,146 +293,55 @@ class KingsBuilder {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             
-            console.log(`🎪 Dropping widget "${widgetType}" at position (${x}, ${y})`);
-            this.addWidget(widgetType, { x, y });
+            console.log(`🎪 Dropping element "${elementType}" at position (${x}, ${y})`);
+            this.addElement(elementType, { x, y });
         });
-        
-        // Add visual feedback for drop zones
-        this.addDropZoneStyles();
     }
     
-    addDropZoneStyles() {
-        // Add CSS for drag over effect if not already added
-        if (!document.getElementById('dragDropStyles')) {
-            const style = document.createElement('style');
-            style.id = 'dragDropStyles';
-            style.textContent = `
-                .canvas-frame.drag-over {
-                    background: linear-gradient(45deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%),
-                                linear-gradient(-45deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%),
-                                linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.05) 75%),
-                                linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.05) 75%);
-                    background-size: 20px 20px;
-                    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-                    border: 2px dashed var(--primary-color);
-                    animation: dropZoneAnimation 2s linear infinite;
-                }
-                
-                @keyframes dropZoneAnimation {
-                    0% { background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
-                    100% { background-position: 20px 20px, 20px 30px, 30px 10px, 10px 20px; }
-                }
-                
-                .widget-item.dragging {
-                    opacity: 0.5;
-                    transform: rotate(2deg) scale(0.95);
-                }
-                
-                .widget-item {
-                    cursor: grab;
-                }
-                
-                .widget-item:active {
-                    cursor: grabbing;
-                }
-            `;
-            document.head.appendChild(style);
-        }
-    }
-    
-    initShopifyBridge() {
-        try {
-            // Check if we're inside Shopify admin
-            if (window.parent !== window) {
-                console.log('📱 Running inside Shopify Admin');
-                
-                // Initialize App Bridge if available
-                if (window.ShopifyAppBridge) {
-                    const app = window.ShopifyAppBridge.createApp({
-                        apiKey: '128d69fb5441ba3eda3ae4694c71b175',
-                        shopOrigin: this.getShopOrigin(),
-                    });
-                    
-                    console.log('🌉 Shopify App Bridge initialized');
-                    this.app = app;
-                }
-            }
-        } catch (error) {
-            console.log('⚠️  Shopify App Bridge not available:', error.message);
-        }
-    }
-    
-    getShopOrigin() {
-        // Try to get shop from URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const shop = urlParams.get('shop');
+    addElement(type, position = {}) {
+        console.log(`➕ Adding element: ${type}`, position);
         
-        if (shop) {
-            return shop.includes('.') ? shop : `${shop}.myshopify.com`;
-        }
-        
-        // Try to get from parent window
-        try {
-            return window.parent.location.hostname;
-        } catch (e) {
-            return 'unknown.myshopify.com';
-        }
-    }
-    
-    switchDevice(device) {
-        // Update active device button
-        document.querySelectorAll('.device-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-device="${device}"]`).classList.add('active');
-        
-        // Update canvas frame class
-        const canvasFrame = document.querySelector('.canvas-frame');
-        canvasFrame.className = `canvas-frame ${device}`;
-        
-        this.currentDevice = device;
-        console.log(`📱 Switched to ${device} view`);
-    }
-    
-    addWidget(type, position = {}) {
-        console.log(`➕ Adding widget: ${type}`, position);
-        
-        const widget = this.createWidget(type, position);
-        if (widget) {
-            this.widgets.push(widget);
-            this.renderWidget(widget);
+        const element = this.createElement(type, position);
+        if (element) {
+            this.elements.push(element);
+            this.renderElement(element);
             this.saveState();
             
             // Remove empty state if it exists
-            const emptyState = document.querySelector('.empty-state');
+            const emptyState = document.querySelector('.empty-canvas');
             if (emptyState) {
-                emptyState.remove();
+                emptyState.style.display = 'none';
             }
             
-            // Select the new widget
-            this.selectElement(widget);
+            // Select the new element
+            this.selectElement(element);
+            
+            // Auto switch to properties tab
+            this.switchTab('properties');
         }
     }
     
-    createWidget(type, position) {
-        const widgetId = `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    createElement(type, position) {
+        const elementId = `kb_element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        const widgets = {
+        const elements = {
             heading: {
-                id: widgetId,
+                id: elementId,
                 type: 'heading',
                 content: 'Your Heading Here',
+                tag: 'h2',
                 styles: {
                     fontSize: '32px',
                     fontWeight: '700',
                     color: '#1a1a1a',
                     textAlign: 'left',
-                    marginBottom: '16px'
+                    marginBottom: '16px',
+                    lineHeight: '1.2'
                 },
                 position: position
             },
             text: {
-                id: widgetId,
+                id: elementId,
                 type: 'text',
                 content: 'Your text content goes here. Click to edit and customize.',
                 styles: {
@@ -322,9 +354,9 @@ class KingsBuilder {
                 position: position
             },
             image: {
-                id: widgetId,
+                id: elementId,
                 type: 'image',
-                content: 'https://via.placeholder.com/400x300',
+                content: 'https://via.placeholder.com/400x300/f0f0f0/666666?text=Your+Image',
                 alt: 'Placeholder image',
                 styles: {
                     width: '100%',
@@ -336,7 +368,7 @@ class KingsBuilder {
                 position: position
             },
             button: {
-                id: widgetId,
+                id: elementId,
                 type: 'button',
                 content: 'Click Me',
                 href: '#',
@@ -351,12 +383,13 @@ class KingsBuilder {
                     cursor: 'pointer',
                     textDecoration: 'none',
                     display: 'inline-block',
-                    marginBottom: '16px'
+                    marginBottom: '16px',
+                    transition: 'all 0.2s ease'
                 },
                 position: position
             },
             section: {
-                id: widgetId,
+                id: elementId,
                 type: 'section',
                 content: '',
                 styles: {
@@ -367,123 +400,183 @@ class KingsBuilder {
                     border: '2px dashed #e5e7eb'
                 },
                 position: position
+            },
+            divider: {
+                id: elementId,
+                type: 'divider',
+                content: '',
+                styles: {
+                    height: '1px',
+                    backgroundColor: '#e5e7eb',
+                    border: 'none',
+                    margin: '20px 0',
+                    width: '100%'
+                },
+                position: position
+            },
+            spacer: {
+                id: elementId,
+                type: 'spacer',
+                content: '',
+                styles: {
+                    height: '40px',
+                    backgroundColor: 'transparent',
+                    margin: '0',
+                    width: '100%'
+                },
+                position: position
             }
         };
         
-        return widgets[type] || null;
+        return elements[type] || null;
     }
     
-    renderWidget(widget) {
+    renderElement(element) {
         const canvasFrame = document.querySelector('.canvas-frame');
-        const element = document.createElement('div');
-        element.className = 'widget-element';
-        element.setAttribute('data-widget-id', widget.id);
-        element.setAttribute('data-widget-type', widget.type);
-        element.innerHTML = this.getWidgetHTML(widget);
+        const elementDiv = document.createElement('div');
+        elementDiv.className = 'kb-element';
+        elementDiv.setAttribute('data-element-id', element.id);
+        elementDiv.setAttribute('data-element-type', element.type);
+        elementDiv.innerHTML = this.getElementHTML(element);
         
         // Apply styles
-        this.applyStyles(element, widget.styles);
+        this.applyStyles(elementDiv, element.styles);
         
         // Add event listeners
-        element.addEventListener('click', (e) => {
+        elementDiv.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.selectElement(widget);
+            this.selectElement(element);
         });
         
-        canvasFrame.appendChild(element);
+        // Add context menu
+        elementDiv.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.showContextMenu(e, element);
+        });
+        
+        canvasFrame.appendChild(elementDiv);
+        console.log(`✨ Rendered element: ${element.type}`);
     }
     
-    getWidgetHTML(widget) {
+    getElementHTML(element) {
         const controlsHTML = `
-            <div class="widget-controls">
-                <button class="widget-control-btn" onclick="builder.editWidget('${widget.id}')" title="Edit">
+            <div class="kb-element-controls">
+                <button class="kb-element-control" onclick="kingsBuilder.editElement('${element.id}')" title="Edit">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="widget-control-btn" onclick="builder.deleteWidget('${widget.id}')" title="Delete">
+                <button class="kb-element-control" onclick="kingsBuilder.duplicateElement('${element.id}')" title="Duplicate">
+                    <i class="fas fa-clone"></i>
+                </button>
+                <button class="kb-element-control danger" onclick="kingsBuilder.deleteElement('${element.id}')" title="Delete">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
         `;
         
-        switch (widget.type) {
+        switch (element.type) {
             case 'heading':
-                return `<h2>${widget.content}</h2>${controlsHTML}`;
+                return `<${element.tag || 'h2'}>${element.content}</${element.tag || 'h2'}>${controlsHTML}`;
             case 'text':
-                return `<p>${widget.content}</p>${controlsHTML}`;
+                return `<p>${element.content}</p>${controlsHTML}`;
             case 'image':
-                return `<img src="${widget.content}" alt="${widget.alt || ''}" style="max-width: 100%;">${controlsHTML}`;
+                return `<img src="${element.content}" alt="${element.alt || ''}" style="max-width: 100%;">${controlsHTML}`;
             case 'button':
-                return `<a href="${widget.href || '#'}" class="widget-button">${widget.content}</a>${controlsHTML}`;
+                return `<a href="${element.href || '#'}" class="kb-button">${element.content}</a>${controlsHTML}`;
             case 'section':
-                return `<div class="widget-section">Drop widgets here</div>${controlsHTML}`;
+                return `<div class="kb-section">Drop elements here</div>${controlsHTML}`;
+            case 'divider':
+                return `<hr>${controlsHTML}`;
+            case 'spacer':
+                return `<div class="kb-spacer"></div>${controlsHTML}`;
             default:
-                return `<div>Unknown widget type: ${widget.type}</div>${controlsHTML}`;
+                return `<div>Unknown element type: ${element.type}</div>${controlsHTML}`;
         }
     }
     
-    applyStyles(element, styles) {
+    applyStyles(elementDiv, styles) {
         if (styles) {
-            Object.assign(element.style, styles);
+            Object.assign(elementDiv.style, styles);
         }
     }
     
-    selectElement(widget) {
+    selectElement(element) {
         // Deselect previous element
         this.deselectElement();
         
         // Select new element
-        const element = document.querySelector(`[data-widget-id="${widget.id}"]`);
-        if (element) {
-            element.classList.add('selected');
-            this.selectedElement = widget;
-            this.showProperties(widget);
+        const elementDiv = document.querySelector(`[data-element-id="${element.id}"]`);
+        if (elementDiv) {
+            elementDiv.classList.add('selected');
+            this.selectedElement = element;
+            this.showProperties(element);
+            this.updateNavigator();
         }
     }
     
     deselectElement() {
-        document.querySelectorAll('.widget-element.selected').forEach(el => {
+        document.querySelectorAll('.kb-element.selected').forEach(el => {
             el.classList.remove('selected');
         });
         this.selectedElement = null;
         this.hideProperties();
     }
     
-    showProperties(widget) {
+    showProperties(element) {
+        // Switch to properties tab
+        this.switchTab('properties');
+        
         const propertiesContent = document.getElementById('propertiesContent');
         if (!propertiesContent) return;
         
-        const form = this.createPropertiesForm(widget);
+        const form = this.createPropertiesForm(element);
         propertiesContent.innerHTML = form;
         
         // Add event listeners to form inputs
         propertiesContent.querySelectorAll('input, textarea, select').forEach(input => {
             input.addEventListener('input', (e) => {
-                this.updateWidgetProperty(widget.id, e.target.name, e.target.value);
+                this.updateElementProperty(element.id, e.target.name, e.target.value);
             });
         });
     }
     
-    createPropertiesForm(widget) {
-        let form = `<h4>Edit ${widget.type.charAt(0).toUpperCase() + widget.type.slice(1)}</h4>`;
+    createPropertiesForm(element) {
+        let form = `
+            <div class="properties-header">
+                <h3>Edit ${element.type.charAt(0).toUpperCase() + element.type.slice(1)}</h3>
+            </div>
+            <div class="properties-sections">
+        `;
         
-        switch (widget.type) {
+        // Content section
+        form += `<div class="property-section">
+            <h4>Content</h4>`;
+        
+        switch (element.type) {
             case 'heading':
+                form += `
+                    <div class="form-group">
+                        <label>Heading Text</label>
+                        <input type="text" name="content" value="${element.content}">
+                    </div>
+                    <div class="form-group">
+                        <label>Heading Tag</label>
+                        <select name="tag">
+                            <option value="h1" ${element.tag === 'h1' ? 'selected' : ''}>H1</option>
+                            <option value="h2" ${element.tag === 'h2' ? 'selected' : ''}>H2</option>
+                            <option value="h3" ${element.tag === 'h3' ? 'selected' : ''}>H3</option>
+                            <option value="h4" ${element.tag === 'h4' ? 'selected' : ''}>H4</option>
+                            <option value="h5" ${element.tag === 'h5' ? 'selected' : ''}>H5</option>
+                            <option value="h6" ${element.tag === 'h6' ? 'selected' : ''}>H6</option>
+                        </select>
+                    </div>
+                `;
+                break;
             case 'text':
                 form += `
                     <div class="form-group">
-                        <label>Content</label>
-                        <textarea name="content" rows="3">${widget.content}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Font Size</label>
-                        <input type="text" name="fontSize" value="${widget.styles.fontSize || '16px'}">
-                    </div>
-                    <div class="form-group">
-                        <label>Color</label>
-                        <div class="color-picker">
-                            <input type="color" name="color" value="${this.hexFromRgb(widget.styles.color)}">
-                            <input type="text" name="colorText" value="${widget.styles.color}">
-                        </div>
+                        <label>Text Content</label>
+                        <textarea name="content" rows="4">${element.content}</textarea>
                     </div>
                 `;
                 break;
@@ -491,11 +584,11 @@ class KingsBuilder {
                 form += `
                     <div class="form-group">
                         <label>Image URL</label>
-                        <input type="url" name="content" value="${widget.content}">
+                        <input type="url" name="content" value="${element.content}">
                     </div>
                     <div class="form-group">
                         <label>Alt Text</label>
-                        <input type="text" name="alt" value="${widget.alt || ''}">
+                        <input type="text" name="alt" value="${element.alt || ''}">
                     </div>
                 `;
                 break;
@@ -503,40 +596,62 @@ class KingsBuilder {
                 form += `
                     <div class="form-group">
                         <label>Button Text</label>
-                        <input type="text" name="content" value="${widget.content}">
+                        <input type="text" name="content" value="${element.content}">
                     </div>
                     <div class="form-group">
                         <label>Link URL</label>
-                        <input type="url" name="href" value="${widget.href || ''}">
-                    </div>
-                    <div class="form-group">
-                        <label>Background Color</label>
-                        <div class="color-picker">
-                            <input type="color" name="backgroundColor" value="${this.hexFromRgb(widget.styles.backgroundColor)}">
-                        </div>
+                        <input type="url" name="href" value="${element.href || ''}">
                     </div>
                 `;
                 break;
         }
         
+        form += `</div>`;
+        
+        // Style section
+        if (element.type !== 'spacer') {
+            form += `<div class="property-section">
+                <h4>Style</h4>
+                <div class="form-group">
+                    <label>Font Size</label>
+                    <input type="text" name="fontSize" value="${element.styles.fontSize || '16px'}">
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="color" name="color" value="${this.hexFromRgb(element.styles.color)}">
+                </div>
+                <div class="form-group">
+                    <label>Text Align</label>
+                    <select name="textAlign">
+                        <option value="left" ${element.styles.textAlign === 'left' ? 'selected' : ''}>Left</option>
+                        <option value="center" ${element.styles.textAlign === 'center' ? 'selected' : ''}>Center</option>
+                        <option value="right" ${element.styles.textAlign === 'right' ? 'selected' : ''}>Right</option>
+                        <option value="justify" ${element.styles.textAlign === 'justify' ? 'selected' : ''}>Justify</option>
+                    </select>
+                </div>
+            </div>`;
+        }
+        
+        form += `</div>`;
+        
         return form;
     }
     
-    updateWidgetProperty(widgetId, property, value) {
-        const widget = this.widgets.find(w => w.id === widgetId);
-        if (!widget) return;
+    updateElementProperty(elementId, property, value) {
+        const element = this.elements.find(e => e.id === elementId);
+        if (!element) return;
         
-        if (property === 'content' || property === 'href' || property === 'alt') {
-            widget[property] = value;
+        if (property === 'content' || property === 'href' || property === 'alt' || property === 'tag') {
+            element[property] = value;
         } else {
-            widget.styles[property] = value;
+            element.styles[property] = value;
         }
         
-        // Re-render the widget
-        const element = document.querySelector(`[data-widget-id="${widgetId}"]`);
-        if (element) {
-            element.innerHTML = this.getWidgetHTML(widget);
-            this.applyStyles(element, widget.styles);
+        // Re-render the element
+        const elementDiv = document.querySelector(`[data-element-id="${elementId}"]`);
+        if (elementDiv) {
+            elementDiv.innerHTML = this.getElementHTML(element);
+            this.applyStyles(elementDiv, element.styles);
         }
         
         this.saveState();
@@ -550,40 +665,407 @@ class KingsBuilder {
                     <div class="no-selection-icon">
                         <i class="fas fa-mouse-pointer"></i>
                     </div>
+                    <h3>No Element Selected</h3>
                     <p>Select an element to edit its properties</p>
                 </div>
             `;
         }
     }
     
-    editWidget(widgetId) {
-        const widget = this.widgets.find(w => w.id === widgetId);
-        if (widget) {
-            this.selectElement(widget);
+    editElement(elementId) {
+        const element = this.elements.find(e => e.id === elementId);
+        if (element) {
+            this.selectElement(element);
         }
     }
     
-    deleteWidget(widgetId) {
-        if (confirm('Are you sure you want to delete this widget?')) {
-            this.widgets = this.widgets.filter(w => w.id !== widgetId);
-            const element = document.querySelector(`[data-widget-id="${widgetId}"]`);
-            if (element) {
-                element.remove();
+    duplicateElement(elementId) {
+        const element = this.elements.find(e => e.id === elementId);
+        if (element) {
+            const newElement = JSON.parse(JSON.stringify(element));
+            newElement.id = `kb_element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            newElement.position = { x: (element.position.x || 0) + 20, y: (element.position.y || 0) + 20 };
+            
+            this.elements.push(newElement);
+            this.renderElement(newElement);
+            this.saveState();
+            this.selectElement(newElement);
+        }
+    }
+    
+    deleteElement(elementId) {
+        if (confirm('Are you sure you want to delete this element?')) {
+            this.elements = this.elements.filter(e => e.id !== elementId);
+            const elementDiv = document.querySelector(`[data-element-id="${elementId}"]`);
+            if (elementDiv) {
+                elementDiv.remove();
             }
             this.deselectElement();
             this.saveState();
+            this.updateNavigator();
+            
+            // Show empty state if no elements
+            if (this.elements.length === 0) {
+                const emptyState = document.querySelector('.empty-canvas');
+                if (emptyState) {
+                    emptyState.style.display = 'block';
+                }
+            }
         }
     }
     
-    deleteSelectedElement() {
-        if (this.selectedElement) {
-            this.deleteWidget(this.selectedElement.id);
+    initContextMenu() {
+        const contextMenu = document.getElementById('contextMenu');
+        
+        // Hide context menu on click elsewhere
+        document.addEventListener('click', () => {
+            contextMenu.classList.remove('show');
+        });
+        
+        // Context menu actions
+        contextMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const action = e.target.closest('.context-menu-item')?.getAttribute('data-action');
+            if (action && this.selectedElement) {
+                this.handleContextAction(action, this.selectedElement);
+            }
+            contextMenu.classList.remove('show');
+        });
+    }
+    
+    showContextMenu(e, element) {
+        const contextMenu = document.getElementById('contextMenu');
+        contextMenu.style.left = `${e.pageX}px`;
+        contextMenu.style.top = `${e.pageY}px`;
+        contextMenu.classList.add('show');
+        
+        // Update menu items based on element
+        this.updateContextMenu(element);
+    }
+    
+    updateContextMenu(element) {
+        // Enable/disable menu items based on context
+        const pasteItem = document.querySelector('[data-action="paste"]');
+        if (pasteItem) {
+            pasteItem.style.opacity = this.clipboard ? '1' : '0.5';
         }
+    }
+    
+    handleContextAction(action, element) {
+        switch (action) {
+            case 'copy':
+                this.copyElement(element);
+                break;
+            case 'paste':
+                this.pasteElement();
+                break;
+            case 'duplicate':
+                this.duplicateElement(element.id);
+                break;
+            case 'edit':
+                this.selectElement(element);
+                break;
+            case 'reset-style':
+                this.resetElementStyle(element);
+                break;
+            case 'navigator':
+                this.showInNavigator(element);
+                break;
+            case 'delete':
+                this.deleteElement(element.id);
+                break;
+        }
+    }
+    
+    copyElement(element) {
+        this.clipboard = JSON.parse(JSON.stringify(element));
+        console.log('📋 Element copied to clipboard');
+    }
+    
+    pasteElement() {
+        if (this.clipboard) {
+            const newElement = JSON.parse(JSON.stringify(this.clipboard));
+            newElement.id = `kb_element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            newElement.position = { x: (this.clipboard.position.x || 0) + 20, y: (this.clipboard.position.y || 0) + 20 };
+            
+            this.elements.push(newElement);
+            this.renderElement(newElement);
+            this.saveState();
+            this.selectElement(newElement);
+            console.log('📋 Element pasted from clipboard');
+        }
+    }
+    
+    resetElementStyle(element) {
+        // Reset to default styles based on element type
+        const defaultElement = this.createElement(element.type, element.position);
+        if (defaultElement) {
+            element.styles = defaultElement.styles;
+            
+            const elementDiv = document.querySelector(`[data-element-id="${element.id}"]`);
+            if (elementDiv) {
+                this.applyStyles(elementDiv, element.styles);
+            }
+            
+            this.saveState();
+            this.showProperties(element);
+        }
+    }
+    
+    initNavigator() {
+        const navigator = document.getElementById('kingsbuilder-navigator');
+        const navigatorHeader = document.getElementById('navigatorHeader');
+        
+        // Make navigator draggable
+        this.makeDraggable(navigator, navigatorHeader);
+        
+        // Navigator controls
+        const toggleBtn = document.getElementById('toggleNavigator');
+        const dockBtn = document.getElementById('dockNavigator');
+        const closeBtn = document.getElementById('closeNavigator');
+        
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => this.toggleAllElements());
+        }
+        
+        if (dockBtn) {
+            dockBtn.addEventListener('click', () => this.toggleNavigatorDock());
+        }
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.toggleNavigator());
+        }
+    }
+    
+    toggleNavigator() {
+        const navigator = document.getElementById('kingsbuilder-navigator');
+        navigator.classList.toggle('show');
+        this.navigatorVisible = !this.navigatorVisible;
+        
+        if (this.navigatorVisible) {
+            this.updateNavigator();
+        }
+        
+        console.log(`🧭 Navigator ${this.navigatorVisible ? 'shown' : 'hidden'}`);
+    }
+    
+    toggleNavigatorDock() {
+        const navigator = document.getElementById('kingsbuilder-navigator');
+        navigator.classList.toggle('docked');
+        this.navigatorDocked = !this.navigatorDocked;
+        
+        const dockBtn = document.getElementById('dockNavigator');
+        const icon = dockBtn.querySelector('i');
+        icon.className = this.navigatorDocked ? 'fas fa-expand-arrows-alt' : 'fas fa-anchor';
+        
+        console.log(`🧭 Navigator ${this.navigatorDocked ? 'docked' : 'floating'}`);
+    }
+    
+    updateNavigator() {
+        const navigatorContent = document.getElementById('navigatorContent');
+        if (!navigatorContent) return;
+        
+        if (this.elements.length === 0) {
+            navigatorContent.innerHTML = `
+                <div class="navigator-empty">
+                    <div class="navigator-empty-icon">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <p>No elements yet</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const elementsHTML = this.elements.map(element => `
+            <div class="navigator-item ${this.selectedElement?.id === element.id ? 'selected' : ''}" 
+                 onclick="kingsBuilder.selectElementById('${element.id}')">
+                <div class="navigator-item-icon">
+                    <i class="${this.getElementIcon(element.type)}"></i>
+                </div>
+                <div class="navigator-item-content">
+                    <div class="navigator-item-title">${element.type.charAt(0).toUpperCase() + element.type.slice(1)}</div>
+                    <div class="navigator-item-subtitle">${this.getElementPreview(element)}</div>
+                </div>
+                <div class="navigator-item-actions">
+                    <button onclick="kingsBuilder.toggleElementVisibility('${element.id}')" title="Toggle Visibility">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+        navigatorContent.innerHTML = elementsHTML;
+    }
+    
+    getElementIcon(type) {
+        const icons = {
+            heading: 'fas fa-heading',
+            text: 'fas fa-paragraph',
+            image: 'fas fa-image',
+            button: 'fas fa-mouse-pointer',
+            section: 'fas fa-layer-group',
+            divider: 'fas fa-minus',
+            spacer: 'fas fa-arrows-alt-v'
+        };
+        return icons[type] || 'fas fa-cube';
+    }
+    
+    getElementPreview(element) {
+        switch (element.type) {
+            case 'heading':
+            case 'text':
+            case 'button':
+                return element.content.length > 30 ? element.content.substring(0, 30) + '...' : element.content;
+            case 'image':
+                return element.alt || 'Image';
+            default:
+                return element.type;
+        }
+    }
+    
+    selectElementById(elementId) {
+        const element = this.elements.find(e => e.id === elementId);
+        if (element) {
+            this.selectElement(element);
+        }
+    }
+    
+    showInNavigator(element) {
+        if (!this.navigatorVisible) {
+            this.toggleNavigator();
+        }
+        this.updateNavigator();
+        
+        // Highlight element in navigator
+        setTimeout(() => {
+            const navigatorItem = document.querySelector(`.navigator-item[onclick*="${element.id}"]`);
+            if (navigatorItem) {
+                navigatorItem.classList.add('highlight');
+                setTimeout(() => navigatorItem.classList.remove('highlight'), 2000);
+            }
+        }, 100);
+    }
+    
+    makeDraggable(element, handle) {
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        
+        handle.addEventListener('mousedown', (e) => {
+            if (element.classList.contains('docked')) return;
+            
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            
+            if (e.target === handle || handle.contains(e.target)) {
+                isDragging = true;
+                element.style.cursor = 'move';
+            }
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                
+                xOffset = currentX;
+                yOffset = currentY;
+                
+                element.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                element.style.cursor = '';
+            }
+        });
+    }
+    
+    initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key) {
+                    case 'z':
+                        e.preventDefault();
+                        e.shiftKey ? this.redo() : this.undo();
+                        break;
+                    case 'c':
+                        e.preventDefault();
+                        if (this.selectedElement) {
+                            this.copyElement(this.selectedElement);
+                        }
+                        break;
+                    case 'v':
+                        e.preventDefault();
+                        this.pasteElement();
+                        break;
+                    case 'd':
+                        e.preventDefault();
+                        if (this.selectedElement) {
+                            this.duplicateElement(this.selectedElement.id);
+                        }
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        this.savePage();
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        this.preview();
+                        break;
+                }
+            }
+            
+            if (e.key === 'Delete' && this.selectedElement) {
+                e.preventDefault();
+                this.deleteElement(this.selectedElement.id);
+            }
+            
+            if (e.key === 'Escape') {
+                this.deselectElement();
+                document.getElementById('contextMenu').classList.remove('show');
+            }
+        });
+    }
+    
+    filterElements(searchTerm) {
+        const elements = document.querySelectorAll('.element-item');
+        elements.forEach(element => {
+            const title = element.querySelector('.element-title').textContent.toLowerCase();
+            const matches = title.includes(searchTerm.toLowerCase());
+            element.style.display = matches ? 'flex' : 'none';
+        });
+    }
+    
+    zoomIn() {
+        this.zoomLevel = Math.min(this.zoomLevel + 0.1, 2);
+        this.updateZoom();
+    }
+    
+    zoomOut() {
+        this.zoomLevel = Math.max(this.zoomLevel - 0.1, 0.5);
+        this.updateZoom();
+    }
+    
+    updateZoom() {
+        const canvas = document.getElementById('kingsbuilder-canvas');
+        canvas.style.transform = `scale(${this.zoomLevel})`;
+        canvas.style.transformOrigin = 'top center';
+        
+        document.getElementById('zoomLevel').textContent = `${Math.round(this.zoomLevel * 100)}%`;
     }
     
     saveState() {
         const state = {
-            widgets: JSON.parse(JSON.stringify(this.widgets)),
+            elements: JSON.parse(JSON.stringify(this.elements)),
             timestamp: Date.now()
         };
         
@@ -597,7 +1079,7 @@ class KingsBuilder {
             this.historyIndex--;
         }
         
-        console.log('💾 State saved', { widgets: this.widgets.length, historyIndex: this.historyIndex });
+        console.log('💾 State saved', { elements: this.elements.length, historyIndex: this.historyIndex });
     }
     
     undo() {
@@ -619,53 +1101,37 @@ class KingsBuilder {
     }
     
     loadState(state) {
-        this.widgets = JSON.parse(JSON.stringify(state.widgets));
-        this.renderAllWidgets();
+        this.elements = JSON.parse(JSON.stringify(state.elements));
+        this.renderAllElements();
         this.deselectElement();
+        this.updateNavigator();
     }
     
-    renderAllWidgets() {
+    renderAllElements() {
         const canvasFrame = document.querySelector('.canvas-frame');
         
-        // Clear existing widgets
-        canvasFrame.querySelectorAll('.widget-element').forEach(el => el.remove());
+        // Clear existing elements
+        canvasFrame.querySelectorAll('.kb-element').forEach(el => el.remove());
         
-        // Check if no widgets
-        if (this.widgets.length === 0) {
-            canvasFrame.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-magic"></i>
-                    </div>
-                    <h3>Start Building Your Page</h3>
-                    <p>Drag elements from the sidebar to start creating your page</p>
-                </div>
-            `;
+        // Check if no elements
+        if (this.elements.length === 0) {
+            const emptyState = document.querySelector('.empty-canvas');
+            if (emptyState) {
+                emptyState.style.display = 'block';
+            }
             return;
         }
         
-        // Render all widgets
-        this.widgets.forEach(widget => {
-            this.renderWidget(widget);
-        });
-    }
-    
-    zoomIn() {
-        this.zoomLevel = Math.min(this.zoomLevel + 0.1, 2);
-        this.updateZoom();
-    }
-    
-    zoomOut() {
-        this.zoomLevel = Math.max(this.zoomLevel - 0.1, 0.5);
-        this.updateZoom();
-    }
-    
-    updateZoom() {
-        const canvasFrame = document.querySelector('.canvas-frame');
-        canvasFrame.style.transform = `scale(${this.zoomLevel})`;
-        canvasFrame.style.transformOrigin = 'top center';
+        // Hide empty state
+        const emptyState = document.querySelector('.empty-canvas');
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
         
-        document.getElementById('zoomLevel').textContent = `${Math.round(this.zoomLevel * 100)}%`;
+        // Render all elements
+        this.elements.forEach(element => {
+            this.renderElement(element);
+        });
     }
     
     async preview() {
@@ -686,6 +1152,11 @@ class KingsBuilder {
             const html = this.generateHTML();
             const css = this.generateCSS();
             
+            // Get page settings
+            const pageTitle = document.getElementById('pageTitle')?.value || 'KingsBuilder Page';
+            const pageUrl = document.getElementById('pageUrl')?.value || 'kingsbuilder-page';
+            const pageStatus = document.getElementById('pageStatus')?.value || 'draft';
+            
             // Send to server
             const response = await fetch('/api/pages', {
                 method: 'POST',
@@ -693,21 +1164,23 @@ class KingsBuilder {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    title: this.getPageTitle(),
+                    title: pageTitle,
+                    url: pageUrl,
+                    status: pageStatus,
                     html: html,
                     css: css,
-                    widgets: this.widgets,
+                    elements: this.elements,
                     shop: this.getShopOrigin()
                 })
             });
             
             if (response.ok) {
-                alert('Page published successfully!');
+                alert('🎉 Page published successfully!');
             } else {
                 throw new Error('Failed to publish page');
             }
         } catch (error) {
-            console.error('Publish error:', error);
+            console.error('❌ Publish error:', error);
             alert('Failed to publish page. Please try again.');
         } finally {
             this.hideLoading();
@@ -725,14 +1198,17 @@ class KingsBuilder {
                 <style>${this.generateCSS()}</style>
             </head>
             <body>
-                <div class="page-content">
+                <div class="kingsbuilder-page">
         `;
         
-        this.widgets.forEach(widget => {
-            html += this.getWidgetPublishHTML(widget);
+        this.elements.forEach(element => {
+            html += this.getElementPublishHTML(element);
         });
         
         html += `
+                </div>
+                <div class="kingsbuilder-footer">
+                    <p>Created with <strong>KingsBuilder</strong> by <a href="#" target="_blank">Kingsmen Marketing Agency</a></p>
                 </div>
             </body>
             </html>
@@ -741,18 +1217,24 @@ class KingsBuilder {
         return html;
     }
     
-    getWidgetPublishHTML(widget) {
-        switch (widget.type) {
+    getElementPublishHTML(element) {
+        const styles = this.stylesToString(element.styles);
+        
+        switch (element.type) {
             case 'heading':
-                return `<h2 style="${this.stylesToString(widget.styles)}">${widget.content}</h2>`;
+                return `<${element.tag || 'h2'} style="${styles}">${element.content}</${element.tag || 'h2'}>`;
             case 'text':
-                return `<p style="${this.stylesToString(widget.styles)}">${widget.content}</p>`;
+                return `<p style="${styles}">${element.content}</p>`;
             case 'image':
-                return `<img src="${widget.content}" alt="${widget.alt || ''}" style="${this.stylesToString(widget.styles)}">`;
+                return `<img src="${element.content}" alt="${element.alt || ''}" style="${styles}">`;
             case 'button':
-                return `<a href="${widget.href || '#'}" style="${this.stylesToString(widget.styles)}">${widget.content}</a>`;
+                return `<a href="${element.href || '#'}" style="${styles}">${element.content}</a>`;
             case 'section':
-                return `<div style="${this.stylesToString(widget.styles)}">${widget.content}</div>`;
+                return `<section style="${styles}">${element.content}</section>`;
+            case 'divider':
+                return `<hr style="${styles}">`;
+            case 'spacer':
+                return `<div style="${styles}"></div>`;
             default:
                 return '';
         }
@@ -765,11 +1247,39 @@ class KingsBuilder {
                 margin: 0;
                 padding: 0;
                 line-height: 1.6;
+                color: #1a1a1a;
             }
-            .page-content {
+            
+            .kingsbuilder-page {
                 max-width: 1200px;
                 margin: 0 auto;
                 padding: 20px;
+            }
+            
+            .kingsbuilder-footer {
+                text-align: center;
+                padding: 20px;
+                margin-top: 40px;
+                border-top: 1px solid #e5e7eb;
+                font-size: 14px;
+                color: #6b7280;
+            }
+            
+            .kingsbuilder-footer a {
+                color: #000000;
+                text-decoration: none;
+                font-weight: 600;
+            }
+            
+            .kingsbuilder-footer a:hover {
+                text-decoration: underline;
+            }
+            
+            /* Responsive */
+            @media (max-width: 768px) {
+                .kingsbuilder-page {
+                    padding: 10px;
+                }
             }
         `;
     }
@@ -785,12 +1295,27 @@ class KingsBuilder {
     }
     
     getPageTitle() {
+        const titleInput = document.getElementById('pageTitle');
+        return titleInput?.value || 'KingsBuilder Page';
+    }
+    
+    getShopOrigin() {
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('title') || 'KingsBuilder Page';
+        const shop = urlParams.get('shop');
+        
+        if (shop) {
+            return shop.includes('.') ? shop : `${shop}.myshopify.com`;
+        }
+        
+        try {
+            return window.parent.location.hostname;
+        } catch (e) {
+            return 'unknown.myshopify.com';
+        }
     }
     
     async savePage() {
-        console.log('💾 Saving page...');
+        console.log('💾 Auto-saving page...');
         // Implement auto-save functionality
     }
     
@@ -801,9 +1326,6 @@ class KingsBuilder {
         if (pageId && pageId !== 'new') {
             console.log('📂 Loading page data for ID:', pageId);
             // Implement loading existing page data
-        } else {
-            // Initialize with empty state
-            this.saveState();
         }
     }
     
@@ -839,15 +1361,17 @@ class KingsBuilder {
         return '#' + [r, g, b].map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
     }
     
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    showQuickStart() {
+        // Show a quick start tutorial or guide
+        alert('Welcome to KingsBuilder! Drag elements from the left panel to start building your page.');
     }
 }
 
-// Initialize builder when DOM is loaded
+// Initialize KingsBuilder when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initializing KingsBuilder Page Builder...');
-    window.builder = new KingsBuilder();
+    console.log('🚀 Initializing KingsBuilder - Visual Page Builder...');
+    console.log('🏢 Created by Kingsmen Marketing Agency');
+    window.kingsBuilder = new KingsBuilder();
 });
 
 // Export for module systems
