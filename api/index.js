@@ -91,7 +91,55 @@ app.get('/app/builder', (req, res) => {
     return res.redirect('/install');
   }
   
-  // Serve the page builder interface
+  // Serve the new page builder interface
+  res.sendFile(path.join(__dirname, '../public/builder.html'));
+});
+
+// Builder route (alternative path)
+app.get('/builder', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/builder.html'));
+});
+
+// Dashboard route  
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
+// Additional routes for different access patterns
+app.get('/pages', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
+app.get('/templates', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
+app.get('/settings', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
+app.get('/help', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+app.get('/builder', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/builder.html'));
+});
+
+// Dashboard route  
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
+// Legacy route handler (to be removed)
+app.get('/app/builder-old', (req, res) => {
+  const shop = req.query.shop || req.cookies?.shopOrigin;
+  const pageId = req.query.pageId;
+  
+  if (!shop) {
+    return res.redirect('/install');
+  }
+  
+  // OLD - Serve the page builder interface
   res.send(`
     <!DOCTYPE html>
     <html lang="en">

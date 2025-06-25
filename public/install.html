@@ -1,136 +1,567 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Install KingsBuilder</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      background-color: #f6f6f7;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .container {
-      max-width: 600px;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      padding: 40px;
-      text-align: center;
-    }
-    h1 {
-      color: #212b36;
-      margin-top: 0;
-      margin-bottom: 20px;
-    }
-    p {
-      color: #637381;
-      margin-bottom: 30px;
-      line-height: 1.5;
-    }
-    .logo {
-      width: 120px;
-      height: 120px;
-      margin-bottom: 20px;
-    }
-    .install-form {
-      margin-bottom: 30px;
-    }
-    .shop-input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #c4cdd5;
-      border-radius: 4px;
-      font-size: 16px;
-      margin-bottom: 20px;
-      box-sizing: border-box;
-    }
-    .install-button {
-      background-color: #5c6ac4;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 4px;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    .install-button:hover {
-      background-color: #4959bd;
-    }
-    .error {
-      color: #de3618;
-      margin-top: 20px;
-      display: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install KingsBuilder - Premium Shopify Page Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        
+        .install-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            margin-bottom: 30px;
+        }
+        
+        .logo i {
+            font-size: 60px;
+            color: #667eea;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .install-form {
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .install-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+        
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .install-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .features {
+            text-align: left;
+            margin-top: 30px;
+        }
+        
+        .features h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1a1a1a;
+        }
+        
+        .feature-list {
+            list-style: none;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            color: #6b7280;
+        }
+        
+        .feature-list i {
+            color: #10b981;
+            margin-right: 10px;
+            width: 16px;
+        }
+        
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .loading i {
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <img src="https://cdn.shopify.com/s/files/1/0533/2089/files/Shopify_logo_small.png" alt="Shopify Logo" class="logo">
-    <h1>Install KingsBuilder</h1>
-    <p>KingsBuilder is a powerful page builder for your Shopify store. Create beautiful, custom pages without coding.</p>
-    
-    <div class="install-form">
-      <form id="install-form" onsubmit="installApp(event)">
-        <input type="text" id="shop-input" class="shop-input" placeholder="your-store.myshopify.com" required>
-        <button type="submit" class="install-button">Install App</button>
-      </form>
-      <div id="error-message" class="error"></div>
+    <div class="install-container">
+        <div class="logo">
+            <i class="fas fa-crown"></i>
+        </div>
+        
+        <h1>KingsBuilder</h1>
+        <p class="subtitle">
+            Install KingsBuilder to start creating beautiful, high-converting pages for your Shopify store.
+        </p>
+        
+        <form class="install-form" id="installForm">
+            <div class="form-group">
+                <label for="shopDomain">Your Shopify Store Domain</label>
+                <input 
+                    type="text" 
+                    id="shopDomain" 
+                    name="shop" 
+                    placeholder="your-store.myshopify.com"
+                    required
+                >
+            </div>
+            
+            <div class="error" id="errorMessage"></div>
+            
+            <button type="submit" class="install-btn" id="installBtn">
+                <i class="fas fa-download"></i>
+                Install KingsBuilder
+            </button>
+            
+            <div class="loading" id="loading">
+                <i class="fas fa-spinner"></i>
+                Installing KingsBuilder...
+            </div>
+        </form>
+        
+        <div class="features">
+            <h3>What you'll get:</h3>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Drag & Drop Page Builder</li>
+                <li><i class="fas fa-check"></i> Mobile-Responsive Design</li>
+                <li><i class="fas fa-check"></i> Shopify Product Integration</li>
+                <li><i class="fas fa-check"></i> SEO Optimization Tools</li>
+                <li><i class="fas fa-check"></i> Advanced Analytics</li>
+                <li><i class="fas fa-check"></i> Premium Support</li>
+            </ul>
+        </div>
     </div>
-    
-    <p>By installing, you agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
-  </div>
 
-  <script>
-    function installApp(event) {
-      event.preventDefault();
-      
-      const shopInput = document.getElementById('shop-input');
-      const errorMessage = document.getElementById('error-message');
-      let shop = shopInput.value.trim();
-      
-      // Hide any previous error
-      errorMessage.style.display = 'none';
-      
-      // Validate shop format
-      if (!shop) {
-        showError('Please enter your shop domain');
-        return;
-      }
-      
-      // Remove https:// if present
-      if (shop.startsWith('https://')) {
-        shop = shop.substring(8);
-      }
-      
-      // Add .myshopify.com if not present
-      if (!shop.includes('.myshopify.com')) {
-        shop = shop + '.myshopify.com';
-      }
-      
-      // Redirect to the OAuth flow
-      window.location.href = `/api/auth?shop=${shop}`;
-    }
-    
-    function showError(message) {
-      const errorMessage = document.getElementById('error-message');
-      errorMessage.textContent = message;
-      errorMessage.style.display = 'block';
-    }
-    
-    // Check for error parameter in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const error = urlParams.get('error');
-    if (error) {
-      showError(decodeURIComponent(error));
-    }
-  </script>
+    <script>
+        document.getElementById('installForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const shopDomain = document.getElementById('shopDomain').value.trim();
+            const installBtn = document.getElementById('installBtn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Reset error state
+            errorMessage.style.display = 'none';
+            
+            // Validate shop domain
+            if (!shopDomain) {
+                showError('Please enter your shop domain');
+                return;
+            }
+            
+            // Clean up domain (remove protocol, add .myshopify.com if needed)
+            let cleanDomain = shopDomain.replace(/^https?:\/\//, '');
+            if (!cleanDomain.includes('.')) {
+                cleanDomain += '.myshopify.com';
+            }
+            
+            // Show loading state
+            installBtn.style.display = 'none';
+            loading.style.display = 'flex';
+            
+            // Build OAuth URL
+            const authUrl = buildOAuthUrl(cleanDomain);
+            
+            // Redirect to Shopify OAuth
+            setTimeout(() => {
+                window.location.href = authUrl;
+            }, 1000);
+        });
+        
+        function buildOAuthUrl(shop) {
+            const scopes = 'read_products,write_pages,read_themes,write_themes,read_script_tags,write_script_tags';
+            const redirectUri = window.location.origin + '/auth/callback';
+            const apiKey = '128d69fb5441ba3eda3ae4694c71b175'; // Your Shopify API key
+            
+            const params = new URLSearchParams({
+                client_id: apiKey,
+                scope: scopes,
+                redirect_uri: redirectUri,
+                state: Math.random().toString(36).substring(7)
+            });
+            
+            return `https://${shop}/admin/oauth/authorize?${params.toString()}`;
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // Auto-fill shop domain from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopParam = urlParams.get('shop');
+        if (shopParam) {
+            document.getElementById('shopDomain').value = shopParam;
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install KingsBuilder - Premium Shopify Page Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        
+        .install-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            margin-bottom: 30px;
+        }
+        
+        .logo i {
+            font-size: 60px;
+            color: #667eea;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .install-form {
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .install-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+        
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .install-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .features {
+            text-align: left;
+            margin-top: 30px;
+        }
+        
+        .features h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1a1a1a;
+        }
+        
+        .feature-list {
+            list-style: none;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            color: #6b7280;
+        }
+        
+        .feature-list i {
+            color: #10b981;
+            margin-right: 10px;
+            width: 16px;
+        }
+        
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .loading i {
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="install-container">
+        <div class="logo">
+            <i class="fas fa-crown"></i>
+        </div>
+        
+        <h1>KingsBuilder</h1>
+        <p class="subtitle">
+            Install KingsBuilder to start creating beautiful, high-converting pages for your Shopify store.
+        </p>
+        
+        <form class="install-form" id="installForm">
+            <div class="form-group">
+                <label for="shopDomain">Your Shopify Store Domain</label>
+                <input 
+                    type="text" 
+                    id="shopDomain" 
+                    name="shop" 
+                    placeholder="your-store.myshopify.com"
+                    required
+                >
+            </div>
+            
+            <div class="error" id="errorMessage"></div>
+            
+            <button type="submit" class="install-btn" id="installBtn">
+                <i class="fas fa-download"></i>
+                Install KingsBuilder
+            </button>
+            
+            <div class="loading" id="loading">
+                <i class="fas fa-spinner"></i>
+                Installing KingsBuilder...
+            </div>
+        </form>
+        
+        <div class="features">
+            <h3>What you'll get:</h3>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Drag & Drop Page Builder</li>
+                <li><i class="fas fa-check"></i> Mobile-Responsive Design</li>
+                <li><i class="fas fa-check"></i> Shopify Product Integration</li>
+                <li><i class="fas fa-check"></i> SEO Optimization Tools</li>
+                <li><i class="fas fa-check"></i> Advanced Analytics</li>
+                <li><i class="fas fa-check"></i> Premium Support</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('installForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const shopDomain = document.getElementById('shopDomain').value.trim();
+            const installBtn = document.getElementById('installBtn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Reset error state
+            errorMessage.style.display = 'none';
+            
+            // Validate shop domain
+            if (!shopDomain) {
+                showError('Please enter your shop domain');
+                return;
+            }
+            
+            // Clean up domain (remove protocol, add .myshopify.com if needed)
+            let cleanDomain = shopDomain.replace(/^https?:\/\//, '');
+            if (!cleanDomain.includes('.')) {
+                cleanDomain += '.myshopify.com';
+            }
+            
+            // Show loading state
+            installBtn.style.display = 'none';
+            loading.style.display = 'flex';
+            
+            // Build OAuth URL
+            const authUrl = buildOAuthUrl(cleanDomain);
+            
+            // Redirect to Shopify OAuth
+            setTimeout(() => {
+                window.location.href = authUrl;
+            }, 1000);
+        });
+        
+        function buildOAuthUrl(shop) {
+            const scopes = 'read_products,write_pages,read_themes,write_themes,read_script_tags,write_script_tags';
+            const redirectUri = window.location.origin + '/auth/callback';
+            const apiKey = '128d69fb5441ba3eda3ae4694c71b175'; // Your Shopify API key
+            
+            const params = new URLSearchParams({
+                client_id: apiKey,
+                scope: scopes,
+                redirect_uri: redirectUri,
+                state: Math.random().toString(36).substring(7)
+            });
+            
+            return `https://${shop}/admin/oauth/authorize?${params.toString()}`;
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // Auto-fill shop domain from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopParam = urlParams.get('shop');
+        if (shopParam) {
+            document.getElementById('shopDomain').value = shopParam;
+        }
+    </script>
 </body>
 </html>
