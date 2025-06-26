@@ -12,14 +12,19 @@ console.log('SHOPIFY_APP_URL:', process.env.SHOPIFY_APP_URL);
 
 // Add security headers middleware
 app.use((req, res, next) => {
-  // Set security headers for Shopify iframe embedding
+  // Remove X-Frame-Options to avoid conflicts
+  res.removeHeader("X-Frame-Options");
+  
+  // Set CSP headers to allow Shopify iframe embedding
   res.setHeader(
     "Content-Security-Policy",
-    "frame-ancestors 'self' https://*.myshopify.com https://*.shopify.com; script-src 'self' 'unsafe-inline' https://cdn.shopify.com;"
+    "frame-ancestors 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.shopify.com https://cdnjs.cloudflare.com https://unpkg.com; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
+    "connect-src 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; " +
+    "img-src 'self' data: https:; " +
+    "font-src 'self' https://fonts.gstatic.com;"
   );
-  
-  // Allow scripts to run in iframe
-  res.setHeader("X-Frame-Options", "ALLOW-FROM https://*.myshopify.com https://*.shopify.com");
   
   // Add sandbox permissions for iframe
   res.setHeader("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");

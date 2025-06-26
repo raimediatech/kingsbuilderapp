@@ -28,14 +28,19 @@ app.use(cookieParser(process.env.SESSION_SECRET || 'kings-builder-session-secret
 
 // Add security headers middleware for Shopify iframe embedding
 app.use((req, res, next) => {
-  // Set security headers for Shopify iframe embedding
+  // Remove X-Frame-Options completely (it conflicts with CSP frame-ancestors)
+  res.removeHeader('X-Frame-Options');
+  
+  // Set CSP headers to allow Shopify iframe embedding
   res.setHeader(
     "Content-Security-Policy",
-    "frame-ancestors 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.shopify.com https://cdnjs.cloudflare.com https://unpkg.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; connect-src 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com;"
+    "frame-ancestors 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.shopify.com https://cdnjs.cloudflare.com https://unpkg.com https://fonts.googleapis.com; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
+    "connect-src 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; " +
+    "img-src 'self' data: https:; " +
+    "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;"
   );
-  
-  // Set X-Frame-Options to allow Shopify domains
-  res.setHeader('X-Frame-Options', 'ALLOW-FROM https://admin.shopify.com');
   
   // Set Access-Control-Allow headers for cross-origin requests
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -56,8 +61,32 @@ app.get('/test', (req, res) => {
     success: true, 
     message: 'Server is working!',
     env: process.env.NODE_ENV || 'development',
-    time: new Date().toISOString()
+    time: new Date().toISOString(),
+    headers: req.headers
   });
+});
+
+// Test route that can be loaded in iframe
+app.get('/iframe-test', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>KingsBuilder - Iframe Test</title>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0;">
+      <h1>✅ KingsBuilder App is Loading!</h1>
+      <p>If you can see this, the iframe security headers are working correctly.</p>
+      <p><strong>Shop:</strong> ${req.query.shop || 'Not specified'}</p>
+      <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+      <button onclick="window.location.href='/dashboard?shop=${req.query.shop || ''}'">
+        Go to Dashboard
+      </button>
+    </body>
+    </html>
+  `);
 });
 
 // Serve static files from the public directory
@@ -371,38 +400,36 @@ app.get('/app/builder', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/builder.html'));
 });
 
-// Builder route (alternative path)
+// Builder route
 app.get('/builder', (req, res) => {
+  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/builder.html'));
 });
 
 // Dashboard route  
 app.get('/dashboard', (req, res) => {
+  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
 // Additional routes for different access patterns
 app.get('/pages', (req, res) => {
+  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
 app.get('/templates', (req, res) => {
+  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
 app.get('/settings', (req, res) => {
+  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
 app.get('/help', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
-});
-app.get('/builder', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/builder.html'));
-});
-
-// Dashboard route  
-app.get('/dashboard', (req, res) => {
+  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
