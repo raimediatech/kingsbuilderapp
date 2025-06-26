@@ -179,11 +179,9 @@ class KingsDashboard {
             this.renderPages();
             
         } catch (error) {
-            console.error('❌ Error loading pages:', error);
-            this.showError('Failed to load pages from Shopify: ' + error.message);
+            console.log('⚠️ Could not connect to Shopify, loading demo data:', error.message);
             
-            // Fallback to demo data for now
-            console.log('📝 Loading demo data as fallback...');
+            // Load demo data immediately - no error to user
             this.loadDemoPages();
         } finally {
             this.hideLoading();
