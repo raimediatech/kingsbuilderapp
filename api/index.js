@@ -28,10 +28,10 @@ app.use(cookieParser(process.env.SESSION_SECRET || 'kings-builder-session-secret
 
 // REMOVE ALL SECURITY HEADERS - ALLOW IFRAME
 app.use((req, res, next) => {
-  // Delete ALL headers that block iframe
-  delete res.headers['X-Frame-Options'];
-  delete res.headers['Content-Security-Policy'];
-  delete res.headers['X-Content-Type-Options'];
+  // Remove headers that could block iframe
+  res.removeHeader('X-Frame-Options');
+  res.removeHeader('Content-Security-Policy');
+  res.removeHeader('X-Content-Type-Options');
   
   next();
 });
