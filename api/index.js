@@ -40,11 +40,15 @@ app.use((req, res, next) => {
 app.get('/test', (req, res) => {
   res.json({ 
     success: true, 
-    message: 'Server is working!',
+    message: 'Server is working! iframe headers removed',
     env: process.env.NODE_ENV || 'development',
-    time: new Date().toISOString(),
-    headers: req.headers
+    time: new Date().toISOString()
   });
+});
+
+// Super simple HTML test
+app.get('/simple', (req, res) => {
+  res.send('<h1>✅ SERVER WORKS!</h1><p>No iframe blocking headers</p>');
 });
 
 // Test route that can be loaded in iframe
