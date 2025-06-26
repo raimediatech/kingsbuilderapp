@@ -181,8 +181,9 @@ class KingsDashboard {
         } catch (error) {
             console.log('⚠️ Could not connect to Shopify, loading demo data:', error.message);
             
-            // Load demo data immediately - no error to user
-            this.loadDemoPages();
+            // Show empty state - no demo pages
+            this.pages = [];
+            this.renderPages();
         } finally {
             this.hideLoading();
         }
@@ -256,37 +257,30 @@ class KingsDashboard {
         this.renderPages();
     }
     
-    // Connect to Shopify function - user-initiated
+    // Connect to Shopify function - auto-detect shop, no popup
     connectShopify() {
         console.log('🔗 User requested Shopify connection');
         
-        // Get shop domain from user
-        const shopDomain = prompt('Enter your Shopify store domain (e.g., mystore or mystore.myshopify.com):');
+        // Auto-detect shop domain from URL parameters or Shopify context
+        const shopDomain = this.getShopOrigin();
         
         if (!shopDomain) {
-            console.log('❌ User cancelled connection');
+            console.log('❌ Could not auto-detect shop domain');
+            alert('Could not detect your Shopify store. Please make sure you are accessing this app from your Shopify admin.');
             return;
         }
         
-        // Clean up domain
-        let cleanDomain = shopDomain.trim().toLowerCase();
-        cleanDomain = cleanDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-        
-        if (!cleanDomain.includes('.')) {
-            cleanDomain += '.myshopify.com';
-        }
-        
-        console.log('🚀 Connecting to shop:', cleanDomain);
+        console.log('🚀 Auto-detected shop:', shopDomain);
         
         // Show loading state
-        const connectBtn = document.querySelector('.connection-banner .btn');
+        const connectBtn = document.querySelector('.empty-state .btn') || document.querySelector('.connection-banner .btn');
         if (connectBtn) {
             connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
             connectBtn.disabled = true;
         }
         
-        // Start OAuth flow
-        this.startShopifyAuth(cleanDomain);
+        // Start OAuth flow directly - no popup, just redirect to permission screen
+        this.startShopifyAuth(shopDomain);
     }
     
     startShopifyAuth(shopDomain) {
@@ -339,13 +333,13 @@ class KingsDashboard {
             pagesGrid.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">
-                        <i class="fas fa-file-plus"></i>
+                        <i class="fab fa-shopify"></i>
                     </div>
-                    <h3>No Pages Found</h3>
-                    <p>Create your first page with KingsBuilder or check if you have pages in your Shopify store</p>
-                    <button class="btn btn-primary" onclick="dashboard.showCreatePageModal()">
-                        <i class="fas fa-plus"></i>
-                        Create New Page
+                    <h3>Connect Your Shopify Store</h3>
+                    <p>Grant KingsBuilder permission to access your store pages. We'll automatically detect your store - no setup required.</p>
+                    <button class="btn btn-primary" onclick="dashboard.connectShopify()">
+                        <i class="fas fa-link"></i>
+                        Grant Permission
                     </button>
                 </div>
             `;
