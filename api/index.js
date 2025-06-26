@@ -26,31 +26,12 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser(process.env.SESSION_SECRET || 'kings-builder-session-secret'));
 
-// Add security headers middleware for Shopify iframe embedding
+// REMOVE ALL SECURITY HEADERS - ALLOW IFRAME
 app.use((req, res, next) => {
-  // Remove X-Frame-Options completely (it conflicts with CSP frame-ancestors)
-  res.removeHeader('X-Frame-Options');
-  
-  // Set CSP headers to allow Shopify iframe embedding
-  res.setHeader(
-    "Content-Security-Policy",
-    "frame-ancestors 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.shopify.com https://cdnjs.cloudflare.com https://unpkg.com https://fonts.googleapis.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
-    "connect-src 'self' https://*.myshopify.com https://*.shopify.com https://admin.shopify.com; " +
-    "img-src 'self' data: https:; " +
-    "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;"
-  );
-  
-  // Set Access-Control-Allow headers for cross-origin requests
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-email, x-shopify-shop-domain, Authorization, X-Shopify-Access-Token, X-Shopify-Shop-Domain');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  // Delete ALL headers that block iframe
+  delete res.headers['X-Frame-Options'];
+  delete res.headers['Content-Security-Policy'];
+  delete res.headers['X-Content-Type-Options'];
   
   next();
 });
@@ -402,34 +383,28 @@ app.get('/app/builder', (req, res) => {
 
 // Builder route
 app.get('/builder', (req, res) => {
-  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/builder.html'));
 });
 
 // Dashboard route  
 app.get('/dashboard', (req, res) => {
-  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
 // Additional routes for different access patterns
 app.get('/pages', (req, res) => {
-  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
 app.get('/templates', (req, res) => {
-  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
 app.get('/settings', (req, res) => {
-  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
 app.get('/help', (req, res) => {
-  res.removeHeader('X-Frame-Options');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
