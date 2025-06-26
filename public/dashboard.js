@@ -142,16 +142,13 @@ class KingsDashboard {
             // Get shop from URL or detect it
             const shop = this.getShopOrigin();
             
-            // Fetch real pages from Shopify API
-            const accessToken = localStorage.getItem('shopify_access_token');
+            // Fetch real pages from Shopify API (server handles authentication via cookies)
             const response = await fetch(`/api/shopify/pages?shop=${shop}`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-Shopify-Access-Token': accessToken,
-                    'X-Shopify-Shop-Domain': shop
+                    'Content-Type': 'application/json'
                 },
-                credentials: 'include' // Include cookies for auth
+                credentials: 'include' // Include cookies with access token
             });
             
             if (!response.ok) {
@@ -263,7 +260,7 @@ class KingsDashboard {
         this.renderPages();
     }
     
-    // Connect to Shopify function - use App Bridge for permission
+    // Connect to Shopify function - automatic OAuth flow
     connectShopify() {
         console.log('🔗 User requested Shopify connection');
         
@@ -276,7 +273,7 @@ class KingsDashboard {
             return;
         }
         
-        console.log('🚀 Auto-detected shop:', shopDomain);
+        console.log('🚀 Starting OAuth flow for shop:', shopDomain);
         
         // Show loading state
         const connectBtn = document.querySelector('.empty-state .btn') || document.querySelector('.connection-banner .btn');
@@ -285,120 +282,41 @@ class KingsDashboard {
             connectBtn.disabled = true;
         }
         
-        // Request access token from user for real API access
-        this.requestShopifyCredentials(shopDomain);
+        // Redirect to OAuth install flow (like all other Shopify apps)
+        window.location.href = `/install?shop=${shopDomain}`;
     }
     
-    requestShopifyCredentials(shopDomain) {
-        // Show a modal asking for Shopify access token
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.7); z-index: 10000; display: flex; 
-            align-items: center; justify-content: center;
-        `;
-        
-        modal.innerHTML = `
-            <div style="background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%;">
-                <h3>🔐 Connect to Your Shopify Store</h3>
-                <p>To fetch your real Shopify pages, I need your store's access token.</p>
-                <p><strong>Store:</strong> ${shopDomain}</p>
-                
-                <div style="margin: 20px 0;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">
-                        Shopify Access Token:
-                    </label>
-                    <input type="password" id="accessTokenInput" placeholder="Enter your Shopify private app access token" 
-                           style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                </div>
-                
-                <div style="margin-top: 20px;">
-                    <p style="font-size: 12px; color: #666;">
-                        <strong>How to get your access token:</strong><br>
-                        1. Go to your Shopify admin → Settings → Apps and sales channels<br>
-                        2. Click "Develop apps" → Create a private app<br>
-                        3. Add "read_content" permission and get the access token
-                    </p>
-                </div>
-                
-                <div style="margin-top: 20px; text-align: right;">
-                    <button onclick="this.closeModal()" style="margin-right: 10px; padding: 10px 20px; background: #f1f1f1; border: none; border-radius: 4px; cursor: pointer;">
-                        Cancel
-                    </button>
-                    <button onclick="this.saveCredentials()" style="padding: 10px 20px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        Connect Store
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        // Add modal functions
-        modal.closeModal = () => {
-            document.body.removeChild(modal);
-            const connectBtn = document.querySelector('.empty-state .btn');
-            if (connectBtn) {
-                connectBtn.innerHTML = '<i class="fas fa-link"></i> Grant Permission';
-                connectBtn.disabled = false;
-            }
-        };
-        
-        modal.saveCredentials = () => {
-            const accessToken = document.getElementById('accessTokenInput').value.trim();
-            if (!accessToken) {
-                alert('Please enter your access token');
-                return;
-            }
-            
-            // Store credentials
-            localStorage.setItem('kingsbuilder_shop_domain', shopDomain);
-            localStorage.setItem('shopify_access_token', accessToken);
-            localStorage.setItem('connection_status', 'connected');
-            
-            console.log('✅ Credentials saved for:', shopDomain);
-            
-            // Close modal
-            document.body.removeChild(modal);
-            
-            // Show success and reload pages
-            const connectBtn = document.querySelector('.empty-state .btn');
-            if (connectBtn) {
-                connectBtn.innerHTML = '<i class="fas fa-check"></i> Connected!';
-                connectBtn.style.background = '#28a745';
-                connectBtn.disabled = true;
-            }
-            
-            setTimeout(() => {
-                this.loadPages();
-                this.updateConnectionStatus();
-            }, 1000);
-        };
-        
-        document.body.appendChild(modal);
-        
-        // Focus on input
-        setTimeout(() => {
-            document.getElementById('accessTokenInput').focus();
-        }, 100);
-    }
+
     
-    updateConnectionStatus() {
+    async updateConnectionStatus() {
         const statusElement = document.getElementById('connectionStatus');
         const iconElement = document.getElementById('statusIcon');
         const textElement = document.getElementById('statusText');
         
         if (!statusElement) return;
         
-        const isConnected = localStorage.getItem('shopify_access_token');
-        const shopDomain = localStorage.getItem('kingsbuilder_shop_domain');
-        
-        if (isConnected && shopDomain) {
-            statusElement.className = 'connection-status connected';
-            iconElement.className = 'fas fa-circle';
-            textElement.textContent = `Connected to ${shopDomain}`;
-        } else {
+        try {
+            // Check server-side authentication status
+            const response = await fetch('/api/health', {
+                credentials: 'include'
+            });
+            
+            const shopParam = new URLSearchParams(window.location.search).get('shop');
+            const shopDomain = shopParam || this.getShopOrigin();
+            
+            if (response.ok && shopDomain) {
+                statusElement.className = 'connection-status connected';
+                iconElement.className = 'fas fa-circle';
+                textElement.textContent = `Connected to ${shopDomain}`;
+            } else {
+                statusElement.className = 'connection-status disconnected';
+                iconElement.className = 'fas fa-circle';
+                textElement.textContent = 'Not Connected';
+            }
+        } catch (error) {
             statusElement.className = 'connection-status disconnected';
             iconElement.className = 'fas fa-circle';
-            textElement.textContent = 'Not Connected';
+            textElement.textContent = 'Connection Error';
         }
     }
     
@@ -426,39 +344,20 @@ class KingsDashboard {
         const showConnectionBanner = !hasShopifyConnection && hasDemoPages;
         
         if (this.pages.length === 0) {
-            const isConnected = localStorage.getItem('shopify_access_token');
-            
-            if (isConnected) {
-                // Connected but no pages found
-                pagesGrid.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <i class="fas fa-file-plus"></i>
-                        </div>
-                        <h3>No Pages Found</h3>
-                        <p>Your Shopify store is connected! Create your first page with KingsBuilder or check if you have existing pages.</p>
-                        <button class="btn btn-primary" onclick="dashboard.showCreatePageModal()">
-                            <i class="fas fa-plus"></i>
-                            Create New Page
-                        </button>
+            // Always show connection screen for empty state
+            pagesGrid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fab fa-shopify"></i>
                     </div>
-                `;
-            } else {
-                // Not connected
-                pagesGrid.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <i class="fab fa-shopify"></i>
-                        </div>
-                        <h3>Connect Your Shopify Store</h3>
-                        <p>Grant KingsBuilder permission to access your store pages. We'll automatically detect your store - no setup required.</p>
-                        <button class="btn btn-primary" onclick="dashboard.connectShopify()">
-                            <i class="fas fa-link"></i>
-                            Grant Permission
-                        </button>
-                    </div>
-                `;
-            }
+                    <h3>Connect Your Shopify Store</h3>
+                    <p>Click to authorize KingsBuilder to access your store pages. This works just like any other Shopify app - simple and automatic!</p>
+                    <button class="btn btn-primary" onclick="dashboard.connectShopify()">
+                        <i class="fas fa-link"></i>
+                        Install & Connect
+                    </button>
+                </div>
+            `;
             return;
         }
         

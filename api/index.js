@@ -259,13 +259,99 @@ app.get('/api/shopify/shop', async (req, res) => {
   }
 });
 
+// Shopify OAuth install endpoint
+app.get('/install', (req, res) => {
+  const shop = req.query.shop;
+  
+  if (!shop) {
+    return res.status(400).send('Missing shop parameter');
+  }
+  
+  const shopDomain = shop.includes('.') ? shop : `${shop}.myshopify.com`;
+  
+  // Store shop in session
+  res.cookie('shopOrigin', shopDomain, { httpOnly: true, secure: false });
+  
+  // Build OAuth URL
+  const clientId = process.env.SHOPIFY_API_KEY || 'your-client-id';
+  const scopes = 'read_content,write_content,read_products,write_products';
+  const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/auth/callback`);
+  const state = Math.random().toString(36).substring(2, 15);
+  
+  res.cookie('oauth_state', state, { httpOnly: true, secure: false });
+  
+  const oauthUrl = `https://${shopDomain}/admin/oauth/authorize?` +
+    `client_id=${clientId}&` +
+    `scope=${scopes}&` +
+    `redirect_uri=${redirectUri}&` +
+    `state=${state}`;
+  
+  console.log('🔗 Redirecting to Shopify OAuth:', oauthUrl);
+  res.redirect(oauthUrl);
+});
+
+// Shopify OAuth callback endpoint
+app.get('/auth/callback', async (req, res) => {
+  try {
+    const { code, state, shop } = req.query;
+    const storedState = req.cookies?.oauth_state;
+    const shopOrigin = req.cookies?.shopOrigin || shop;
+    
+    if (!code || !state || state !== storedState) {
+      return res.status(400).send('Invalid OAuth callback');
+    }
+    
+    // Exchange code for access token
+    const clientId = process.env.SHOPIFY_API_KEY || 'your-client-id';
+    const clientSecret = process.env.SHOPIFY_API_SECRET || 'your-client-secret';
+    
+    const tokenResponse = await fetch(`https://${shopOrigin}/admin/oauth/access_token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: code
+      })
+    });
+    
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to get access token');
+    }
+    
+    const tokenData = await tokenResponse.json();
+    
+    // Store access token and shop info
+    res.cookie('accessToken', tokenData.access_token, { httpOnly: true, secure: false });
+    res.cookie('shopOrigin', shopOrigin, { httpOnly: true, secure: false });
+    
+    console.log('✅ OAuth successful for shop:', shopOrigin);
+    
+    // Redirect to dashboard
+    res.redirect(`/dashboard?shop=${shopOrigin}`);
+    
+  } catch (error) {
+    console.error('❌ OAuth callback error:', error);
+    res.status(500).send('OAuth authentication failed');
+  }
+});
+
 // App route for Shopify admin
 app.get('/app', (req, res) => {
   const shop = req.query.shop || req.cookies?.shopOrigin;
   
   if (shop) {
-    // Redirect to dashboard with shop parameter
-    res.redirect('/dashboard?shop=' + shop);
+    // Check if we have access token
+    const accessToken = req.cookies?.accessToken;
+    if (accessToken) {
+      // Already authenticated, go to dashboard
+      res.redirect('/dashboard?shop=' + shop);
+    } else {
+      // Need to authenticate
+      res.redirect('/install?shop=' + shop);
+    }
   } else {
     // If no shop parameter, redirect to install
     res.redirect('/install');
