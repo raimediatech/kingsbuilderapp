@@ -256,7 +256,66 @@ class KingsDashboard {
         this.renderPages();
     }
     
-    // showAuthRequired function removed - we now load demo data by default
+    // Connect to Shopify function - user-initiated
+    connectShopify() {
+        console.log('🔗 User requested Shopify connection');
+        
+        // Get shop domain from user
+        const shopDomain = prompt('Enter your Shopify store domain (e.g., mystore or mystore.myshopify.com):');
+        
+        if (!shopDomain) {
+            console.log('❌ User cancelled connection');
+            return;
+        }
+        
+        // Clean up domain
+        let cleanDomain = shopDomain.trim().toLowerCase();
+        cleanDomain = cleanDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        
+        if (!cleanDomain.includes('.')) {
+            cleanDomain += '.myshopify.com';
+        }
+        
+        console.log('🚀 Connecting to shop:', cleanDomain);
+        
+        // Show loading state
+        const connectBtn = document.querySelector('.connection-banner .btn');
+        if (connectBtn) {
+            connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+            connectBtn.disabled = true;
+        }
+        
+        // Start OAuth flow
+        this.startShopifyAuth(cleanDomain);
+    }
+    
+    startShopifyAuth(shopDomain) {
+        // Store shop domain
+        localStorage.setItem('kingsbuilder_shop_domain', shopDomain);
+        
+        // Build OAuth URL
+        const clientId = 'kingsbuilder-app'; // Your app's client ID
+        const scopes = 'read_content,write_content';
+        const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
+        const state = this.generateRandomState();
+        
+        localStorage.setItem('oauth_state', state);
+        
+        const oauthUrl = `https://${shopDomain}/admin/oauth/authorize?` +
+            `client_id=${clientId}&` +
+            `scope=${scopes}&` +
+            `redirect_uri=${redirectUri}&` +
+            `state=${state}&` +
+            `response_type=code`;
+        
+        console.log('🔗 Redirecting to Shopify OAuth');
+        window.location.href = oauthUrl;
+    }
+    
+    generateRandomState() {
+        return Math.random().toString(36).substring(2, 15) + 
+               Math.random().toString(36).substring(2, 15);
+    }
     
     formatDate(dateString) {
         try {
@@ -270,6 +329,11 @@ class KingsDashboard {
     renderPages() {
         const pagesGrid = document.getElementById('pagesGrid');
         if (!pagesGrid) return;
+        
+        // Check if we're showing demo data and add connection banner
+        const hasShopifyConnection = localStorage.getItem('shopify_access_token');
+        const hasDemoPages = this.pages.some(p => p.isDemo);
+        const showConnectionBanner = !hasShopifyConnection && hasDemoPages;
         
         if (this.pages.length === 0) {
             pagesGrid.innerHTML = `
@@ -287,6 +351,25 @@ class KingsDashboard {
             `;
             return;
         }
+        
+        // Connection banner HTML
+        const connectionBanner = showConnectionBanner ? `
+            <div class="connection-banner">
+                <div class="banner-content">
+                    <div class="banner-icon">
+                        <i class="fab fa-shopify"></i>
+                    </div>
+                    <div class="banner-text">
+                        <h4>📋 You're viewing demo pages</h4>
+                        <p>Connect your Shopify store to manage your real pages and unlock all features.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="dashboard.connectShopify()">
+                        <i class="fas fa-link"></i>
+                        Connect Shopify Store
+                    </button>
+                </div>
+            </div>
+        ` : '';
         
         const pagesHTML = this.pages.map(page => {
             const pageType = page.isShopifyPage ? 'shopify' : page.isKingsBuilderPage ? 'kingsbuilder' : 'demo';
@@ -334,7 +417,7 @@ class KingsDashboard {
             `;
         }).join('');
         
-        pagesGrid.innerHTML = pagesHTML;
+        pagesGrid.innerHTML = connectionBanner + pagesHTML;
         
         // Add summary stats
         this.updatePageStats();
@@ -533,8 +616,8 @@ class KingsDashboard {
     
     showError(message) {
         console.error('Dashboard Error:', message);
-        // You could show a toast notification here
-        alert(message);
+        // Don't show alerts to users - just log for debugging
+        // Could add a toast notification here instead
     }
     
     delay(ms) {
