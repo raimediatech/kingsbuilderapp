@@ -143,10 +143,13 @@ class KingsDashboard {
             const shop = this.getShopOrigin();
             
             // Fetch real pages from Shopify API
+            const accessToken = localStorage.getItem('shopify_access_token');
             const response = await fetch(`/api/shopify/pages?shop=${shop}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Shopify-Access-Token': accessToken,
+                    'X-Shopify-Shop-Domain': shop
                 },
                 credentials: 'include' // Include cookies for auth
             });
@@ -282,32 +285,100 @@ class KingsDashboard {
             connectBtn.disabled = true;
         }
         
-        // Since we're in Shopify admin, simulate successful connection
-        // In a real app, this would be handled by the Shopify App Bridge
-        this.simulateSuccessfulConnection(shopDomain);
+        // Request access token from user for real API access
+        this.requestShopifyCredentials(shopDomain);
     }
     
-    simulateSuccessfulConnection(shopDomain) {
-        // Store connection info
-        localStorage.setItem('kingsbuilder_shop_domain', shopDomain);
-        localStorage.setItem('shopify_access_token', 'demo_token_' + Date.now());
-        localStorage.setItem('connection_status', 'connected');
+    requestShopifyCredentials(shopDomain) {
+        // Show a modal asking for Shopify access token
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.7); z-index: 10000; display: flex; 
+            align-items: center; justify-content: center;
+        `;
         
-        console.log('✅ Simulated successful connection to:', shopDomain);
+        modal.innerHTML = `
+            <div style="background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%;">
+                <h3>🔐 Connect to Your Shopify Store</h3>
+                <p>To fetch your real Shopify pages, I need your store's access token.</p>
+                <p><strong>Store:</strong> ${shopDomain}</p>
+                
+                <div style="margin: 20px 0;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                        Shopify Access Token:
+                    </label>
+                    <input type="password" id="accessTokenInput" placeholder="Enter your Shopify private app access token" 
+                           style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <p style="font-size: 12px; color: #666;">
+                        <strong>How to get your access token:</strong><br>
+                        1. Go to your Shopify admin → Settings → Apps and sales channels<br>
+                        2. Click "Develop apps" → Create a private app<br>
+                        3. Add "read_content" permission and get the access token
+                    </p>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <button onclick="this.closeModal()" style="margin-right: 10px; padding: 10px 20px; background: #f1f1f1; border: none; border-radius: 4px; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button onclick="this.saveCredentials()" style="padding: 10px 20px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Connect Store
+                    </button>
+                </div>
+            </div>
+        `;
         
-        // Show success message
-        const connectBtn = document.querySelector('.empty-state .btn') || document.querySelector('.connection-banner .btn');
-        if (connectBtn) {
-            connectBtn.innerHTML = '<i class="fas fa-check"></i> Connected!';
-            connectBtn.style.background = '#28a745';
-            connectBtn.disabled = true;
-        }
+        // Add modal functions
+        modal.closeModal = () => {
+            document.body.removeChild(modal);
+            const connectBtn = document.querySelector('.empty-state .btn');
+            if (connectBtn) {
+                connectBtn.innerHTML = '<i class="fas fa-link"></i> Grant Permission';
+                connectBtn.disabled = false;
+            }
+        };
         
-        // Wait a moment then reload pages
+        modal.saveCredentials = () => {
+            const accessToken = document.getElementById('accessTokenInput').value.trim();
+            if (!accessToken) {
+                alert('Please enter your access token');
+                return;
+            }
+            
+            // Store credentials
+            localStorage.setItem('kingsbuilder_shop_domain', shopDomain);
+            localStorage.setItem('shopify_access_token', accessToken);
+            localStorage.setItem('connection_status', 'connected');
+            
+            console.log('✅ Credentials saved for:', shopDomain);
+            
+            // Close modal
+            document.body.removeChild(modal);
+            
+            // Show success and reload pages
+            const connectBtn = document.querySelector('.empty-state .btn');
+            if (connectBtn) {
+                connectBtn.innerHTML = '<i class="fas fa-check"></i> Connected!';
+                connectBtn.style.background = '#28a745';
+                connectBtn.disabled = true;
+            }
+            
+            setTimeout(() => {
+                this.loadPages();
+                this.updateConnectionStatus();
+            }, 1000);
+        };
+        
+        document.body.appendChild(modal);
+        
+        // Focus on input
         setTimeout(() => {
-            this.loadPages();
-            this.updateConnectionStatus();
-        }, 1000);
+            document.getElementById('accessTokenInput').focus();
+        }, 100);
     }
     
     updateConnectionStatus() {
