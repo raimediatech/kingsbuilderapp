@@ -107,7 +107,7 @@ app.get('/', (req, res) => {
   
   if (shop) {
     // FORCE PARENT WINDOW OAUTH
-    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=placeholder&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
     
     res.send(`
       <!DOCTYPE html>
@@ -158,7 +158,7 @@ app.get('/install', (req, res) => {
     return;
   }
   
-  const authUrl = `https://${shop}/admin/oauth/authorize?client_id=placeholder&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+  const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
   
   res.send(`
     <!DOCTYPE html>
