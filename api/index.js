@@ -111,11 +111,15 @@ app.get('/', (req, res) => {
     const accessToken = req.cookies?.accessToken;
     const cookieShop = req.cookies?.shopOrigin;
     
+    console.log('🔍 Root route check:', { shop, cookieShop, hasToken: !!accessToken });
+    
     if (accessToken && cookieShop === shop) {
       // User is authenticated - redirect to dashboard EMBEDDED
+      console.log('✅ User authenticated, redirecting to dashboard');
       return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
     } else {
       // Need OAuth - break out of iframe first
+      console.log('🔐 Starting OAuth flow for shop:', shop);
       const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
       
       res.send(`
@@ -207,28 +211,8 @@ app.get('/auth/callback', async (req, res) => {
       
       console.log(`✅ OAuth successful for ${shop}`);
       
-      // STAY EMBEDDED - redirect back to Shopify admin with session token
-      res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <script src="https://unpkg.com/@shopify/app-bridge@3.7.9/umd/index.js"></script>
-        </head>
-        <body>
-          <script>
-            const shopOrigin = "${shop}";
-            const redirectUri = "https://admin.shopify.com/store/" + shopOrigin.replace('.myshopify.com', '') + "/apps/kingsbuilder";
-            
-            // Store tokens in sessionStorage for the embedded app
-            sessionStorage.setItem('shopOrigin', shopOrigin);
-            sessionStorage.setItem('accessToken', '${tokenData.access_token}');
-            
-            // Redirect back to embedded app
-            window.top.location.href = redirectUri;
-          </script>
-        </body>
-        </html>
-      `);
+      // Redirect back to dashboard with token as query parameter (temporary fix)
+      res.redirect(`/dashboard?shop=${shop}&access_token=${tokenData.access_token}&embedded=1`);
     } else {
       throw new Error('Failed to get access token');
     }
@@ -560,10 +544,30 @@ app.get('/builder', (req, res) => {
 app.get('/dashboard', (req, res) => {
   const shop = req.query.shop;
   const embedded = req.query.embedded;
+  const access_token = req.query.access_token;
   
   // For embedded apps, check if we have shop parameter
   if (embedded === '1' && !shop) {
     return res.status(400).send('Missing shop parameter for embedded app');
+  }
+  
+  // If we have an access token in the URL, store it in cookies
+  if (access_token && shop) {
+    res.cookie('shopOrigin', shop, { 
+      maxAge: 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
+    });
+    res.cookie('accessToken', access_token, { 
+      maxAge: 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
+    });
+    
+    // Redirect without the access token in the URL for security
+    return res.redirect(`/dashboard?shop=${shop}&embedded=1`);
   }
   
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
