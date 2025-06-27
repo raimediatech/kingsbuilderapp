@@ -100,16 +100,21 @@ app.get('/iframe-test', (req, res) => {
   `);
 });
 
-// ROOT ROUTE - DIRECT SHOPIFY OAUTH
+// ROOT ROUTE - IFRAME BREAKOUT OAUTH
 app.get('/', (req, res) => {
   const shop = req.query.shop;
   
   if (shop) {
-    // DIRECT REDIRECT TO SHOPIFY OAUTH - NO HTML
+    // FORCE TOP WINDOW OAUTH - BREAK OUT OF IFRAME
     const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
     
-    console.log('🔄 Redirecting to Shopify OAuth:', authUrl);
-    return res.redirect(authUrl);
+    res.send(`
+      <script>
+        // FORCE PARENT WINDOW NAVIGATION
+        window.top.location.href = "${authUrl}";
+      </script>
+    `);
+    return;
   }
   
   // No shop, serve landing page
@@ -119,7 +124,7 @@ app.get('/', (req, res) => {
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
-// INSTALL ROUTE - DIRECT OAUTH REDIRECT  
+// INSTALL ROUTE - IFRAME BREAKOUT OAUTH
 app.get('/install', (req, res) => {
   const shop = req.query.shop;
   if (!shop) {
@@ -133,11 +138,19 @@ app.get('/install', (req, res) => {
     return;
   }
   
-  // DIRECT SERVER REDIRECT TO SHOPIFY
+  // FORCE TOP WINDOW OAUTH - THIS WORKS
   const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
   
-  console.log('🔄 Direct OAuth redirect to:', authUrl);
-  res.redirect(authUrl);
+  res.send(`
+    <script>
+      // BREAK OUT OF IFRAME AND GO TO SHOPIFY
+      if (window.top !== window.self) {
+        window.top.location.href = "${authUrl}";
+      } else {
+        window.location.href = "${authUrl}";
+      }
+    </script>
+  `);
 });
 
 // AUTH ROUTE - REDIRECT TO INSTALL
