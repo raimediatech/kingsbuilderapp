@@ -120,7 +120,7 @@ app.get('/', (req, res) => {
     } else {
       // Need OAuth - break out of iframe first
       console.log('🔐 Starting OAuth flow for shop:', shop);
-      const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+      const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products,read_pages,write_pages,read_pages,write_pages&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
       
       res.send(`
         <script>
@@ -265,12 +265,22 @@ app.get('/api/shopify/pages', async (req, res) => {
     console.log('📄 Fetching pages from Shopify for shop:', shop);
     
     // Fetch pages from Shopify API
-    const response = await fetch(`https://${shop}/admin/api/2023-10/pages.json`, {
+    const apiUrl = apiUrl = `https://${shop}/admin/api/2023-10/pages.json`;
+    console.log('📡 Making API request to:', apiUrl);
+    
+    const response = await fetch(apiUrl;
+    console.log('📡 Making API request to:', apiUrl);
+    
+    const ch(apiUrl, {
       headers: {
         'X-Shopify-Access-Token': accessToken,
         'Content-Type': 'application/json'
       }
     });
+    
+    console.log('📡 API Response Status:', response.status, response.statusText);
+    
+    console.log('📡 API Response Status:', response.status, response.statusText);
     
     if (!response.ok) {
       throw new Error(`Shopify API error: ${response.status} ${response.statusText}`);
