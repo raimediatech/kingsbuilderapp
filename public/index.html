@@ -13,6 +13,15 @@
       // This is a Shopify request - redirect to root which will handle authentication
       window.location.href = "/" + window.location.search;
     }
+    
+    // Function to install app for any Shopify store
+    function installApp() {
+      const shop = prompt('Enter your Shopify store domain (without .myshopify.com):');
+      if (shop && shop.trim()) {
+        const cleanShop = shop.trim().toLowerCase().replace('.myshopify.com', '');
+        window.location.href = `/install?shop=${cleanShop}.myshopify.com`;
+      }
+    }
   </script>
   <style>
     :root {
@@ -807,7 +816,7 @@
           <li class="pricing-feature"><span class="feature-check">✓</span> Basic templates</li>
           <li class="pricing-feature"><span class="feature-check">✓</span> Email support</li>
         </ul>
-        <a href="/install?shop=kingsbuilder.myshopify.com" class="button">Install & Connect</a>
+        <a href="#" class="button" onclick="installApp()">Install & Connect</a>
       </div>
       
       <div class="pricing-card popular">
@@ -821,7 +830,7 @@
           <li class="pricing-feature"><span class="feature-check">✓</span> Priority support</li>
           <li class="pricing-feature"><span class="feature-check">✓</span> Advanced analytics</li>
         </ul>
-        <a href="/install?shop=kingsbuilder.myshopify.com" class="button">Install & Connect</a>
+        <a href="#" class="button" onclick="installApp()">Install & Connect</a>
       </div>
       
       <div class="pricing-card">
@@ -835,7 +844,7 @@
           <li class="pricing-feature"><span class="feature-check">✓</span> Advanced analytics &amp; reporting</li>
           <li class="pricing-feature"><span class="feature-check">✓</span> Custom integrations</li>
         </ul>
-        <a href="/install?shop=kingsbuilder.myshopify.com" class="button">Install & Connect</a>
+        <a href="#" class="button" onclick="installApp()">Install & Connect</a>
       </div>
     </div>
   </section>
