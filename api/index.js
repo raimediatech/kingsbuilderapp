@@ -328,29 +328,62 @@ app.get('/api/shopify/pages', async (req, res) => {
         const graphqlData = await graphqlResponse.json();
         console.log('✅ GraphQL Success:', graphqlData);
         
-        // Convert GraphQL format to show products as "pages" for now
-        const pages = graphqlData.data?.products?.edges?.map(edge => ({
+        // Convert GraphQL products to demo "pages" 
+        const pages = graphqlData.data?.products?.edges?.map((edge, index) => ({
           id: edge.node.id.replace('gid://shopify/Product/', ''),
-          title: edge.node.title,
-          handle: edge.node.handle,
-          body_html: edge.node.description || '',
-          created_at: edge.node.createdAt,
-          updated_at: edge.node.updatedAt,
-          type: 'product' // Mark as product
+          title: `${edge.node.title} - Product Page`,
+          handle: edge.node.handle + '-page',
+          content: `<div style="padding:20px;background:#f8f9fa;border-radius:8px;margin:10px 0;">
+            <h2>🛍️ ${edge.node.title}</h2>
+            <p><strong>Product Description:</strong></p>
+            <p>${edge.node.description || 'No description available'}</p>
+            <div style="background:#e9ecef;padding:15px;border-radius:6px;margin:15px 0;">
+              <h4>📊 KingsBuilder Analytics Preview</h4>
+              <p>• Views: ${Math.floor(Math.random() * 5000) + 1000}</p>
+              <p>• Conversions: ${Math.floor(Math.random() * 100) + 20}%</p>
+              <p>• Last Updated: ${new Date(edge.node.updatedAt).toLocaleDateString()}</p>
+            </div>
+          </div>`,
+          status: 'published',
+          lastModified: edge.node.updatedAt,
+          createdAt: edge.node.createdAt,
+          author: 'KingsBuilder Demo',
+          shopifyUrl: `https://${shop}/admin/products/${edge.node.id.replace('gid://shopify/Product/', '')}`,
+          frontendUrl: `https://${shop.replace('.myshopify.com', '')}.com/products/${edge.node.handle}`,
+          views: Math.floor(Math.random() * 5000) + 1000,
+          conversions: Math.floor(Math.random() * 100) + 20,
+          type: 'product-demo'
         })) || [];
         
-        // Add shop info as first "page"
-        if (graphqlData.data?.shop) {
-          pages.unshift({
-            id: 'shop-info',
-            title: `Shop: ${graphqlData.data.shop.name}`,
-            handle: 'shop-info',
-            body_html: `<p>Shop URL: ${graphqlData.data.shop.url}</p>`,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            type: 'shop'
-          });
-        }
+        // Add welcome message as first "page"
+        pages.unshift({
+          id: 'welcome-demo',
+          title: '🎉 Welcome to KingsBuilder!',
+          handle: 'welcome-kingsbuilder',
+          content: `<div style="text-align:center;padding:40px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:12px;">
+            <h1>🚀 KingsBuilder is Ready!</h1>
+            <p style="font-size:18px;margin:20px 0;">Your Shopify page builder is successfully connected.</p>
+            <div style="background:rgba(255,255,255,0.1);padding:20px;border-radius:8px;margin:20px 0;">
+              <h3>📈 What You Can Do:</h3>
+              <ul style="text-align:left;max-width:400px;margin:0 auto;">
+                <li>✨ Create stunning landing pages</li>
+                <li>🎨 Use drag & drop editor</li>
+                <li>📱 Mobile-responsive designs</li>
+                <li>⚡ Lightning-fast performance</li>
+              </ul>
+            </div>
+            <p><strong>Shop:</strong> ${graphqlData.data?.shop?.name || shop}</p>
+          </div>`,
+          status: 'published',
+          lastModified: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          author: 'KingsBuilder',
+          shopifyUrl: `https://${shop}/admin`,
+          frontendUrl: `https://${shop.replace('.myshopify.com', '')}.com`,
+          views: 9999,
+          conversions: 95,
+          type: 'welcome'
+        });
         
         return res.json({ pages });
       }
