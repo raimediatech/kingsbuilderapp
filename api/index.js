@@ -100,14 +100,41 @@ app.get('/iframe-test', (req, res) => {
   `);
 });
 
-// ROOT ROUTE - INSTANT OAUTH FIX
+// ROOT ROUTE - AGGRESSIVE IFRAME BREAKOUT
 app.get('/', (req, res) => {
   const shop = req.query.shop;
   const embedded = req.query.embedded;
   
   if (shop) {
-    // ALWAYS start with OAuth for new installations
-    return res.redirect(`/auth?shop=${shop}`);
+    // FORCE PARENT WINDOW OAUTH
+    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=placeholder&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+    
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head><title>Installing KingsBuilder...</title></head>
+      <body>
+        <h2>Installing KingsBuilder App...</h2>
+        <p>Redirecting to Shopify authorization...</p>
+        <script>
+          // FORCE PARENT WINDOW REDIRECT
+          function redirectToAuth() {
+            var authUrl = "${authUrl}";
+            if (window.top && window.top !== window) {
+              window.top.location.href = authUrl;
+            } else {
+              window.location.href = authUrl;
+            }
+          }
+          
+          // Try immediately and with delay
+          redirectToAuth();
+          setTimeout(redirectToAuth, 100);
+        </script>
+      </body>
+      </html>
+    `);
+    return;
   }
   
   // No shop, serve landing page
@@ -117,30 +144,53 @@ app.get('/', (req, res) => {
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
-// DIRECT OAUTH - NO IFRAME BLOCKING
-app.get('/auth', (req, res) => {
+// INSTALL ROUTE - AGGRESSIVE PARENT WINDOW REDIRECT
+app.get('/install', (req, res) => {
   const shop = req.query.shop;
   if (!shop) {
-    return res.status(400).send('Missing shop parameter');
+    res.send(`
+      <h2>Enter your shop domain:</h2>
+      <form onsubmit="window.location.href='/install?shop=' + document.getElementById('shop').value + '.myshopify.com'; return false;">
+        <input id="shop" placeholder="yourstore" required>
+        <button type="submit">Install</button>
+      </form>
+    `);
+    return;
   }
   
-  // FORCE FULL WINDOW REDIRECT - NOT IFRAME
-  const shopifyAuthUrl = `https://${shop}/admin/oauth/authorize?` +
-    `client_id=${process.env.SHOPIFY_API_KEY || 'placeholder'}&` +
-    `scope=read_content,write_content,read_products,write_products&` +
-    `redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&` +
-    `state=${shop}`;
+  const authUrl = `https://${shop}/admin/oauth/authorize?client_id=placeholder&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
   
-  // Send JavaScript to break out of iframe and redirect in parent window
   res.send(`
-    <script>
-      if (window.top !== window.self) {
-        window.top.location.href = "${shopifyAuthUrl}";
-      } else {
-        window.location.href = "${shopifyAuthUrl}";
-      }
-    </script>
+    <!DOCTYPE html>
+    <html>
+    <head><title>Installing KingsBuilder</title></head>
+    <body>
+      <script>
+        // ULTIMATE IFRAME BREAKER
+        function forceRedirect() {
+          var url = "${authUrl}";
+          try {
+            if (parent && parent !== window) {
+              parent.location.href = url;
+            } else if (top && top !== window) {
+              top.location.href = url;
+            } else {
+              window.location.href = url;
+            }
+          } catch(e) {
+            window.open(url, '_blank');
+          }
+        }
+        forceRedirect();
+      </script>
+    </body>
+    </html>
   `);
+});
+
+// DIRECT OAUTH - NO IFRAME BLOCKING
+app.get('/auth', (req, res) => {
+  res.redirect('/install?' + new URLSearchParams(req.query));
 });
 
 app.get('/auth/callback', (req, res) => {
