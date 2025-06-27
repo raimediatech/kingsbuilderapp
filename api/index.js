@@ -141,9 +141,6 @@ app.get('/', (req, res) => {
     if (embedded && (idToken || hmac) && storedAccessToken && cookieShop === shop) {
         console.log('✅ Embedded + token present – jump to dashboard');
         return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
-    } {
-      return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
-    }
     
     
       
