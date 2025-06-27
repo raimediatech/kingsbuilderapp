@@ -209,7 +209,10 @@ app.get('/auth/callback', async (req, res) => {
         sameSite: 'none'
       });
       
-      console.log(`✅ OAuth successful for ${shop}`);
+      console.log(`✅ OAuth successful for ${shop}`, { 
+        access_token: tokenData.access_token?.substring(0, 10) + '...',
+        token_length: tokenData.access_token?.length 
+      });
       
       // Redirect back to dashboard with token as query parameter (temporary fix)
       res.redirect(`/dashboard?shop=${shop}&access_token=${tokenData.access_token}&embedded=1`);
@@ -242,10 +245,20 @@ app.get('/api/shopify/pages', async (req, res) => {
     const shop = req.query.shop || req.cookies?.shopOrigin;
     const accessToken = req.cookies?.accessToken;
     
+    console.log('🔍 API Pages endpoint hit:', { 
+      shop_query: req.query.shop,
+      shop_cookie: req.cookies?.shopOrigin,
+      has_access_token: !!accessToken,
+      token_preview: accessToken?.substring(0, 10) + '...',
+      all_cookies: Object.keys(req.cookies || {})
+    });
+    
     if (!shop || !accessToken) {
+      console.log('❌ Missing auth data - returning 401');
       return res.status(401).json({ 
         error: 'Shop or access token missing',
-        requiresAuth: true 
+        requiresAuth: true,
+        debug: { shop: !!shop, accessToken: !!accessToken }
       });
     }
     
@@ -546,6 +559,13 @@ app.get('/dashboard', (req, res) => {
   const embedded = req.query.embedded;
   const access_token = req.query.access_token;
   
+  console.log('🎯 Dashboard route hit:', { 
+    shop, 
+    embedded, 
+    has_access_token: !!access_token, 
+    token_preview: access_token?.substring(0, 10) + '...' 
+  });
+  
   // For embedded apps, check if we have shop parameter
   if (embedded === '1' && !shop) {
     return res.status(400).send('Missing shop parameter for embedded app');
@@ -553,6 +573,8 @@ app.get('/dashboard', (req, res) => {
   
   // If we have an access token in the URL, store it in cookies
   if (access_token && shop) {
+    console.log('💾 Storing access token in cookies for shop:', shop);
+    
     res.cookie('shopOrigin', shop, { 
       maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
@@ -566,10 +588,12 @@ app.get('/dashboard', (req, res) => {
       sameSite: 'none'
     });
     
+    console.log('🔄 Redirecting to clean dashboard URL');
     // Redirect without the access token in the URL for security
     return res.redirect(`/dashboard?shop=${shop}&embedded=1`);
   }
   
+  console.log('📄 Serving dashboard.html');
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
