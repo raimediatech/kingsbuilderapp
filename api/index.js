@@ -108,7 +108,7 @@ app.get('/', (req, res) => {
   
   if (shop) {
     // TEMPORARY: Force re-auth to get content scopes (remove after first install)
-    const forceReauth = req.query.force_reauth || true; // FORCE FOR NOW
+    const forceReauth = req.query.force_reauth === 'true'; // Only force re-auth when ?force_reauth=true // FORCE FOR NOW
     
     if (forceReauth) {
       console.log('🔄 FORCING RE-AUTH to get content scopes');
@@ -2286,7 +2286,7 @@ app.get('/install', (req, res) => {
 
 // OAuth callback route
 app.get('/auth/callback', async (req, res) => {
-  const { code, shop, state } = req.query;
+  const { code, shop, state, host } = req.query; // Include host for embedded redirect
   
   if (!code || !shop) {
     return res.status(400).send('Missing required parameters');
@@ -2332,7 +2332,7 @@ app.get('/auth/callback', async (req, res) => {
     }
     
     // Redirect to dashboard
-    res.redirect(`/dashboard?shop=${shop}&installed=true`);
+    res.redirect(`/?shop=${shop}&host=${host}&embedded=1`); // Redirect back into embedded app with host
     
   } catch (error) {
     console.error('❌ OAuth callback error:', error);
