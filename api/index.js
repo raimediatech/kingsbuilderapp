@@ -107,12 +107,34 @@ app.get('/', (req, res) => {
   const host = req.query.host;
   
   if (shop) {
+    // TEMPORARY: Force re-auth to get content scopes (remove after first install)
+    const forceReauth = req.query.force_reauth || true; // FORCE FOR NOW
+    
+    if (forceReauth) {
+      console.log('🔄 FORCING RE-AUTH to get content scopes');
+      // Clear old cookies
+      res.clearCookie('accessToken');
+      res.clearCookie('shopOrigin');
+      
+      const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_products%2Cwrite_products%2Cread_content%2Cwrite_content&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+      
+      res.send(`
+        <script>
+          // Clear all cookies first
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+          window.top.location.href = "${authUrl}";
+        </script>
+      `);
+      return;
+    }
+    
     // Check if this is coming from Shopify admin (has id_token or hmac)
     const idToken = req.query.id_token;
     const hmac = req.query.hmac;
     
     if (embedded && (idToken || hmac)) {
-      // This is from Shopify Admin - redirect to dashboard
       console.log('🎯 Coming from Shopify Admin - redirect to dashboard');
       return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
     }
@@ -122,7 +144,6 @@ app.get('/', (req, res) => {
     const cookieShop = req.cookies?.shopOrigin;
     
     if (accessToken && cookieShop === shop) {
-      // User is authenticated - redirect to dashboard
       console.log('✅ User authenticated - redirect to dashboard');
       return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
     }
