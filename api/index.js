@@ -136,20 +136,15 @@ app.get('/', (req, res) => {
 
     // Read any stored token *before* deciding to skip OAuth
     const storedAccessToken = req.cookies?.accessToken;
-    const cookieShop = req.cookies?.shopOrigin;
 
     // Skip OAuth ONLY when we already have a valid token for this shop
     if (embedded && (idToken || hmac) && storedAccessToken && cookieShop === shop) {
         console.log('✅ Embedded + token present – jump to dashboard');
         return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
     } {
-      console.log('🎯 Coming from Shopify Admin - redirect to dashboard');
       return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
     }
     
-    // Check if user already has access token
-    const accessToken = req.cookies?.accessToken;
-    const cookieShop = req.cookies?.shopOrigin;
     
       
   // Serve the new page builder interface
