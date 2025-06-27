@@ -132,12 +132,12 @@ app.get('/', (req, res) => {
     
     // Check if this is coming from Shopify admin (has id_token or hmac)
     const idToken = req.query.id_token;
-    const hmac = req.query.hmac;
-    
-    if (embedded && (idToken || hmac)) {
-      console.log('🎯 Coming from Shopify Admin - redirect to dashboard');
-      return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
-    }
+    const hmac = req.query.hmac;// 
+//     
+//     if (embedded && (idToken || hmac)) {
+//       console.log('🎯 Coming from Shopify Admin - redirect to dashboard');
+//       return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
+//     }
     
     // Check if user already has access token
     const accessToken = req.cookies?.accessToken;
