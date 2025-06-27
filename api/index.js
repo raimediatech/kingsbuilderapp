@@ -135,7 +135,7 @@ app.get('/', (req, res) => {
     const hmac = req.query.hmac;
 
     // Read any stored token *before* deciding to skip OAuth
-    const accessToken = req.cookies?.accessToken;
+    // const accessToken = req.cookies?.accessToken;
     const cookieShop = req.cookies?.shopOrigin;
 
     // Skip OAuth ONLY when we already have a valid token for this shop
