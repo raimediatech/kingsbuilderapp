@@ -107,23 +107,32 @@ app.get('/', (req, res) => {
   const host = req.query.host;
   
   if (shop) {
-    // FORCE RE-AUTHORIZATION - Clear old cookies and start fresh OAuth
-    console.log('🔐 FORCING FRESH OAuth flow for shop:', shop);
+    // Check if this is coming from Shopify admin (has id_token or hmac)
+    const idToken = req.query.id_token;
+    const hmac = req.query.hmac;
     
-    // Clear old cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('shopOrigin');
+    if (embedded && (idToken || hmac)) {
+      // This is from Shopify Admin - redirect to dashboard
+      console.log('🎯 Coming from Shopify Admin - redirect to dashboard');
+      return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
+    }
     
-    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_products%2Cwrite_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+    // Check if user already has access token
+    const accessToken = req.cookies?.accessToken;
+    const cookieShop = req.cookies?.shopOrigin;
     
-    console.log('🔗 OAuth URL:', authUrl);
+    if (accessToken && cookieShop === shop) {
+      // User is authenticated - redirect to dashboard
+      console.log('✅ User authenticated - redirect to dashboard');
+      return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
+    }
+    
+    // Need OAuth flow
+    console.log('🔐 Starting OAuth flow for shop:', shop);
+    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_products%2Cwrite_products%2Cread_content%2Cwrite_content&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
     
     res.send(`
       <script>
-        // CLEAR ALL COOKIES AND FORCE PARENT WINDOW NAVIGATION FOR OAUTH
-        document.cookie.split(";").forEach(function(c) { 
-          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-        });
         window.top.location.href = "${authUrl}";
       </script>
     `);
@@ -288,107 +297,17 @@ app.get('/api/shopify/pages', async (req, res) => {
       const errorText = await response.text();
       console.log('❌ Shopify API Error Details:', errorText);
       
-      // TRY GRAPHQL API INSTEAD
-      console.log('🔄 Trying GraphQL API as fallback...');
-      
-      const graphqlQuery = `
-        query {
-          shop {
-            name
-            url
-            id
-          }
-          products(first: 10) {
-            edges {
-              node {
-                id
-                title
-                handle
-                description
-                createdAt
-                updatedAt
-              }
-            }
-          }
-        }
-      `;
-      
-      const graphqlResponse = await fetch(`https://${shop}/admin/api/2023-10/graphql.json`, {
-        method: 'POST',
-        headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ query: graphqlQuery })
-      });
-      
-      console.log('📡 GraphQL Response Status:', graphqlResponse.status);
-      
-      if (graphqlResponse.ok) {
-        const graphqlData = await graphqlResponse.json();
-        console.log('✅ GraphQL Success:', graphqlData);
-        
-        // Convert GraphQL products to demo "pages" 
-        const pages = graphqlData.data?.products?.edges?.map((edge, index) => ({
-          id: edge.node.id.replace('gid://shopify/Product/', ''),
-          title: `${edge.node.title} - Product Page`,
-          handle: edge.node.handle + '-page',
-          content: `<div style="padding:20px;background:#f8f9fa;border-radius:8px;margin:10px 0;">
-            <h2>🛍️ ${edge.node.title}</h2>
-            <p><strong>Product Description:</strong></p>
-            <p>${edge.node.description || 'No description available'}</p>
-            <div style="background:#e9ecef;padding:15px;border-radius:6px;margin:15px 0;">
-              <h4>📊 KingsBuilder Analytics Preview</h4>
-              <p>• Views: ${Math.floor(Math.random() * 5000) + 1000}</p>
-              <p>• Conversions: ${Math.floor(Math.random() * 100) + 20}%</p>
-              <p>• Last Updated: ${new Date(edge.node.updatedAt).toLocaleDateString()}</p>
-            </div>
-          </div>`,
-          status: 'published',
-          lastModified: edge.node.updatedAt,
-          createdAt: edge.node.createdAt,
-          author: 'KingsBuilder Demo',
-          shopifyUrl: `https://${shop}/admin/products/${edge.node.id.replace('gid://shopify/Product/', '')}`,
-          frontendUrl: `https://${shop.replace('.myshopify.com', '')}.com/products/${edge.node.handle}`,
-          views: Math.floor(Math.random() * 5000) + 1000,
-          conversions: Math.floor(Math.random() * 100) + 20,
-          type: 'product-demo'
-        })) || [];
-        
-        // Add welcome message as first "page"
-        pages.unshift({
-          id: 'welcome-demo',
-          title: '🎉 Welcome to KingsBuilder!',
-          handle: 'welcome-kingsbuilder',
-          content: `<div style="text-align:center;padding:40px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:12px;">
-            <h1>🚀 KingsBuilder is Ready!</h1>
-            <p style="font-size:18px;margin:20px 0;">Your Shopify page builder is successfully connected.</p>
-            <div style="background:rgba(255,255,255,0.1);padding:20px;border-radius:8px;margin:20px 0;">
-              <h3>📈 What You Can Do:</h3>
-              <ul style="text-align:left;max-width:400px;margin:0 auto;">
-                <li>✨ Create stunning landing pages</li>
-                <li>🎨 Use drag & drop editor</li>
-                <li>📱 Mobile-responsive designs</li>
-                <li>⚡ Lightning-fast performance</li>
-              </ul>
-            </div>
-            <p><strong>Shop:</strong> ${graphqlData.data?.shop?.name || shop}</p>
-          </div>`,
-          status: 'published',
-          lastModified: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          author: 'KingsBuilder',
-          shopifyUrl: `https://${shop}/admin`,
-          frontendUrl: `https://${shop.replace('.myshopify.com', '')}.com`,
-          views: 9999,
-          conversions: 95,
-          type: 'welcome'
+      // CHECK IF IT'S A PERMISSION ERROR
+      if (errorText.includes('merchant approval') || errorText.includes('read_content')) {
+        return res.status(403).json({
+          error: 'App needs content permissions',
+          message: 'Your Shopify app needs merchant approval for read_content scope to access pages.',
+          fix: 'Go to Shopify Partner Dashboard → Your App → App setup → Protected customer data access → Request read_content and write_content scopes',
+          shopifyError: errorText
         });
-        
-        return res.json({ pages });
       }
       
-      throw new Error(`Both REST and GraphQL failed: ${response.status} ${response.statusText}`);
+      throw new Error(`Shopify API error: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
