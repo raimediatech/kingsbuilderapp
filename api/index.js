@@ -26,20 +26,14 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser(process.env.SESSION_SECRET || 'kings-builder-session-secret'));
 
-// NO IFRAME RESTRICTIONS - ALLOW FROM ANYWHEOM ANYWHERE
+// NO IFRAME RESTRICTIONS - ALLOW FROM ANYWHERE
 app.use((req, res, next) => {
   // Remove ALL security headers that could block iframe
-  res.removeALL security Header('X-Frame-Options');
+  res.removeHeader('X-Frame-Options');
   res.removeHeader('Content-Security-Policy');
   res.removeHeader('X-Content-Type-Options');
   res.removeHeader('Referrer-Policy');
   res.removeHeader('Permissions-Policy');
-  
-  // Do NOT set X-Frame-Options at all - let it be embeddable everywhere
-  res.removeHeader('Referrer-Policy');
-  res.removeHeader('Permissions-Policy');
-  
-  // Do NOT set X-Frame-Options at all - let it be embeddable everywhere
   
   next();
 });
