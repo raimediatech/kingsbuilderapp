@@ -100,41 +100,16 @@ app.get('/iframe-test', (req, res) => {
   `);
 });
 
-// ROOT ROUTE - AGGRESSIVE IFRAME BREAKOUT
+// ROOT ROUTE - DIRECT SHOPIFY OAUTH
 app.get('/', (req, res) => {
   const shop = req.query.shop;
-  const embedded = req.query.embedded;
   
   if (shop) {
-    // FORCE PARENT WINDOW OAUTH
+    // DIRECT REDIRECT TO SHOPIFY OAUTH - NO HTML
     const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
     
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head><title>Installing KingsBuilder...</title></head>
-      <body>
-        <h2>Installing KingsBuilder App...</h2>
-        <p>Redirecting to Shopify authorization...</p>
-        <script>
-          // FORCE PARENT WINDOW REDIRECT
-          function redirectToAuth() {
-            var authUrl = "${authUrl}";
-            if (window.top && window.top !== window) {
-              window.top.location.href = authUrl;
-            } else {
-              window.location.href = authUrl;
-            }
-          }
-          
-          // Try immediately and with delay
-          redirectToAuth();
-          setTimeout(redirectToAuth, 100);
-        </script>
-      </body>
-      </html>
-    `);
-    return;
+    console.log('🔄 Redirecting to Shopify OAuth:', authUrl);
+    return res.redirect(authUrl);
   }
   
   // No shop, serve landing page
@@ -144,7 +119,7 @@ app.get('/', (req, res) => {
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
-// INSTALL ROUTE - AGGRESSIVE PARENT WINDOW REDIRECT
+// INSTALL ROUTE - DIRECT OAUTH REDIRECT  
 app.get('/install', (req, res) => {
   const shop = req.query.shop;
   if (!shop) {
@@ -158,37 +133,14 @@ app.get('/install', (req, res) => {
     return;
   }
   
+  // DIRECT SERVER REDIRECT TO SHOPIFY
   const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
   
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head><title>Installing KingsBuilder</title></head>
-    <body>
-      <script>
-        // ULTIMATE IFRAME BREAKER
-        function forceRedirect() {
-          var url = "${authUrl}";
-          try {
-            if (parent && parent !== window) {
-              parent.location.href = url;
-            } else if (top && top !== window) {
-              top.location.href = url;
-            } else {
-              window.location.href = url;
-            }
-          } catch(e) {
-            window.open(url, '_blank');
-          }
-        }
-        forceRedirect();
-      </script>
-    </body>
-    </html>
-  `);
+  console.log('🔄 Direct OAuth redirect to:', authUrl);
+  res.redirect(authUrl);
 });
 
-// DIRECT OAUTH - NO IFRAME BLOCKING
+// AUTH ROUTE - REDIRECT TO INSTALL
 app.get('/auth', (req, res) => {
   res.redirect('/install?' + new URLSearchParams(req.query));
 });
