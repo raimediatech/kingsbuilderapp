@@ -118,8 +118,6 @@ app.get('/', (req, res) => {
     
     console.log('🔗 OAuth URL:', authUrl);
     
-    console.log('🔗 OAuth URL:', authUrl);
-    
     res.send(`
       <script>
         // CLEAR ALL COOKIES AND FORCE PARENT WINDOW NAVIGATION FOR OAUTH
@@ -198,15 +196,7 @@ app.get('/auth/callback', async (req, res) => {
       code: code?.substring(0, 10) + '...'
     });
     
-    console.log('🔑 Token request payload:', {
-      client_id: process.env.SHOPIFY_API_KEY,
-      has_secret: !!process.env.SHOPIFY_API_SECRET,
-      code: code?.substring(0, 10) + '...'
-    });
-    
     const tokenData = await tokenResponse.json();
-    
-    console.log('🔍 Full token response:', tokenData);
     
     console.log('🔍 Full token response:', tokenData);
     
@@ -295,7 +285,58 @@ app.get('/api/shopify/pages', async (req, res) => {
     console.log('📡 API Response Status:', response.status, response.statusText);
     
     if (!response.ok) {
-      throw new Error(`Shopify API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.log('❌ Shopify API Error Details:', errorText);
+      
+      // TRY GRAPHQL API INSTEAD
+      console.log('🔄 Trying GraphQL API as fallback...');
+      
+      const graphqlQuery = `
+        query {
+          pages(first: 10) {
+            edges {
+              node {
+                id
+                title
+                handle
+                bodySummary
+                createdAt
+                updatedAt
+              }
+            }
+          }
+        }
+      `;
+      
+      const graphqlResponse = await fetch(`https://${shop}/admin/api/2023-10/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'X-Shopify-Access-Token': accessToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ query: graphqlQuery })
+      });
+      
+      console.log('📡 GraphQL Response Status:', graphqlResponse.status);
+      
+      if (graphqlResponse.ok) {
+        const graphqlData = await graphqlResponse.json();
+        console.log('✅ GraphQL Success:', graphqlData);
+        
+        // Convert GraphQL format to REST format
+        const pages = graphqlData.data?.pages?.edges?.map(edge => ({
+          id: edge.node.id.replace('gid://shopify/Page/', ''),
+          title: edge.node.title,
+          handle: edge.node.handle,
+          body_html: edge.node.bodySummary || '',
+          created_at: edge.node.createdAt,
+          updated_at: edge.node.updatedAt
+        })) || [];
+        
+        return res.json({ pages });
+      }
+      
+      throw new Error(`Both REST and GraphQL failed: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
