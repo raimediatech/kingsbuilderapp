@@ -114,7 +114,7 @@ app.get('/', (req, res) => {
     res.clearCookie('accessToken');
     res.clearCookie('shopOrigin');
     
-    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content%2Cwrite_content%2Cread_products%2Cwrite_products%2Cread_pages%2Cwrite_pages&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_products%2Cwrite_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
     
     console.log('🔗 OAuth URL:', authUrl);
     
@@ -293,13 +293,18 @@ app.get('/api/shopify/pages', async (req, res) => {
       
       const graphqlQuery = `
         query {
-          pages(first: 10) {
+          shop {
+            name
+            url
+            id
+          }
+          products(first: 10) {
             edges {
               node {
                 id
                 title
                 handle
-                bodySummary
+                description
                 createdAt
                 updatedAt
               }
@@ -323,15 +328,29 @@ app.get('/api/shopify/pages', async (req, res) => {
         const graphqlData = await graphqlResponse.json();
         console.log('✅ GraphQL Success:', graphqlData);
         
-        // Convert GraphQL format to REST format
-        const pages = graphqlData.data?.pages?.edges?.map(edge => ({
-          id: edge.node.id.replace('gid://shopify/Page/', ''),
+        // Convert GraphQL format to show products as "pages" for now
+        const pages = graphqlData.data?.products?.edges?.map(edge => ({
+          id: edge.node.id.replace('gid://shopify/Product/', ''),
           title: edge.node.title,
           handle: edge.node.handle,
-          body_html: edge.node.bodySummary || '',
+          body_html: edge.node.description || '',
           created_at: edge.node.createdAt,
-          updated_at: edge.node.updatedAt
+          updated_at: edge.node.updatedAt,
+          type: 'product' // Mark as product
         })) || [];
+        
+        // Add shop info as first "page"
+        if (graphqlData.data?.shop) {
+          pages.unshift({
+            id: 'shop-info',
+            title: `Shop: ${graphqlData.data.shop.name}`,
+            handle: 'shop-info',
+            body_html: `<p>Shop URL: ${graphqlData.data.shop.url}</p>`,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            type: 'shop'
+          });
+        }
         
         return res.json({ pages });
       }
