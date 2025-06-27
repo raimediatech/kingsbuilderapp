@@ -135,11 +135,11 @@ app.get('/', (req, res) => {
     const hmac = req.query.hmac;
 
     // Read any stored token *before* deciding to skip OAuth
-    // const accessToken = req.cookies?.accessToken;
+    const storedAccessToken = req.cookies?.accessToken;
     const cookieShop = req.cookies?.shopOrigin;
 
     // Skip OAuth ONLY when we already have a valid token for this shop
-    if (embedded && (idToken || hmac) && accessToken && cookieShop === shop) {
+    if (embedded && (idToken || hmac) && storedAccessToken && cookieShop === shop) {
         console.log('✅ Embedded + token present – jump to dashboard');
         return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
     } {
