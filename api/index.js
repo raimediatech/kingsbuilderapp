@@ -26,12 +26,20 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser(process.env.SESSION_SECRET || 'kings-builder-session-secret'));
 
-// REMOVE ALL SECURITY HEADERS - ALLOW IFRAME
+// NO IFRAME RESTRICTIONS - ALLOW FROM ANYWHEOM ANYWHERE
 app.use((req, res, next) => {
-  // Remove headers that could block iframe
-  res.removeHeader('X-Frame-Options');
+  // Remove ALL security headers that could block iframe
+  res.removeALL security Header('X-Frame-Options');
   res.removeHeader('Content-Security-Policy');
   res.removeHeader('X-Content-Type-Options');
+  res.removeHeader('Referrer-Policy');
+  res.removeHeader('Permissions-Policy');
+  
+  // Do NOT set X-Frame-Options at all - let it be embeddable everywhere
+  res.removeHeader('Referrer-Policy');
+  res.removeHeader('Permissions-Policy');
+  
+  // Do NOT set X-Frame-Options at all - let it be embeddable everywhere
   
   next();
 });
@@ -46,9 +54,31 @@ app.get('/test', (req, res) => {
   });
 });
 
+// Debug headers route
+app.get('/debug-headers', (req, res) => {
+  const headers = res.getHeaders();
+  res.json({
+    message: 'Current response headers',
+    headers: headers,
+    xFrameOptions: headers['x-frame-options'] || 'NOT SET',
+    csp: headers['content-security-policy'] || 'NOT SET'
+  });
+});
+
 // Super simple HTML test
 app.get('/simple', (req, res) => {
   res.send('<h1>✅ SERVER WORKS!</h1><p>No iframe blocking headers</p>');
+});
+
+// Debug headers route
+app.get('/debug-headers', (req, res) => {
+  const headers = res.getHeaders();
+  res.json({
+    message: 'Current response headers',
+    headers: headers,
+    xFrameOptions: headers['x-frame-options'] || 'NOT SET',
+    csp: headers['content-security-policy'] || 'NOT SET'
+  });
 });
 
 // Test route that can be loaded in iframe
