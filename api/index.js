@@ -12,38 +12,25 @@ try {
   console.log('No .env file found, using environment variables from the system');
 }
 
-// FORCE ALLOW SHOPIFY IFRAME EMBEDDING - MUST BE FIRST MIDDLEWARE!
+// ABSOLUTE IFRAME FREEDOM - NO RESTRICTIONS WHATSOEVER
 app.use((req, res, next) => {
-  // Remove any existing headers that block iframe
+  // Delete ALL possible blocking headers
   res.removeHeader('X-Frame-Options');
   res.removeHeader('Content-Security-Policy');
   res.removeHeader('X-Content-Type-Options');
   res.removeHeader('Referrer-Policy');
   res.removeHeader('Permissions-Policy');
+  res.removeHeader('Cross-Origin-Embedder-Policy');
+  res.removeHeader('Cross-Origin-Opener-Policy');
   
-  // EXPLICITLY set CSP to allow Shopify iframe embedding
-  res.setHeader('Content-Security-Policy', 
-    'frame-ancestors * ' +
-    'https://*.myshopify.com ' +
-    'https://*.shopify.com ' +
-    'https://admin.shopify.com ' +
-    'https://partners.shopify.com;'
-  );
+  // NO CSP AT ALL - COMPLETE FREEDOM
+  // Most page builders work because they don't set ANY CSP
   
   next();
 });
 
-// Configure CORS
-const corsOptions = {
-  origin: function (origin, callback) {
-    callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Shopify-Access-Token', 'X-Shopify-Shop-Domain', 'x-user-email']
-};
-
-app.use(cors(corsOptions));
+// COMPLETELY OPEN CORS - NO RESTRICTIONS
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser(process.env.SESSION_SECRET || 'kings-builder-session-secret'));
 
