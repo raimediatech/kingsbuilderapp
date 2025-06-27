@@ -193,12 +193,42 @@ app.get('/auth', (req, res) => {
   res.redirect('/install?' + new URLSearchParams(req.query));
 });
 
-app.get('/auth/callback', (req, res) => {
+app.get('/auth/callback', async (req, res) => {
   const { shop, code } = req.query;
   
-  // Store shop and redirect to dashboard
-  res.cookie('shopOrigin', shop, { maxAge: 24 * 60 * 60 * 1000 });
-  res.redirect(`/dashboard?shop=${shop}&installed=1`);
+  if (!shop || !code) {
+    return res.status(400).send('Missing shop or code parameter');
+  }
+  
+  try {
+    // Exchange code for access token
+    const tokenResponse = await fetch(`https://${shop}/admin/oauth/access_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: process.env.SHOPIFY_API_KEY,
+        client_secret: process.env.SHOPIFY_API_SECRET,
+        code: code
+      })
+    });
+    
+    const tokenData = await tokenResponse.json();
+    
+    if (tokenData.access_token) {
+      // Store both shop and access token in cookies
+      res.cookie('shopOrigin', shop, { maxAge: 24 * 60 * 60 * 1000 });
+      res.cookie('accessToken', tokenData.access_token, { maxAge: 24 * 60 * 60 * 1000 });
+      
+      console.log(`✅ OAuth successful for ${shop}`);
+      res.redirect(`/dashboard?shop=${shop}&installed=1`);
+    } else {
+      throw new Error('Failed to get access token');
+    }
+    
+  } catch (error) {
+    console.error('❌ OAuth Error:', error);
+    res.status(500).send('OAuth failed: ' + error.message);
+  }
 });
 
 app.get('/auth/shopify/callback', (req, res) => {

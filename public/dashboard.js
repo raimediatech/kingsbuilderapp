@@ -104,46 +104,7 @@ class KingsDashboard {
         }
     }
     
-    loadDemoData() {
-        console.log('📄 Loading demo data for dashboard');
-        
-        // Load demo pages
-        this.pages = [
-            {
-                id: 'demo1',
-                title: 'Homepage',
-                status: 'published',
-                lastModified: '2024-01-15',
-                views: 1542,
-                conversions: 28,
-                handle: 'homepage',
-                isShopifyPage: false
-            },
-            {
-                id: 'demo2', 
-                title: 'Product Landing Page',
-                status: 'published',
-                lastModified: '2024-01-14',
-                views: 892,
-                conversions: 45,
-                handle: 'product-landing',
-                isShopifyPage: false
-            },
-            {
-                id: 'demo3',
-                title: 'About Us',
-                status: 'draft',
-                lastModified: '2024-01-13',
-                views: 234,
-                conversions: 12,
-                handle: 'about-us',
-                isShopifyPage: false
-            }
-        ];
-        
-        this.renderPages();
-        this.hideLoading();
-    }
+
     
     switchTab(tabName) {
         // Update active tab
@@ -194,14 +155,9 @@ class KingsDashboard {
             
             if (!response.ok) {
                 if (response.status === 401) {
-                    // No authentication - load demo data instead
-                    console.log('🎯 No authentication, loading demo data');
-                    this.loadDemoData();
-                    return;
+                    throw new Error('Authentication required - please reinstall the app');
                 }
-                console.log('🎯 API Error, loading demo data instead');
-                this.loadDemoData();
-                return;
+                throw new Error(`Shopify API Error: ${response.status}`);
             }
             
             const data = await response.json();
@@ -226,9 +182,10 @@ class KingsDashboard {
             this.renderPages();
             
         } catch (error) {
-            console.log('⚠️ Could not connect to Shopify, loading demo data:', error.message);
+            console.error('❌ Failed to load Shopify pages:', error.message);
             
-            // Show empty state - no demo pages
+            // Show error message to user
+            this.showError(`Failed to load pages: ${error.message}`);
             this.pages = [];
             this.renderPages();
         } finally {
