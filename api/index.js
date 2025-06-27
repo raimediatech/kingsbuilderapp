@@ -12,6 +12,27 @@ try {
   console.log('No .env file found, using environment variables from the system');
 }
 
+// FORCE ALLOW SHOPIFY IFRAME EMBEDDING - MUST BE FIRST MIDDLEWARE!
+app.use((req, res, next) => {
+  // Remove any existing headers that block iframe
+  res.removeHeader('X-Frame-Options');
+  res.removeHeader('Content-Security-Policy');
+  res.removeHeader('X-Content-Type-Options');
+  res.removeHeader('Referrer-Policy');
+  res.removeHeader('Permissions-Policy');
+  
+  // EXPLICITLY set CSP to allow Shopify iframe embedding
+  res.setHeader('Content-Security-Policy', 
+    'frame-ancestors * ' +
+    'https://*.myshopify.com ' +
+    'https://*.shopify.com ' +
+    'https://admin.shopify.com ' +
+    'https://partners.shopify.com;'
+  );
+  
+  next();
+});
+
 // Configure CORS
 const corsOptions = {
   origin: function (origin, callback) {
@@ -25,18 +46,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser(process.env.SESSION_SECRET || 'kings-builder-session-secret'));
-
-// NO IFRAME RESTRICTIONS - ALLOW FROM ANYWHERE
-app.use((req, res, next) => {
-  // Remove ALL security headers that could block iframe
-  res.removeHeader('X-Frame-Options');
-  res.removeHeader('Content-Security-Policy');
-  res.removeHeader('X-Content-Type-Options');
-  res.removeHeader('Referrer-Policy');
-  res.removeHeader('Permissions-Policy');
-  
-  next();
-});
 
 // Simple test route to check if the server is working
 app.get('/test', (req, res) => {
@@ -61,7 +70,13 @@ app.get('/debug-headers', (req, res) => {
 
 // Super simple HTML test
 app.get('/simple', (req, res) => {
-  res.send('<h1>✅ SERVER WORKS!</h1><p>No iframe blocking headers</p>');
+  const headers = res.getHeaders();
+  res.send(`
+    <h1>✅ SERVER WORKS!</h1>
+    <p><strong>CSP Header:</strong> ${headers['content-security-policy'] || 'NOT SET'}</p>
+    <p><strong>X-Frame-Options:</strong> ${headers['x-frame-options'] || 'NOT SET (GOOD!)'}</p>
+    <p>Should now work in Shopify admin iframe!</p>
+  `);
 });
 
 // Debug headers route
