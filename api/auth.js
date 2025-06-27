@@ -114,7 +114,7 @@ router.get('/callback', async (req, res) => {
     }
     
     // Redirect to the app
-    res.redirect(`/?shop=${shop}&installed=1`);
+    res.redirect(`/dashboard?shop=${shop}`);
   } catch (error) {
     console.error('Error exchanging code for access token:', error.message);
     res.status(500).send(`Authentication failed: ${error.message}`);

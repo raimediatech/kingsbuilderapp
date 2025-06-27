@@ -133,19 +133,472 @@ app.get('/', (req, res) => {
     // Check if this is coming from Shopify admin (has id_token or hmac)
     const idToken = req.query.id_token;
     const hmac = req.query.hmac;
-
-    // Read any stored token *before* deciding to skip OAuth
-    const storedAccessToken = req.cookies?.accessToken;
-    const cookieShop = req.cookies?.shopOrigin;
-
-    // Skip OAuth ONLY when we already have a valid token for this shop
-    if (embedded && (idToken || hmac) && storedAccessToken && cookieShop === shop) {
-        console.log('✅ Embedded + token present – jump to dashboard');
-        return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
+    
+    if (embedded && (idToken || hmac)) {
+      console.log('🎯 Coming from Shopify Admin - redirect to dashboard');
+      return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
     }
     
+    // Check if user already has access token
+    const accessToken = req.cookies?.accessToken;
+    const cookieShop = req.cookies?.shopOrigin;
     
+    if (accessToken && cookieShop === shop) {
+      console.log('✅ User authenticated - redirect to dashboard');
+      return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
+    }
+    
+    // Need OAuth flow
+    console.log('🔐 Starting OAuth flow for shop:', shop);
+    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_products%2Cwrite_products%2Cread_content%2Cwrite_content&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+    
+    res.send(`
+      <script>
+        window.top.location.href = "${authUrl}";
+      </script>
+    `);
+    return;
+  }
+  
+  // No shop, serve landing page
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
+// INSTALL ROUTE - IFRAME BREAKOUT OAUTH
+app.get('/install', (req, res) => {
+  const shop = req.query.shop;
+  if (!shop) {
+    res.send(`
+      <h2>Enter your shop domain:</h2>
+      <form onsubmit="window.location.href='/install?shop=' + document.getElementById('shop').value + '.myshopify.com'; return false;">
+        <input id="shop" placeholder="yourstore" required>
+        <button type="submit">Install</button>
+      </form>
+    `);
+    return;
+  }
+  
+  // FORCE TOP WINDOW OAUTH - THIS WORKS
+  const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+  
+  res.send(`
+    <script>
+      // BREAK OUT OF IFRAME AND GO TO SHOPIFY
+      if (window.top !== window.self) {
+        window.top.location.href = "${authUrl}";
+      } else {
+        window.location.href = "${authUrl}";
+      }
+    </script>
+  `);
+});
+
+// AUTH ROUTE - REDIRECT TO INSTALL
+app.get('/auth', (req, res) => {
+  res.redirect('/install?' + new URLSearchParams(req.query));
+});
+
+app.get('/auth/callback', async (req, res) => {
+  const { shop, code } = req.query;
+  
+  if (!shop || !code) {
+    return res.status(400).send('Missing shop or code parameter');
+  }
+  
+  try {
+    // Exchange code for access token
+    const tokenResponse = await fetch(`https://${shop}/admin/oauth/access_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: process.env.SHOPIFY_API_KEY,
+        client_secret: process.env.SHOPIFY_API_SECRET,
+        code: code
+      })
+    });
+    
+    console.log('🔑 Token request payload:', {
+      client_id: process.env.SHOPIFY_API_KEY,
+      has_secret: !!process.env.SHOPIFY_API_SECRET,
+      code: code?.substring(0, 10) + '...'
+    });
+    
+    const tokenData = await tokenResponse.json();
+    
+    console.log('🔍 Full token response:', tokenData);
+    
+    if (tokenData.access_token) {
+      console.log(`✅ NEW OAuth token received for ${shop}`, { 
+        access_token: tokenData.access_token?.substring(0, 10) + '...',
+        token_length: tokenData.access_token?.length,
+        scope: tokenData.scope
+      });
       
+      // Store both shop and access token in cookies with proper settings for embedded apps
+      res.cookie('shopOrigin', shop, { 
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+      });
+      res.cookie('accessToken', tokenData.access_token, { 
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+      });
+      
+      // Redirect back to dashboard with token as query parameter 
+      res.redirect(`/dashboard?shop=${shop}&access_token=${tokenData.access_token}&embedded=1`);
+    } else {
+      throw new Error('Failed to get access token');
+    }
+    
+  } catch (error) {
+    console.error('❌ OAuth Error:', error);
+    res.status(500).send('OAuth failed: ' + error.message);
+  }
+});
+
+app.get('/auth/shopify/callback', (req, res) => {
+  res.redirect('/auth/callback?' + new URLSearchParams(req.query));
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// API endpoint to get real Shopify pages
+app.get('/api/shopify/pages', async (req, res) => {
+  try {
+    const shop = req.query.shop || req.cookies?.shopOrigin;
+    const accessToken = req.cookies?.accessToken;
+    
+    console.log('🔍 API Pages endpoint hit:', { 
+      shop_query: req.query.shop,
+      shop_cookie: req.cookies?.shopOrigin,
+      has_access_token: !!accessToken,
+      token_preview: accessToken?.substring(0, 10) + '...',
+      all_cookies: Object.keys(req.cookies || {})
+    });
+    
+    if (!shop || !accessToken) {
+      console.log('❌ Missing auth data - returning 401');
+      return res.status(401).json({ 
+        error: 'Shop or access token missing',
+        requiresAuth: true,
+        debug: { shop: !!shop, accessToken: !!accessToken }
+      });
+    }
+    
+    console.log('📄 Fetching pages from Shopify for shop:', shop);
+    
+    // Fetch pages from Shopify API
+    const apiUrl = `https://${shop}/admin/api/2023-10/pages.json`;
+    console.log('📡 Making API request to:', apiUrl);
+    
+    const response = await fetch(apiUrl, {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('📡 API Response Status:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log('❌ Shopify API Error Details:', errorText);
+      
+      // CHECK IF IT'S A PERMISSION ERROR
+      if (errorText.includes('merchant approval') || errorText.includes('read_content')) {
+        return res.status(403).json({
+          error: 'App needs content permissions',
+          message: 'Your Shopify app needs merchant approval for read_content scope to access pages.',
+          fix: 'Go to Shopify Partner Dashboard → Your App → App setup → Protected customer data access → Request read_content and write_content scopes',
+          shopifyError: errorText
+        });
+      }
+      
+      throw new Error(`Shopify API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`✅ Found ${data.pages.length} pages in Shopify store`);
+    
+    // Transform Shopify pages to our format
+    const transformedPages = data.pages.map(page => ({
+      id: page.id,
+      title: page.title,
+      handle: page.handle,
+      content: page.body_html,
+      status: page.published_at ? 'published' : 'draft',
+      lastModified: page.updated_at,
+      createdAt: page.created_at,
+      author: page.author,
+      shopifyUrl: `https://${shop}/admin/pages/${page.id}`,
+      frontendUrl: `https://${shop.replace('.myshopify.com', '')}.com/pages/${page.handle}`,
+      views: Math.floor(Math.random() * 2000) + 100, // Placeholder - would need analytics integration
+      conversions: Math.floor(Math.random() * 50) + 5 // Placeholder
+    }));
+    
+    res.json({
+      success: true,
+      pages: transformedPages,
+      total: transformedPages.length,
+      shop: shop
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching Shopify pages:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch pages from Shopify',
+      message: error.message 
+    });
+  }
+});
+
+// API endpoint to get real Shopify products
+app.get('/api/shopify/products', async (req, res) => {
+  try {
+    const shop = req.query.shop || req.cookies?.shopOrigin;
+    const accessToken = req.cookies?.accessToken;
+    const limit = req.query.limit || 50;
+    
+    if (!shop || !accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop or access token missing',
+        requiresAuth: true 
+      });
+    }
+    
+    console.log('🛍️ Fetching products from Shopify for shop:', shop);
+    
+    const response = await fetch(`https://${shop}/admin/api/2023-10/products.json?limit=${limit}&status=active`, {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Shopify API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`✅ Found ${data.products.length} products in Shopify store`);
+    
+    const transformedProducts = data.products.map(product => ({
+      id: product.id,
+      title: product.title,
+      handle: product.handle,
+      description: product.body_html,
+      vendor: product.vendor,
+      productType: product.product_type,
+      status: product.status,
+      images: product.images.map(img => ({
+        id: img.id,
+        src: img.src,
+        alt: img.alt
+      })),
+      variants: product.variants.map(variant => ({
+        id: variant.id,
+        title: variant.title,
+        price: variant.price,
+        compareAtPrice: variant.compare_at_price,
+        sku: variant.sku
+      })),
+      tags: product.tags.split(',').map(tag => tag.trim()),
+      createdAt: product.created_at,
+      updatedAt: product.updated_at
+    }));
+    
+    res.json({
+      success: true,
+      products: transformedProducts,
+      total: transformedProducts.length,
+      shop: shop
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching Shopify products:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch products from Shopify',
+      message: error.message 
+    });
+  }
+});
+
+// API endpoint to get shop information
+app.get('/api/shopify/shop', async (req, res) => {
+  try {
+    const shop = req.query.shop || req.cookies?.shopOrigin;
+    const accessToken = req.cookies?.accessToken;
+    
+    if (!shop || !accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop or access token missing',
+        requiresAuth: true 
+      });
+    }
+    
+    console.log('🏪 Fetching shop info for:', shop);
+    
+    const response = await fetch(`https://${shop}/admin/api/2023-10/shop.json`, {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Shopify API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Shop info retrieved:', data.shop.name);
+    
+    res.json({
+      success: true,
+      shop: {
+        id: data.shop.id,
+        name: data.shop.name,
+        domain: data.shop.myshopify_domain,
+        email: data.shop.email,
+        currency: data.shop.currency,
+        timezone: data.shop.iana_timezone,
+        planName: data.shop.plan_name,
+        createdAt: data.shop.created_at,
+        country: data.shop.country_name,
+        province: data.shop.province
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching shop info:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch shop information',
+      message: error.message 
+    });
+  }
+});
+
+// Shopify OAuth install endpoint
+app.get('/install', (req, res) => {
+  const shop = req.query.shop;
+  
+  if (!shop) {
+    return res.status(400).send('Missing shop parameter');
+  }
+  
+  const shopDomain = shop.includes('.') ? shop : `${shop}.myshopify.com`;
+  
+  // Store shop in session
+  res.cookie('shopOrigin', shopDomain, { httpOnly: true, secure: false });
+  
+  // Build OAuth URL
+  const clientId = process.env.SHOPIFY_API_KEY || 'your-client-id';
+  const scopes = 'read_content,write_content,read_products,write_products';
+  const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/auth/callback`);
+  const state = Math.random().toString(36).substring(2, 15);
+  
+  res.cookie('oauth_state', state, { httpOnly: true, secure: false });
+  
+  const oauthUrl = `https://${shopDomain}/admin/oauth/authorize?` +
+    `client_id=${clientId}&` +
+    `scope=${scopes}&` +
+    `redirect_uri=${redirectUri}&` +
+    `state=${state}`;
+  
+  console.log('🔗 Redirecting to Shopify OAuth:', oauthUrl);
+  res.redirect(oauthUrl);
+});
+
+// Shopify OAuth callback endpoint
+app.get('/auth/callback', async (req, res) => {
+  try {
+    const { code, state, shop } = req.query;
+    const storedState = req.cookies?.oauth_state;
+    const shopOrigin = req.cookies?.shopOrigin || shop;
+    
+    if (!code || !state || state !== storedState) {
+      return res.status(400).send('Invalid OAuth callback');
+    }
+    
+    // Exchange code for access token
+    const clientId = process.env.SHOPIFY_API_KEY || 'your-client-id';
+    const clientSecret = process.env.SHOPIFY_API_SECRET || 'your-client-secret';
+    
+    const tokenResponse = await fetch(`https://${shopOrigin}/admin/oauth/access_token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: code
+      })
+    });
+    
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to get access token');
+    }
+    
+    const tokenData = await tokenResponse.json();
+    
+    // Store access token and shop info
+    res.cookie('accessToken', tokenData.access_token, { httpOnly: true, secure: false });
+    res.cookie('shopOrigin', shopOrigin, { httpOnly: true, secure: false });
+    
+    console.log('✅ OAuth successful for shop:', shopOrigin);
+    
+    // Redirect to dashboard
+    res.redirect(`/dashboard?shop=${shopOrigin}`);
+    
+  } catch (error) {
+    console.error('❌ OAuth callback error:', error);
+    res.status(500).send('OAuth authentication failed');
+  }
+});
+
+// App route for Shopify admin
+app.get('/app', (req, res) => {
+  const shop = req.query.shop || req.cookies?.shopOrigin;
+  
+  if (shop) {
+    // Check if we have access token
+    const accessToken = req.cookies?.accessToken;
+    if (accessToken) {
+      // Already authenticated, go to dashboard
+      res.redirect('/dashboard?shop=' + shop);
+    } else {
+      // Need to authenticate
+      res.redirect('/install?shop=' + shop);
+    }
+  } else {
+    // If no shop parameter, redirect to install
+    res.redirect('/install');
+  }
+});
+
+// App builder route
+app.get('/app/builder', (req, res) => {
+  const shop = req.query.shop || req.cookies?.shopOrigin;
+  const pageId = req.query.pageId;
+  
+  if (!shop) {
+    return res.redirect('/install');
+  }
+  
   // Serve the new page builder interface
   res.sendFile(path.join(__dirname, '../public/builder.html'));
 });
@@ -193,7 +646,6 @@ app.get('/dashboard', (req, res) => {
     console.log('🔄 Redirecting to clean dashboard URL');
     // Redirect without the access token in the URL for security
     return res.redirect(`/dashboard?shop=${shop}&embedded=1`);
-    }
   }
   
   console.log('📄 Serving dashboard.html');
