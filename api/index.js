@@ -114,7 +114,11 @@ app.get('/', (req, res) => {
     res.clearCookie('accessToken');
     res.clearCookie('shopOrigin');
     
-    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products,read_pages,write_pages&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content%2Cwrite_content%2Cread_products%2Cwrite_products%2Cread_pages%2Cwrite_pages&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+    
+    console.log('🔗 OAuth URL:', authUrl);
+    
+    console.log('🔗 OAuth URL:', authUrl);
     
     res.send(`
       <script>
@@ -188,7 +192,23 @@ app.get('/auth/callback', async (req, res) => {
       })
     });
     
+    console.log('🔑 Token request payload:', {
+      client_id: process.env.SHOPIFY_API_KEY,
+      has_secret: !!process.env.SHOPIFY_API_SECRET,
+      code: code?.substring(0, 10) + '...'
+    });
+    
+    console.log('🔑 Token request payload:', {
+      client_id: process.env.SHOPIFY_API_KEY,
+      has_secret: !!process.env.SHOPIFY_API_SECRET,
+      code: code?.substring(0, 10) + '...'
+    });
+    
     const tokenData = await tokenResponse.json();
+    
+    console.log('🔍 Full token response:', tokenData);
+    
+    console.log('🔍 Full token response:', tokenData);
     
     if (tokenData.access_token) {
       console.log(`✅ NEW OAuth token received for ${shop}`, { 
