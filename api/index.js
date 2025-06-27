@@ -136,11 +136,13 @@ app.get('/', (req, res) => {
 
     // Read any stored token *before* deciding to skip OAuth
     const storedAccessToken = req.cookies?.accessToken;
+    const cookieShop = req.cookies?.shopOrigin;
 
     // Skip OAuth ONLY when we already have a valid token for this shop
     if (embedded && (idToken || hmac) && storedAccessToken && cookieShop === shop) {
         console.log('✅ Embedded + token present – jump to dashboard');
         return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
+    }
     
     
       
@@ -191,6 +193,7 @@ app.get('/dashboard', (req, res) => {
     console.log('🔄 Redirecting to clean dashboard URL');
     // Redirect without the access token in the URL for security
     return res.redirect(`/dashboard?shop=${shop}&embedded=1`);
+    }
   }
   
   console.log('📄 Serving dashboard.html');
