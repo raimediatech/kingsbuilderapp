@@ -100,8 +100,56 @@ app.get('/iframe-test', (req, res) => {
   `);
 });
 
+// ROOT ROUTE - Handle app installation
+app.get('/', (req, res) => {
+  const shop = req.query.shop;
+  const embedded = req.query.embedded;
+  
+  if (shop) {
+    // If embedded, go to dashboard
+    if (embedded === '1') {
+      return res.redirect(`/dashboard?shop=${shop}&embedded=1`);
+    }
+    // Otherwise, start OAuth flow
+    return res.redirect(`/auth?shop=${shop}`);
+  }
+  
+  // No shop, serve landing page
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
+
+// SHOPIFY OAUTH ROUTES
+app.get('/auth', (req, res) => {
+  const shop = req.query.shop;
+  if (!shop) {
+    return res.status(400).send('Missing shop parameter');
+  }
+  
+  const shopifyAuthUrl = `https://${shop}/admin/oauth/authorize?` +
+    `client_id=${process.env.SHOPIFY_API_KEY}&` +
+    `scope=read_content,write_content,read_products,write_products&` +
+    `redirect_uri=${process.env.SHOPIFY_APP_URL}/auth/callback&` +
+    `state=${shop}`;
+  
+  res.redirect(shopifyAuthUrl);
+});
+
+app.get('/auth/callback', (req, res) => {
+  const { shop, code } = req.query;
+  
+  // In a real app, you'd exchange the code for an access token
+  // For now, just redirect to dashboard
+  res.cookie('shopOrigin', shop, { maxAge: 24 * 60 * 60 * 1000 });
+  res.redirect(`/dashboard?shop=${shop}`);
+});
+
+app.get('/auth/shopify/callback', (req, res) => {
+  // Alternative callback route
+  res.redirect('/auth/callback?' + new URLSearchParams(req.query));
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -418,6 +466,14 @@ app.get('/builder', (req, res) => {
 
 // Dashboard route  
 app.get('/dashboard', (req, res) => {
+  const shop = req.query.shop;
+  const embedded = req.query.embedded;
+  
+  // For embedded apps, check if we have shop parameter
+  if (embedded === '1' && !shop) {
+    return res.status(400).send('Missing shop parameter for embedded app');
+  }
+  
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
 });
 
