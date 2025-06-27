@@ -191,17 +191,43 @@ app.get('/auth/callback', async (req, res) => {
     const tokenData = await tokenResponse.json();
     
     if (tokenData.access_token) {
-      // Store both shop and access token in cookies
-      res.cookie('shopOrigin', shop, { maxAge: 24 * 60 * 60 * 1000 });
-      res.cookie('accessToken', tokenData.access_token, { maxAge: 24 * 60 * 60 * 1000 });
+      // Store both shop and access token in cookies with proper settings for embedded apps
+      res.cookie('shopOrigin', shop, { 
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+      });
+      res.cookie('accessToken', tokenData.access_token, { 
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+      });
       
       console.log(`✅ OAuth successful for ${shop}`);
       
-      // STAY EMBEDDED - redirect back to Shopify admin with embedded params
+      // STAY EMBEDDED - redirect back to Shopify admin with session token
       res.send(`
-        <script>
-          window.top.location.href = "https://admin.shopify.com/store/${shop.replace('.myshopify.com', '')}/apps/kingsbuilder";
-        </script>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <script src="https://unpkg.com/@shopify/app-bridge@3.7.9/umd/index.js"></script>
+        </head>
+        <body>
+          <script>
+            const shopOrigin = "${shop}";
+            const redirectUri = "https://admin.shopify.com/store/" + shopOrigin.replace('.myshopify.com', '') + "/apps/kingsbuilder";
+            
+            // Store tokens in sessionStorage for the embedded app
+            sessionStorage.setItem('shopOrigin', shopOrigin);
+            sessionStorage.setItem('accessToken', '${tokenData.access_token}');
+            
+            // Redirect back to embedded app
+            window.top.location.href = redirectUri;
+          </script>
+        </body>
+        </html>
       `);
     } else {
       throw new Error('Failed to get access token');

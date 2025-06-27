@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="frame-ancestors https://admin.shopify.com https://*.myshopify.com;">
     <title>KingsBuilder Dashboard - Manage Your Pages</title>
     <link rel="stylesheet" href="dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/@shopify/app-bridge@3.7.9/umd/index.js"></script>
 </head>
 <body class="dashboard-body">
     <div class="dashboard-container">
@@ -250,6 +252,24 @@
     </div>
 
     <!-- Scripts -->
+    <script>
+        // Initialize Shopify App Bridge for embedded apps
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shop = urlParams.get('shop');
+            const host = urlParams.get('host');
+            
+            if (shop && window.AppBridge) {
+                const app = window.AppBridge.createApp({
+                    apiKey: 'YOUR_API_KEY_PLACEHOLDER',
+                    host: host,
+                    shopOrigin: shop
+                });
+                
+                console.log('✅ App Bridge initialized for:', shop);
+            }
+        });
+    </script>
     <script src="dashboard.js"></script>
 </body>
 </html>
