@@ -100,17 +100,13 @@ app.get('/iframe-test', (req, res) => {
   `);
 });
 
-// ROOT ROUTE - Handle app installation
+// ROOT ROUTE - INSTANT OAUTH FIX
 app.get('/', (req, res) => {
   const shop = req.query.shop;
   const embedded = req.query.embedded;
   
   if (shop) {
-    // If embedded, go to dashboard
-    if (embedded === '1') {
-      return res.redirect(`/dashboard?shop=${shop}&embedded=1`);
-    }
-    // Otherwise, start OAuth flow
+    // ALWAYS start with OAuth for new installations
     return res.redirect(`/auth?shop=${shop}`);
   }
   
@@ -121,33 +117,41 @@ app.get('/', (req, res) => {
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
-// SHOPIFY OAUTH ROUTES
+// DIRECT OAUTH - NO IFRAME BLOCKING
 app.get('/auth', (req, res) => {
   const shop = req.query.shop;
   if (!shop) {
     return res.status(400).send('Missing shop parameter');
   }
   
+  // FORCE FULL WINDOW REDIRECT - NOT IFRAME
   const shopifyAuthUrl = `https://${shop}/admin/oauth/authorize?` +
-    `client_id=${process.env.SHOPIFY_API_KEY}&` +
+    `client_id=${process.env.SHOPIFY_API_KEY || 'placeholder'}&` +
     `scope=read_content,write_content,read_products,write_products&` +
-    `redirect_uri=${process.env.SHOPIFY_APP_URL}/auth/callback&` +
+    `redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&` +
     `state=${shop}`;
   
-  res.redirect(shopifyAuthUrl);
+  // Send JavaScript to break out of iframe and redirect in parent window
+  res.send(`
+    <script>
+      if (window.top !== window.self) {
+        window.top.location.href = "${shopifyAuthUrl}";
+      } else {
+        window.location.href = "${shopifyAuthUrl}";
+      }
+    </script>
+  `);
 });
 
 app.get('/auth/callback', (req, res) => {
   const { shop, code } = req.query;
   
-  // In a real app, you'd exchange the code for an access token
-  // For now, just redirect to dashboard
+  // Store shop and redirect to dashboard
   res.cookie('shopOrigin', shop, { maxAge: 24 * 60 * 60 * 1000 });
-  res.redirect(`/dashboard?shop=${shop}`);
+  res.redirect(`/dashboard?shop=${shop}&installed=1`);
 });
 
 app.get('/auth/shopify/callback', (req, res) => {
-  // Alternative callback route
   res.redirect('/auth/callback?' + new URLSearchParams(req.query));
 });
 
