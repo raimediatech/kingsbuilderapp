@@ -100,21 +100,32 @@ app.get('/iframe-test', (req, res) => {
   `);
 });
 
-// ROOT ROUTE - IFRAME BREAKOUT OAUTH
+// ROOT ROUTE - HANDLE EMBEDDED AND OAUTH
 app.get('/', (req, res) => {
   const shop = req.query.shop;
+  const embedded = req.query.embedded;
+  const host = req.query.host;
   
   if (shop) {
-    // FORCE TOP WINDOW OAUTH - BREAK OUT OF IFRAME
-    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+    // Check if user already has access token
+    const accessToken = req.cookies?.accessToken;
+    const cookieShop = req.cookies?.shopOrigin;
     
-    res.send(`
-      <script>
-        // FORCE PARENT WINDOW NAVIGATION
-        window.top.location.href = "${authUrl}";
-      </script>
-    `);
-    return;
+    if (accessToken && cookieShop === shop) {
+      // User is authenticated - redirect to dashboard EMBEDDED
+      return res.redirect(`/dashboard?shop=${shop}&embedded=1&host=${host || ''}`);
+    } else {
+      // Need OAuth - break out of iframe first
+      const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+      
+      res.send(`
+        <script>
+          // FORCE PARENT WINDOW NAVIGATION FOR OAUTH
+          window.top.location.href = "${authUrl}";
+        </script>
+      `);
+      return;
+    }
   }
   
   // No shop, serve landing page
@@ -185,7 +196,13 @@ app.get('/auth/callback', async (req, res) => {
       res.cookie('accessToken', tokenData.access_token, { maxAge: 24 * 60 * 60 * 1000 });
       
       console.log(`✅ OAuth successful for ${shop}`);
-      res.redirect(`/dashboard?shop=${shop}&installed=1`);
+      
+      // STAY EMBEDDED - redirect back to Shopify admin with embedded params
+      res.send(`
+        <script>
+          window.top.location.href = "https://admin.shopify.com/store/${shop.replace('.myshopify.com', '')}/apps/kingsbuilder";
+        </script>
+      `);
     } else {
       throw new Error('Failed to get access token');
     }
