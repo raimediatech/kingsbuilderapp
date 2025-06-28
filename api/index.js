@@ -108,9 +108,10 @@ app.get('/', (req, res) => {
   
   if (shop) {
     // TEMPORARY: Force re-auth to get content scopes (remove after first install)
-    const forceReauth = (req.query.force_reauth === "true");
+    // Disable forced reauth on every load
+    const forceReauth = (req.query.force_reauth === 'true');
     
-    if (false) {  // reauth disabled }
+    if (forceReauth) {
       console.log('🔄 FORCING RE-AUTH to get content scopes');
       // Clear old cookies
       res.clearCookie('accessToken');
@@ -203,7 +204,6 @@ app.get('/auth', (req, res) => {
 
 app.get('/auth/callback', async (req, res) => {
   const { shop, code } = req.query;
-  const host = req.query.host;
   
   if (!shop || !code) {
     return res.status(400).send('Missing shop or code parameter');
@@ -253,7 +253,7 @@ app.get('/auth/callback', async (req, res) => {
       });
       
       // Redirect back to dashboard with token as query parameter 
-      res.redirect(`/?shop=${shop}&host=${host}&embedded=1`);
+      res.redirect(`/dashboard?shop=${shop}&access_token=${tokenData.access_token}&embedded=1`);
     } else {
       throw new Error('Failed to get access token');
     }
