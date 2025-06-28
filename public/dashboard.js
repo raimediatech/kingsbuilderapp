@@ -284,7 +284,7 @@ class KingsDashboard {
         }
         
         // Redirect to OAuth install flow (like all other Shopify apps)
-        window.top.location.href = `/install?shop=${shopDomain}`;
+        window.location.href = `/install?shop=${shopDomain}`;
     }
     
 

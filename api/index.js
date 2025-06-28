@@ -108,9 +108,10 @@ app.get('/', (req, res) => {
   
   if (shop) {
     // TEMPORARY: Force re-auth to get content scopes (remove after first install)
-    const forceReauth = req.query.force_reauth || true; // FORCE FOR NOW
+    // TEMPORARY re-auth disabled by default; only explicit reauth if needed
+    const forceReauth = (req.query.force_reauth === 'true');
     
-    if (forceReauth) {
+    // if (forceReauth) { // disabled forced OAuth
       console.log('🔄 FORCING RE-AUTH to get content scopes');
       // Clear old cookies
       res.clearCookie('accessToken');
@@ -203,6 +204,7 @@ app.get('/auth', (req, res) => {
 
 app.get('/auth/callback', async (req, res) => {
   const { shop, code } = req.query;
+  const host = req.query.host;
   
   if (!shop || !code) {
     return res.status(400).send('Missing shop or code parameter');
@@ -526,6 +528,7 @@ app.get('/install', (req, res) => {
 app.get('/auth/callback', async (req, res) => {
   try {
     const { code, state, shop } = req.query;
+    const host = req.query.host;
     const storedState = req.cookies?.oauth_state;
     const shopOrigin = req.cookies?.shopOrigin || shop;
     
@@ -2543,6 +2546,5 @@ app.get('/', (req, res) => {
 
 // Export for Vercel
 module.exports = app;
-
 
 

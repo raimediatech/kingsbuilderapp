@@ -41,7 +41,6 @@ router.get('/', (req, res) => {
 // OAuth callback
 router.get('/callback', async (req, res) => {
   const { shop, code, state } = req.query;
-  const host = req.query.host;
   const storedNonce = req.cookies.shopify_nonce;
   
   console.log('OAuth callback received:', { shop, code: code ? 'present' : 'missing', state });
