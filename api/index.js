@@ -108,10 +108,9 @@ app.get('/', (req, res) => {
   
   if (shop) {
     // TEMPORARY: Force re-auth to get content scopes (remove after first install)
-    // TEMPORARY re-auth disabled by default; only explicit reauth if needed
-    const forceReauth = (req.query.force_reauth === 'true');
+    const forceReauth = (req.query.force_reauth === "true");
     
-    // if (forceReauth) { // disabled forced OAuth
+    if (false) {  // reauth disabled }
       console.log('🔄 FORCING RE-AUTH to get content scopes');
       // Clear old cookies
       res.clearCookie('accessToken');
@@ -254,7 +253,7 @@ app.get('/auth/callback', async (req, res) => {
       });
       
       // Redirect back to dashboard with token as query parameter 
-      res.redirect(`/dashboard?shop=${shop}&access_token=${tokenData.access_token}&embedded=1`);
+      res.redirect(`/?shop=${shop}&host=${host}&embedded=1`);
     } else {
       throw new Error('Failed to get access token');
     }
@@ -528,7 +527,6 @@ app.get('/install', (req, res) => {
 app.get('/auth/callback', async (req, res) => {
   try {
     const { code, state, shop } = req.query;
-    const host = req.query.host;
     const storedState = req.cookies?.oauth_state;
     const shopOrigin = req.cookies?.shopOrigin || shop;
     
