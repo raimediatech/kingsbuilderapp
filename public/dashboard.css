@@ -673,6 +673,75 @@ body.dashboard-body {
     font-size: 14px;
 }
 
+/* Permission Error State */
+.permission-error-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--bg-primary);
+    border: 1px solid var(--error-color);
+    border-radius: var(--border-radius);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.permission-error-state .error-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--error-color);
+    font-size: 32px;
+}
+
+.permission-error-state h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--error-color);
+}
+
+.permission-error-state p {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.permission-error-state .error-details {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin: 20px 0;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.permission-error-state .error-details p {
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.permission-error-state .error-details ul {
+    list-style: none;
+    margin: 0;
+}
+
+.permission-error-state .error-details li {
+    padding: 4px 0;
+    font-size: 13px;
+}
+
+.permission-error-state .btn {
+    margin: 8px;
+}
+
 /* Modal Styles */
 .modal-overlay {
     position: fixed;

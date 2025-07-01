@@ -157,6 +157,14 @@ class KingsDashboard {
                 if (response.status === 401) {
                     throw new Error('Authentication required - please reinstall the app');
                 }
+                if (response.status === 403) {
+                    const errorData = await response.json();
+                    if (errorData.message && errorData.message.includes('content permissions')) {
+                        this.showPermissionError();
+                        return;
+                    }
+                    throw new Error('Permission denied - app needs to be reconfigured');
+                }
                 throw new Error(`Shopify API Error: ${response.status}`);
             }
             
@@ -638,6 +646,55 @@ window.top.location.href = installUrl;
         console.error('Dashboard Error:', message);
         // Don't show alerts to users - just log for debugging
         // Could add a toast notification here instead
+    }
+    
+    showPermissionError() {
+        console.log('🚫 Permission error - showing reinstall prompt');
+        
+        // Replace the pages grid with permission error message
+        const pagesGrid = document.getElementById('pagesGrid');
+        if (pagesGrid) {
+            pagesGrid.innerHTML = `
+                <div class="permission-error-state">
+                    <div class="error-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>🔒 Permission Required</h3>
+                    <p>Your app needs permission to access Shopify pages. Please reinstall the app to grant the necessary permissions.</p>
+                    <div class="error-details">
+                        <p><strong>Required permissions:</strong></p>
+                        <ul>
+                            <li>✅ Read and write products</li>
+                            <li>🔒 <strong>Read and write content (pages)</strong> - Missing</li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-primary" onclick="window.dashboard.reinstallApp()">
+                        <i class="fas fa-sync-alt"></i>
+                        Reinstall App with Permissions
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.dashboard.loadDemoPages()">
+                        <i class="fas fa-eye"></i>
+                        View Demo Instead
+                    </button>
+                </div>
+            `;
+        }
+    }
+    
+    reinstallApp() {
+        console.log('🔄 Starting app reinstall process');
+        
+        // Get shop from URL
+        const shop = this.getShopOrigin();
+        if (!shop) {
+            alert('Could not detect shop domain. Please try again from your Shopify admin.');
+            return;
+        }
+        
+        // Force reauth with new scopes
+        const reinstallUrl = `/?shop=${shop}&force_reauth=true`;
+        console.log('Redirecting to:', reinstallUrl);
+        window.top.location.href = reinstallUrl;
     }
     
     delay(ms) {
