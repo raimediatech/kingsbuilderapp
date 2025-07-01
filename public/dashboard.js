@@ -43,6 +43,12 @@ class KingsDashboard {
             createPageBtn.addEventListener('click', () => this.showCreatePageModal());
         }
         
+        // Install & Connect button
+        const installConnectBtn = document.getElementById('installConnectBtn');
+        if (installConnectBtn) {
+            installConnectBtn.addEventListener('click', () => this.forceReauth());
+        }
+        
         // Modal controls
         const modalClose = document.getElementById('modalClose');
         const modalOverlay = document.getElementById('modalOverlay');
@@ -695,6 +701,49 @@ window.top.location.href = installUrl;
         const reinstallUrl = `/?shop=${shop}&force_reauth=true`;
         console.log('Redirecting to:', reinstallUrl);
         window.top.location.href = reinstallUrl;
+    }
+    
+    forceReauth() {
+        console.log('🔄 Force reauth requested');
+        
+        // Get shop from URL
+        const shop = this.getShopOrigin();
+        if (!shop) {
+            alert('Could not detect shop domain. Please try again from your Shopify admin.');
+            return;
+        }
+        
+        // Show loading state
+        const installBtn = document.getElementById('installConnectBtn');
+        if (installBtn) {
+            installBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+            installBtn.disabled = true;
+        }
+        
+        // Build OAuth URL with ALL required scopes
+        const apiKey = '128d69fb5441ba3eda3ae4694c71b175';
+        const scopes = 'read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_content,write_content';
+        const redirectUri = window.location.origin + '/auth/callback';
+        
+        const params = new URLSearchParams({
+            client_id: apiKey,
+            scope: scopes,
+            redirect_uri: redirectUri,
+            state: shop
+        });
+        
+        const authUrl = `https://${shop}/admin/oauth/authorize?${params.toString()}`;
+        
+        console.log('🚀 Forcing OAuth with full scopes:', authUrl);
+        
+        // Clear existing cookies and redirect
+        document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'shopOrigin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        
+        // Redirect to OAuth
+        setTimeout(() => {
+            window.top.location.href = authUrl;
+        }, 1000);
     }
     
     delay(ms) {

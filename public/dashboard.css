@@ -115,6 +115,17 @@ body.dashboard-body {
     border-color: var(--primary-color);
 }
 
+.btn-warning {
+    background: var(--warning-color);
+    color: white;
+    border: none;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+    transform: translateY(-2px);
+}
+
 .user-btn {
     background: transparent;
     border: none;
