@@ -496,44 +496,89 @@ window.top.location.href = installUrl;
             const typeLabel = page.isShopifyPage ? 'Shopify Page' : page.isKingsBuilderPage ? 'KingsBuilder Page' : 'Demo Page';
             const typeColor = page.isShopifyPage ? '#000000' : page.isKingsBuilderPage ? '#667eea' : '#f59e0b';
             
-            return `
-                <div class="page-card ${pageType}" onclick="dashboard.editPage('${page.id}')">
-                    <div class="page-preview">
-                        <i class="${typeIcon}" style="color: ${typeColor}"></i>
+            // Different layout for list view
+            if (this.viewMode === 'list') {
+                return `
+                    <div class="page-card ${pageType}" onclick="dashboard.editPage('${page.id}')">
+                        <div class="page-preview">
+                            <i class="${typeIcon}" style="color: ${typeColor}"></i>
+                        </div>
+                        <div class="page-info">
+                            <div class="page-details">
+                                <div class="page-title">${page.title}</div>
+                                <div class="page-meta">
+                                    <span class="page-status ${page.status}">${page.status}</span>
+                                    <span class="page-date">${page.lastModified}</span>
+                                    <span class="page-type-badge" style="background: ${typeColor}; padding: 2px 6px; border-radius: 3px; font-size: 10px; color: white;">${typeLabel}</span>
+                                </div>
+                            </div>
+                            <div class="page-stats">
+                                <span>${page.views || 0} views</span>
+                                <span>${page.conversions || 0} conversions</span>
+                            </div>
+                            <div class="page-actions">
+                                ${page.isShopifyPage ? `
+                                    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.open('${page.shopifyUrl}', '_blank')">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.open('${page.frontendUrl}', '_blank')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                ` : ''}
+                                ${page.isKingsBuilderPage || page.isDemo ? `
+                                    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); dashboard.duplicatePage('${page.id}')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); dashboard.editPage('${page.id}')">
+                                    <i class="fas fa-edit"></i>
+                                    ${page.isShopifyPage ? 'Edit' : 'Edit'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="page-type-badge" style="background: ${typeColor}">
-                        ${typeLabel}
-                    </div>
-                    <h3>${page.title}</h3>
-                    <div class="page-meta">
-                        <span class="page-status ${page.status}">${page.status}</span>
-                        <span class="page-date">${page.lastModified}</span>
-                    </div>
-                    <p>${page.views || 0} views • ${page.conversions || 0} conversions</p>
-                    <div class="page-actions">
-                        ${page.isShopifyPage ? `
-                            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.open('${page.shopifyUrl}', '_blank')">
-                                <i class="fas fa-external-link-alt"></i>
-                                Shopify
+                `;
+            } else {
+                // Grid view (original layout)
+                return `
+                    <div class="page-card ${pageType}" onclick="dashboard.editPage('${page.id}')">
+                        <div class="page-preview">
+                            <i class="${typeIcon}" style="color: ${typeColor}"></i>
+                        </div>
+                        <div class="page-type-badge" style="background: ${typeColor}">
+                            ${typeLabel}
+                        </div>
+                        <h3>${page.title}</h3>
+                        <div class="page-meta">
+                            <span class="page-status ${page.status}">${page.status}</span>
+                            <span class="page-date">${page.lastModified}</span>
+                        </div>
+                        <p>${page.views || 0} views • ${page.conversions || 0} conversions</p>
+                        <div class="page-actions">
+                            ${page.isShopifyPage ? `
+                                <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.open('${page.shopifyUrl}', '_blank')">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    Shopify
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.open('${page.frontendUrl}', '_blank')">
+                                    <i class="fas fa-eye"></i>
+                                    View
+                                </button>
+                            ` : ''}
+                            ${page.isKingsBuilderPage || page.isDemo ? `
+                                <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); dashboard.duplicatePage('${page.id}')">
+                                    <i class="fas fa-copy"></i>
+                                    Duplicate
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); dashboard.editPage('${page.id}')">
+                                <i class="fas fa-edit"></i>
+                                ${page.isShopifyPage ? 'Edit with KB' : 'Edit'}
                             </button>
-                            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); window.open('${page.frontendUrl}', '_blank')">
-                                <i class="fas fa-eye"></i>
-                                View
-                            </button>
-                        ` : ''}
-                        ${page.isKingsBuilderPage || page.isDemo ? `
-                            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); dashboard.duplicatePage('${page.id}')">
-                                <i class="fas fa-copy"></i>
-                                Duplicate
-                            </button>
-                        ` : ''}
-                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); dashboard.editPage('${page.id}')">
-                            <i class="fas fa-edit"></i>
-                            ${page.isShopifyPage ? 'Edit with KB' : 'Edit'}
-                        </button>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
         }).join('');
         
         pagesGrid.innerHTML = connectionBanner + pagesHTML;
