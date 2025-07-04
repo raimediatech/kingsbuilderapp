@@ -255,6 +255,11 @@ app.get('/auth/callback', async (req, res) => {
         sameSite: 'none'
       });
       
+      // Also store in session for backend access
+      const { storeAccessToken } = require('./utils/session');
+      storeAccessToken(shop, tokenData.access_token);
+      console.log('💾 Access token stored in both cookies and session');
+      
       // For embedded apps, redirect back to Shopify admin
       const shopName = shop.replace('.myshopify.com', '');
       const shopifyAdminUrl = `https://admin.shopify.com/store/${shopName}/apps/kingsbuilder`;

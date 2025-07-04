@@ -17,10 +17,22 @@ const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || '2023-10';
 /**
  * Create a new page in Shopify
  */
-async function createShopifyPage(shop, accessToken, pageData) {
+async function createShopifyPage(shop, accessToken, pageData, req) {
   try {
-    // Use environment token if not provided
-    const token = accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN || process.env.SHOPIFY_API_PASSWORD;
+    // First try to get token from parameters
+    let token = accessToken;
+    
+    // If no token provided, try to get from session/cookies
+    if (!token) {
+      token = getAccessToken(shop, req);
+      console.log('Got token from session/cookies:', token ? 'Yes' : 'No');
+    }
+    
+    // Use environment token if still not found
+    if (!token) {
+      token = process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN || process.env.SHOPIFY_API_PASSWORD;
+      console.log('Using token from environment variables');
+    }
     
     if (!token) {
       throw new Error('No access token available for this shop');
@@ -98,15 +110,15 @@ async function updateShopifyPage(shop, accessToken, pageId, pageData) {
 /**
  * Get a list of pages from Shopify
  */
-async function getShopifyPages(shop, accessToken) {
+async function getShopifyPages(shop, accessToken, req) {
   try {
     // First try to get token from session
     let token = accessToken;
     
-    // If no token provided, try to get from session
+    // If no token provided, try to get from session/cookies
     if (!token) {
-      token = getAccessToken(shop);
-      console.log('Got token from session:', token ? 'Yes' : 'No');
+      token = getAccessToken(shop, req);
+      console.log('Got token from session/cookies:', token ? 'Yes' : 'No');
     }
     
     // If still no token, use environment variables
@@ -169,15 +181,15 @@ async function getShopifyPages(shop, accessToken) {
 /**
  * Get a single page from Shopify by ID
  */
-async function getShopifyPageById(shop, accessToken, pageId) {
+async function getShopifyPageById(shop, accessToken, pageId, req) {
   try {
     // First try to get token from session
     let token = accessToken;
     
-    // If no token provided, try to get from session
+    // If no token provided, try to get from session/cookies
     if (!token) {
-      token = getAccessToken(shop);
-      console.log('Got token from session:', token ? 'Yes' : 'No');
+      token = getAccessToken(shop, req);
+      console.log('Got token from session/cookies:', token ? 'Yes' : 'No');
     }
     
     // If still no token, use environment variables

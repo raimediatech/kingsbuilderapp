@@ -696,26 +696,53 @@ window.top.location.href = installUrl;
         this.showLoading();
         
         try {
-            // Simulate API call
-            await this.delay(1000);
+            // Create real Shopify page
+            const response = await fetch('/api/pages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include', // Include cookies for authentication
+                body: JSON.stringify({
+                    title: title,
+                    url: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                    status: 'draft',
+                    html: '<div class="page-content"><h1>' + title + '</h1><p>Start building your page...</p></div>',
+                    css: '',
+                    elements: [],
+                    shop: this.context.shop
+                })
+            });
             
-            // Add new page to list
-            const newPage = {
-                id: Date.now(),
-                title: title,
-                status: 'draft',
-                lastModified: new Date().toISOString().split('T')[0],
-                views: 0,
-                conversions: 0,
-                type: type
-            };
-            
-            this.pages.unshift(newPage);
-            this.renderPages();
-            this.hideModal();
-            
-            // Redirect to builder
-            window.location.href = `/builder?pageId=${newPage.id}&title=${encodeURIComponent(title)}`;
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Created new Shopify page:', result);
+                
+                // Add new page to list
+                const newPage = {
+                    id: result.page.id,
+                    title: result.page.title,
+                    status: 'draft',
+                    lastModified: new Date().toISOString().split('T')[0],
+                    views: 0,
+                    conversions: 0,
+                    type: type,
+                    isShopifyPage: true
+                };
+                
+                this.pages.unshift(newPage);
+                this.renderPages();
+                this.hideModal();
+                
+                // Redirect to builder with proper parameters
+                const builderUrl = `/builder?pageId=${result.page.id}&title=${encodeURIComponent(title)}&shop=${this.context.shop}&embedded=1`;
+                console.log('🔧 Redirecting to builder:', builderUrl);
+                window.location.href = builderUrl;
+                
+            } else {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to create page');
+            }
             
         } catch (error) {
             console.error('Error creating page:', error);
@@ -728,7 +755,17 @@ window.top.location.href = installUrl;
     editPage(pageId) {
         const page = this.pages.find(p => p.id === pageId);
         if (page) {
-            window.location.href = `/builder?pageId=${pageId}&title=${encodeURIComponent(page.title)}`;
+            const shop = this.context.shop;
+            const builderUrl = `/builder?pageId=${pageId}&title=${encodeURIComponent(page.title)}&shop=${shop}&embedded=1`;
+            
+            console.log('🔧 Opening page editor:', builderUrl);
+            
+            // For embedded apps, navigate within the current window
+            if (this.context.embedded === '1') {
+                window.location.href = builderUrl;
+            } else {
+                window.open(builderUrl, '_blank');
+            }
         }
     }
     

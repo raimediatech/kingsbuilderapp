@@ -1152,7 +1152,7 @@ class KingsBuilder {
             const html = this.generateHTML();
             const css = this.generateCSS();
             
-            // Get page settings
+            // Get page settings from the correct field IDs
             const pageTitle = document.getElementById('pageTitle')?.value || 'KingsBuilder Page';
             const pageUrl = document.getElementById('pageUrl')?.value || 'kingsbuilder-page';
             const pageStatus = document.getElementById('pageStatus')?.value || 'draft';
@@ -1163,6 +1163,7 @@ class KingsBuilder {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include', // Include cookies for authentication
                 body: JSON.stringify({
                     title: pageTitle,
                     url: pageUrl,
@@ -1322,11 +1323,86 @@ class KingsBuilder {
     async loadPageData() {
         const urlParams = new URLSearchParams(window.location.search);
         const pageId = urlParams.get('pageId');
+        const pageTitle = urlParams.get('title');
+        const shop = urlParams.get('shop');
         
         if (pageId && pageId !== 'new') {
             console.log('📂 Loading page data for ID:', pageId);
-            // Implement loading existing page data
+            
+            try {
+                // Set page title in the properties panel
+                if (pageTitle) {
+                    const titleInput = document.getElementById('pageTitle');
+                    if (titleInput) {
+                        titleInput.value = decodeURIComponent(pageTitle);
+                    }
+                }
+                
+                // Load page content from Shopify
+                const response = await fetch(`/api/shopify/pages/${pageId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const page = data.page;
+                    
+                    console.log('✅ Loaded page data:', page);
+                    
+                    // Set the page title and content
+                    if (page.title) {
+                        const titleInput = document.getElementById('pageTitle');
+                        if (titleInput) {
+                            titleInput.value = page.title;
+                        }
+                    }
+                    
+                    // Set page content
+                    if (page.body_html) {
+                        const canvas = document.getElementById('kingsbuilder-canvas');
+                        if (canvas) {
+                            canvas.innerHTML = page.body_html;
+                        }
+                    }
+                    
+                    // Set page handle
+                    if (page.handle) {
+                        const handleInput = document.getElementById('pageUrl');
+                        if (handleInput) {
+                            handleInput.value = page.handle;
+                        }
+                    }
+                    
+                    // Set page status
+                    if (page.published_at) {
+                        const statusSelect = document.getElementById('pageStatus');
+                        if (statusSelect) {
+                            statusSelect.value = page.published_at ? 'published' : 'draft';
+                        }
+                    }
+                    
+                    console.log('📄 Page loaded successfully');
+                } else {
+                    console.error('❌ Failed to load page data:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ Error loading page data:', error);
+            }
+        } else {
+            console.log('📝 Creating new page');
+            // For new pages, just set default values
+            const titleInput = document.getElementById('pageTitle');
+            if (titleInput && pageTitle) {
+                titleInput.value = decodeURIComponent(pageTitle);
+            }
         }
+        
+        // Save initial state
+        this.saveState();
     }
     
     exit() {

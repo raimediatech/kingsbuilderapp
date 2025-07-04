@@ -43,16 +43,24 @@ function getSession(sessionId) {
 }
 
 // Get access token for a shop
-function getAccessToken(shop) {
+function getAccessToken(shop, req) {
+  // First try to get from cookies (for OAuth flow)
+  if (req && req.cookies && req.cookies.accessToken && req.cookies.shopOrigin === shop) {
+    console.log('🍪 Found access token in cookies');
+    return req.cookies.accessToken;
+  }
+  
   // Find the first valid session for this shop
   for (const sessionId in sessions) {
     const session = sessions[sessionId];
     
     if (session.shop === shop && session.expiresAt > Date.now()) {
+      console.log('💾 Found access token in session');
       return session.accessToken;
     }
   }
   
+  console.log('❌ No access token found for shop:', shop);
   return null;
 }
 

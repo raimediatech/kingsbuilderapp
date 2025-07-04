@@ -28,7 +28,7 @@ router.get('/shopify-pages', async (req, res) => {
     console.log('Using access token:', accessToken ? 'Token available' : 'No token');
     
     // Get pages from Shopify
-    const result = await shopifyApi.getShopifyPages(shop, accessToken);
+    const result = await shopifyApi.getShopifyPages(shop, accessToken, req);
     
     console.log('Shopify pages result:', JSON.stringify(result).substring(0, 200) + '...');
     
@@ -105,6 +105,49 @@ router.get('/test-shopify', async (req, res) => {
   }
 });
 
+// Get single page by ID
+router.get('/shopify/pages/:id', async (req, res) => {
+  try {
+    const shop = req.query.shop || req.shopifyShop || req.headers['x-shopify-shop-domain'] || req.cookies?.shopOrigin;
+    const pageId = req.params.id;
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Shop parameter is required' });
+    }
+    
+    if (!pageId) {
+      return res.status(400).json({ error: 'Page ID is required' });
+    }
+    
+    // Get access token from session or environment
+    const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
+    
+    console.log('Fetching Shopify page for shop:', shop, 'Page ID:', pageId);
+    console.log('Using access token:', accessToken ? 'Token available' : 'No token');
+    
+    // Get page from Shopify
+    const page = await shopifyApi.getShopifyPageById(shop, accessToken, pageId, req);
+    
+    console.log('Shopify page result:', JSON.stringify(page).substring(0, 200) + '...');
+    
+    res.json({
+      success: true,
+      page: page
+    });
+    
+  } catch (error) {
+    console.error('Error fetching Shopify page:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch Shopify page', 
+      details: error.message,
+      response: error.response ? {
+        status: error.response.status,
+        data: error.response.data
+      } : null
+    });
+  }
+});
+
 // Get all pages
 router.get('/pages', async (req, res) => {
   try {
@@ -118,7 +161,7 @@ router.get('/pages', async (req, res) => {
     const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
     
     // Get pages from Shopify
-    const result = await shopifyApi.getShopifyPages(shop, accessToken);
+    const result = await shopifyApi.getShopifyPages(shop, accessToken, req);
     
     res.json({
       success: true,
@@ -452,7 +495,7 @@ router.post('/pages', async (req, res) => {
     };
     
     // Create page in Shopify
-    const result = await shopifyApi.createShopifyPage(shop, accessToken, shopifyPageData);
+    const result = await shopifyApi.createShopifyPage(shop, accessToken, shopifyPageData, req);
     
     // Save version history if MongoDB is available
     if (PageVersion) {
