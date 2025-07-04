@@ -255,11 +255,43 @@ app.get('/auth/callback', async (req, res) => {
         sameSite: 'none'
       });
       
-      // For embedded apps, redirect to the Shopify admin URL with the app
-      const shopName = shop.replace('.myshopify.com', '');
-      const shopifyAdminUrl = `https://admin.shopify.com/store/${shopName}/apps/${process.env.SHOPIFY_APP_HANDLE || 'kingsbuilder'}`;
-      console.log('🔄 Redirecting to Shopify admin embedded URL:', shopifyAdminUrl);
-      res.redirect(shopifyAdminUrl);
+      // For embedded apps, we need to handle the iframe context properly
+      const dashboardUrl = `/dashboard?shop=${shop}&embedded=1&installed=1`;
+      console.log('🔄 Redirecting to embedded dashboard:', dashboardUrl);
+      
+      // Send a special page that handles the embedded context
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>KingsBuilder - Connecting...</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+                   text-align: center; padding: 50px; background: #f6f6f7; }
+            .loading { color: #666; }
+            .spinner { animation: spin 1s linear infinite; margin: 20px auto; }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+          </style>
+        </head>
+        <body>
+          <div class="loading">
+            <div class="spinner">⚙️</div>
+            <h2>Connecting to KingsBuilder...</h2>
+            <p>Please wait while we complete the setup.</p>
+          </div>
+          <script>
+            // If we're in an iframe (embedded), navigate the parent window
+            if (window.parent && window.parent !== window) {
+              console.log('🔄 Embedded context detected - navigating parent window');
+              window.parent.location.href = '${dashboardUrl}';
+            } else {
+              console.log('🔄 Top-level context - direct navigation');
+              window.location.href = '${dashboardUrl}';
+            }
+          </script>
+        </body>
+        </html>
+      `);
     } else {
       throw new Error('Failed to get access token');
     }

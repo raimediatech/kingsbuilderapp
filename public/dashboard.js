@@ -13,6 +13,9 @@ class KingsDashboard {
     init() {
         console.log('🎯 KingsBuilder Dashboard Initializing...');
         
+        // Check if we're in embedded context
+        this.checkEmbeddedContext();
+        
         // Initialize event listeners
         this.initEventListeners();
         
@@ -26,6 +29,26 @@ class KingsDashboard {
         this.updateConnectionStatus();
         
         console.log('✅ KingsBuilder Dashboard Ready!');
+    }
+    
+    checkEmbeddedContext() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const embedded = urlParams.get('embedded');
+        const shop = urlParams.get('shop');
+        
+        console.log('🔍 Context check:', { 
+            embedded, 
+            shop, 
+            isIframe: window.parent !== window,
+            userAgent: navigator.userAgent.includes('Shopify')
+        });
+        
+        // If we're supposed to be embedded but we're not in an iframe
+        if (embedded === '1' && shop && window.parent === window) {
+            console.log('⚠️ Should be embedded but not in iframe - may need to redirect');
+            // The app should normally be loaded within Shopify admin
+            // If it's not embedded, it means user accessed directly
+        }
     }
     
     initEventListeners() {
@@ -187,6 +210,11 @@ class KingsDashboard {
             // Clear any existing demo notice since we have real pages
             this.clearDemoNotice();
             
+            // Update URL to show installed=1 for future loads
+            const url = new URL(window.location);
+            url.searchParams.set('installed', '1');
+            window.history.replaceState({}, '', url.toString());
+            
             this.pages = data.pages.map(page => ({
                 id: page.id,
                 title: page.title,
@@ -331,6 +359,7 @@ window.top.location.href = installUrl;
                 iconElement.className = 'fas fa-circle';
                 textElement.textContent = `Connected to ${shopParam}`;
                 console.log('✅ App is connected to:', shopParam);
+                this.clearDemoNotice(); // Clear any Install & Connect buttons
                 return;
             }
             
