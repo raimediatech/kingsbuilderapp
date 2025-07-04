@@ -255,16 +255,17 @@ app.get('/auth/callback', async (req, res) => {
         sameSite: 'none'
       });
       
-      // For embedded apps, we need to handle the iframe context properly
-      const dashboardUrl = `/dashboard?shop=${shop}&embedded=1&installed=1`;
-      console.log('🔄 Redirecting to embedded dashboard:', dashboardUrl);
+      // For embedded apps, redirect back to Shopify admin
+      const shopName = shop.replace('.myshopify.com', '');
+      const shopifyAdminUrl = `https://admin.shopify.com/store/${shopName}/apps/kingsbuilder`;
+      console.log('🔄 Redirecting to Shopify admin app:', shopifyAdminUrl);
       
       // Send a special page that handles the embedded context
       res.send(`
         <!DOCTYPE html>
         <html>
         <head>
-          <title>KingsBuilder - Connecting...</title>
+          <title>KingsBuilder - Connected!</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
                    text-align: center; padding: 50px; background: #f6f6f7; }
@@ -275,19 +276,14 @@ app.get('/auth/callback', async (req, res) => {
         </head>
         <body>
           <div class="loading">
-            <div class="spinner">⚙️</div>
-            <h2>Connecting to KingsBuilder...</h2>
-            <p>Please wait while we complete the setup.</p>
+            <div class="spinner">✅</div>
+            <h2>Successfully Connected!</h2>
+            <p>Returning to your Shopify admin...</p>
           </div>
           <script>
-            // If we're in an iframe (embedded), navigate the parent window
-            if (window.parent && window.parent !== window) {
-              console.log('🔄 Embedded context detected - navigating parent window');
-              window.parent.location.href = '${dashboardUrl}';
-            } else {
-              console.log('🔄 Top-level context - direct navigation');
-              window.location.href = '${dashboardUrl}';
-            }
+            // Always redirect to Shopify admin for embedded apps
+            console.log('🔄 Redirecting to Shopify admin app');
+            window.location.href = '${shopifyAdminUrl}';
           </script>
         </body>
         </html>
@@ -810,6 +806,14 @@ app.get('/dashboard', (req, res) => {
   // For embedded apps, check if we have shop parameter
   if (embedded === '1' && !shop) {
     return res.status(400).send('Missing shop parameter for embedded app');
+  }
+  
+  // If someone accesses the dashboard directly (not embedded), redirect to Shopify admin
+  if (shop && embedded !== '1') {
+    const shopName = shop.replace('.myshopify.com', '');
+    const shopifyAdminUrl = `https://admin.shopify.com/store/${shopName}/apps/kingsbuilder`;
+    console.log('🔄 Redirecting standalone access to Shopify admin:', shopifyAdminUrl);
+    return res.redirect(shopifyAdminUrl);
   }
   
   // If we have an access token in the URL, store it in cookies
