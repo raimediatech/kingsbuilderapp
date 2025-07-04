@@ -371,11 +371,15 @@ class KingsDashboard {
                 const dateValue = page.updated_at || page.created_at;
                 console.log(`📅 Page "${page.title}" date value:`, dateValue);
                 
+                // If no date from API, use current date as fallback
+                const fallbackDate = new Date().toISOString();
+                const finalDate = dateValue || fallbackDate;
+                
                 return {
                     id: page.id,
                     title: page.title,
                     status: page.published_at ? 'published' : 'draft',
-                    lastModified: this.formatDate(dateValue),
+                    lastModified: this.formatDate(finalDate),
                     views: 0, // TODO: Integrate with Google Analytics or Shopify Analytics
                     conversions: 0, // TODO: Integrate with conversion tracking
                     handle: page.handle,
@@ -945,28 +949,41 @@ window.top.location.href = installUrl;
     }
     
     editPage(pageId) {
+        console.log('🔧 editPage called with pageId:', pageId);
+        console.log('🔧 Available pages:', this.pages.map(p => ({ id: p.id, title: p.title })));
+        
         const page = this.pages.find(p => p.id === pageId);
-        if (page) {
-            const shop = this.context.shop || this.getShopOrigin();
-            
-            if (shop === 'unknown.myshopify.com') {
-                console.error('❌ Shop origin not available - cannot edit page');
-                alert('Error: Shop information not available. Please refresh the page and try again.');
-                return;
-            }
-            
-            const builderUrl = `/builder?pageId=${pageId}&title=${encodeURIComponent(page.title)}&shop=${shop}&embedded=1`;
-            
-            console.log('🔧 Opening page editor:', builderUrl);
-            console.log('🔧 Shop:', shop);
-            console.log('🔧 Page ID:', pageId);
-            
-            // For embedded apps, navigate within the current window
-            if (this.context.embedded === '1') {
-                window.location.href = builderUrl;
-            } else {
-                window.open(builderUrl, '_blank');
-            }
+        if (!page) {
+            console.error('❌ Page not found with ID:', pageId);
+            alert('Error: Page not found. Please refresh the page and try again.');
+            return;
+        }
+        
+        console.log('🔧 Found page:', page);
+        
+        const shop = this.context.shop || this.getShopOrigin();
+        console.log('🔧 Shop context:', shop);
+        
+        if (shop === 'unknown.myshopify.com') {
+            console.error('❌ Shop origin not available - cannot edit page');
+            alert('Error: Shop information not available. Please refresh the page and try again.');
+            return;
+        }
+        
+        const builderUrl = `/builder?pageId=${pageId}&title=${encodeURIComponent(page.title)}&shop=${shop}&embedded=1`;
+        
+        console.log('🔧 Opening page editor:', builderUrl);
+        console.log('🔧 Shop:', shop);
+        console.log('🔧 Page ID:', pageId);
+        console.log('🔧 Embedded context:', this.context.embedded);
+        
+        // For embedded apps, navigate within the current window
+        if (this.context.embedded === '1') {
+            console.log('🔧 Navigating to builder in same window');
+            window.location.href = builderUrl;
+        } else {
+            console.log('🔧 Opening builder in new window');
+            window.open(builderUrl, '_blank');
         }
     }
     
