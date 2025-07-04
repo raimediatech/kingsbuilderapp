@@ -47,6 +47,15 @@ class KingsDashboard {
             userAgent: navigator.userAgent.includes('Shopify')
         });
         
+        // Set context for use throughout the app
+        this.context = {
+            embedded: embedded || '0',
+            shop: shop || this.getShopOrigin(),
+            isIframe: window.parent !== window
+        };
+        
+        console.log('📝 Context set:', this.context);
+        
         // If we're supposed to be embedded but we're not in an iframe
         if (embedded === '1' && shop && window.parent === window) {
             console.log('⚠️ Should be embedded but not in iframe - may need to redirect');
@@ -95,10 +104,15 @@ class KingsDashboard {
             });
         });
         
-        // Create page button
+        // Create page buttons (there are two - one in header, one in pages area)
         const createPageBtn = document.getElementById('createPageBtn');
+        const createPageBtn2 = document.getElementById('createPageBtn2');
+        
         if (createPageBtn) {
             createPageBtn.addEventListener('click', () => this.showCreatePageModal());
+        }
+        if (createPageBtn2) {
+            createPageBtn2.addEventListener('click', () => this.showCreatePageModal());
         }
         
         // Install & Connect button
@@ -118,18 +132,15 @@ class KingsDashboard {
             listViewBtn.addEventListener('click', () => this.setViewMode('list'));
         }
         
-        // Modal controls
+        // Modal controls - static elements only
         const modalClose = document.getElementById('modalClose');
         const modalOverlay = document.getElementById('modalOverlay');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const createBtn = document.getElementById('createBtn');
         
         if (modalClose) modalClose.addEventListener('click', () => this.hideModal());
         if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
             if (e.target === modalOverlay) this.hideModal();
         });
-        if (cancelBtn) cancelBtn.addEventListener('click', () => this.hideModal());
-        if (createBtn) createBtn.addEventListener('click', () => this.createNewPage());
+        // Note: cancelBtn and createBtn are added dynamically in showCreatePageModal()
         
         // Search functionality
         const searchPages = document.getElementById('searchPages');
@@ -266,13 +277,13 @@ class KingsDashboard {
             this.pages = data.pages.map(page => ({
                 id: page.id,
                 title: page.title,
-                status: page.status,
-                lastModified: this.formatDate(page.lastModified),
-                views: page.views,
-                conversions: page.conversions,
+                status: page.published_at ? 'published' : 'draft',
+                lastModified: this.formatDate(page.updated_at || page.created_at),
+                views: 0, // TODO: Integrate with Google Analytics or Shopify Analytics
+                conversions: 0, // TODO: Integrate with conversion tracking
                 handle: page.handle,
-                shopifyUrl: page.shopifyUrl,
-                frontendUrl: page.frontendUrl,
+                shopifyUrl: `https://${this.context.shop}/admin/pages/${page.id}`,
+                frontendUrl: `https://${this.context.shop}/pages/${page.handle}`,
                 isShopifyPage: true
             }));
             
@@ -442,6 +453,17 @@ window.top.location.href = installUrl;
         } catch (e) {
             return dateString;
         }
+    }
+
+    // TODO: Integrate real analytics data
+    async loadAnalyticsData() {
+        // Future integration with:
+        // - Google Analytics 4
+        // - Shopify Analytics  
+        // - Custom tracking pixels
+        // - Conversion tracking
+        console.log('📊 Analytics integration coming soon...');
+        return { views: 0, conversions: 0 };
     }
     
     renderPages() {
@@ -685,8 +707,25 @@ window.top.location.href = installUrl;
     }
     
     async createNewPage() {
-        const title = document.getElementById('pageTitle').value.trim();
-        const type = document.getElementById('pageType').value;
+        console.log('🚀 Creating new page...');
+        
+        const titleInput = document.getElementById('pageTitle');
+        const typeSelect = document.getElementById('pageType');
+        
+        console.log('Title input:', titleInput);
+        console.log('Type select:', typeSelect);
+        
+        if (!titleInput || !typeSelect) {
+            console.error('❌ Modal form elements not found');
+            alert('Error: Form elements not found');
+            return;
+        }
+        
+        const title = titleInput.value.trim();
+        const type = typeSelect.value;
+        
+        console.log('Page title:', title);
+        console.log('Page type:', type);
         
         if (!title) {
             alert('Please enter a page title');
