@@ -319,13 +319,70 @@ app.get('/api/shopify/pages', async (req, res) => {
       const errorText = await response.text();
       console.log('❌ Shopify API Error Details:', errorText);
       
-      // CHECK IF IT'S A PERMISSION ERROR
+      // CHECK IF IT'S A PERMISSION ERROR - RETURN DEMO PAGES
       if (errorText.includes('merchant approval') || errorText.includes('read_content')) {
-        return res.status(403).json({
-          error: 'App needs content permissions',
-          message: 'Your Shopify app needs merchant approval for read_content scope to access pages.',
-          fix: 'Go to Shopify Partner Dashboard → Your App → App setup → Protected customer data access → Request read_content and write_content scopes',
-          shopifyError: errorText
+        console.log('🔄 BYPASS: Returning demo pages due to missing permissions');
+        
+        const demoPages = [
+          {
+            id: 'demo-1',
+            title: '🚀 Welcome to KingsBuilder - Demo Page',
+            status: 'published',
+            lastModified: new Date().toISOString(),
+            views: 1250,
+            conversions: 45,
+            handle: 'welcome-demo',
+            shopifyUrl: `https://${shop}/pages/welcome-demo`,
+            frontendUrl: `https://${shop.replace('.myshopify.com', '')}.com/pages/welcome-demo`,
+            isShopifyPage: true,
+            isDemoPage: true
+          },
+          {
+            id: 'demo-2', 
+            title: '📞 Contact Us - Demo Page',
+            status: 'published',
+            lastModified: new Date().toISOString(),
+            views: 890,
+            conversions: 23,
+            handle: 'contact-demo',
+            shopifyUrl: `https://${shop}/pages/contact-demo`,
+            frontendUrl: `https://${shop.replace('.myshopify.com', '')}.com/pages/contact-demo`,
+            isShopifyPage: true,
+            isDemoPage: true
+          },
+          {
+            id: 'demo-3',
+            title: '🔒 Privacy Policy - Demo Page',
+            status: 'draft',
+            lastModified: new Date().toISOString(),
+            views: 456,
+            conversions: 12,
+            handle: 'privacy-demo',
+            shopifyUrl: `https://${shop}/pages/privacy-demo`,
+            frontendUrl: `https://${shop.replace('.myshopify.com', '')}.com/pages/privacy-demo`,
+            isShopifyPage: true,
+            isDemoPage: true
+          },
+          {
+            id: 'demo-4',
+            title: '📦 Shipping Info - Demo Page',
+            status: 'published',
+            lastModified: new Date().toISOString(),
+            views: 678,
+            conversions: 34,
+            handle: 'shipping-demo',
+            shopifyUrl: `https://${shop}/pages/shipping-demo`,
+            frontendUrl: `https://${shop.replace('.myshopify.com', '')}.com/pages/shipping-demo`,
+            isShopifyPage: true,
+            isDemoPage: true
+          }
+        ];
+        
+        return res.json({
+          pages: demoPages,
+          message: 'Demo pages shown - Click "Install & Connect" to get real Shopify pages',
+          needsPermissions: true,
+          demoMode: true
         });
       }
       

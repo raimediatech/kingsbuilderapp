@@ -938,3 +938,48 @@ body.dashboard-body {
 .visible {
     display: block !important;
 }
+
+/* Demo Notice */
+.demo-notice {
+    margin: 0 0 20px 0;
+}
+
+.demo-notice .alert {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 0;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.demo-notice .alert-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.demo-notice .alert-content i {
+    font-size: 24px;
+    opacity: 0.9;
+}
+
+.demo-notice .demo-actions {
+    margin-top: 10px;
+}
+
+.demo-notice .btn-sm {
+    padding: 8px 16px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.demo-notice .btn-sm:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}

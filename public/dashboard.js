@@ -174,6 +174,14 @@ class KingsDashboard {
             }
             
             const data = await response.json();
+            
+            // Check if we got demo pages due to missing permissions
+            if (data.demoMode && data.needsPermissions) {
+                console.log('🎭 Demo mode activated - showing demo pages');
+                this.showDemoPages(data.pages, data.message);
+                return;
+            }
+            
             console.log(`✅ Loaded ${data.pages.length} real Shopify pages`);
             
             this.pages = data.pages.map(page => ({
@@ -649,6 +657,62 @@ window.top.location.href = installUrl;
         console.error('Dashboard Error:', message);
         // Don't show alerts to users - just log for debugging
         // Could add a toast notification here instead
+    }
+    
+    showDemoPages(demoPages, message) {
+        console.log('🎭 Showing demo pages:', demoPages);
+        
+        // Store demo pages
+        this.pages = demoPages.map(page => ({
+            id: page.id,
+            title: page.title,
+            status: page.status,
+            lastModified: this.formatDate(page.lastModified),
+            views: page.views,
+            conversions: page.conversions,
+            handle: page.handle,
+            shopifyUrl: page.shopifyUrl,
+            frontendUrl: page.frontendUrl,
+            isShopifyPage: true,
+            isDemoPage: true
+        }));
+        
+        // Show demo notice
+        this.showDemoNotice(message);
+        
+        // Render the demo pages
+        this.renderPages();
+    }
+    
+    showDemoNotice(message) {
+        // Add demo notice at the top of the page
+        const existingNotice = document.querySelector('.demo-notice');
+        if (existingNotice) {
+            existingNotice.remove();
+        }
+        
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            const notice = document.createElement('div');
+            notice.className = 'demo-notice';
+            notice.innerHTML = `
+                <div class="alert alert-info">
+                    <div class="alert-content">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong>Demo Mode:</strong> ${message}
+                            <div class="demo-actions">
+                                <button class="btn btn-primary btn-sm" onclick="window.dashboard.reinstallApp()">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Install & Connect
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            mainContent.insertBefore(notice, mainContent.firstChild);
+        }
     }
     
     showPermissionError() {
