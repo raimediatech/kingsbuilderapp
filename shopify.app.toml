@@ -1,3 +1,10 @@
 # This file stores configurations for your Shopify app.
 
 scopes = "write_products,read_products,write_customers,read_customers,write_orders,read_orders,read_content,write_content"
+
+[access_scopes]
+# Use the new access scopes system
+scopes = "write_products,read_products,write_customers,read_customers,write_orders,read_orders,read_content,write_content"
+
+[build]
+include_config_on_deploy = true
