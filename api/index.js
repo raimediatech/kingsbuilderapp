@@ -792,6 +792,25 @@ app.get('/app/builder', (req, res) => {
 
 // Builder route
 app.get('/builder', (req, res) => {
+  const shop = req.query.shop || req.cookies?.shopOrigin;
+  const pageId = req.query.pageId;
+  
+  console.log('🔧 Builder route accessed:', { shop, pageId });
+  
+  if (!shop) {
+    console.log('❌ No shop parameter in builder route');
+    return res.redirect('/install');
+  }
+  
+  // Set security headers for Shopify iframe embedding
+  res.setHeader(
+    "Content-Security-Policy",
+    "frame-ancestors 'self' https://*.myshopify.com https://*.shopify.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.shopify.com;"
+  );
+
+  // Remove X-Frame-Options as it's deprecated
+  res.removeHeader('X-Frame-Options');
+  
   res.sendFile(path.join(__dirname, '../public/builder.html'));
 });
 
@@ -2633,6 +2652,15 @@ try {
   console.log('Templates API routes registered successfully');
 } catch (error) {
   console.error('Error loading templates API routes:', error);
+}
+
+// Import pages API routes
+try {
+  const pagesApiRoutes = require('./routes/pages-api');
+  app.use('/api/pages', pagesApiRoutes);
+  console.log('Pages API routes registered successfully');
+} catch (error) {
+  console.error('Error loading pages API routes:', error);
 }
 
 // Import page templates API routes

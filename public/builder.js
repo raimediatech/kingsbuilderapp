@@ -32,6 +32,25 @@ class KingsBuilder {
     }
     
     initializeBuilder() {
+        // Get shop and page parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        this.shop = urlParams.get('shop');
+        this.pageId = urlParams.get('pageId');
+        this.embedded = urlParams.get('embedded') === '1';
+        
+        console.log('🔧 Builder Context:', {
+            shop: this.shop,
+            pageId: this.pageId,
+            embedded: this.embedded
+        });
+        
+        // Validate shop parameter
+        if (!this.shop || this.shop === 'unknown.myshopify.com') {
+            console.error('❌ Invalid shop parameter in builder');
+            this.showError('Shop information not available. Please return to dashboard and try again.');
+            return;
+        }
+        
         // Initialize event listeners
         this.initEventListeners();
         
@@ -1026,6 +1045,151 @@ class KingsBuilder {
             this.renderCanvas();
             this.updateNavigator();
             console.log('👁️ Element visibility toggled:', element.type, element.visible);
+        }
+    }
+    
+    async publish() {
+        if (!this.shop || this.shop === 'unknown.myshopify.com') {
+            console.error('❌ Cannot publish - shop not available');
+            alert('Error: Shop information not available. Please return to dashboard and try again.');
+            return;
+        }
+        
+        console.log('🚀 Publishing page...', { shop: this.shop, pageId: this.pageId });
+        
+        try {
+            // Show loading state
+            this.showLoading();
+            
+            // Generate HTML from elements
+            const html = this.generateHTML();
+            const css = this.generateCSS();
+            
+            // Publish to Shopify
+            const response = await fetch(`/api/pages/${this.pageId}/publish`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    shop: this.shop,
+                    html: html,
+                    css: css,
+                    elements: this.elements
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Page published successfully:', result);
+                
+                // Show success message
+                this.showSuccess('Page published successfully!');
+                
+                // Update publish button state
+                const publishBtn = document.getElementById('publishBtn');
+                if (publishBtn) {
+                    publishBtn.textContent = 'Published';
+                    publishBtn.classList.add('published');
+                    setTimeout(() => {
+                        publishBtn.textContent = 'Publish';
+                        publishBtn.classList.remove('published');
+                    }, 2000);
+                }
+                
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to publish page:', error);
+            this.showError('Failed to publish page: ' + error.message);
+        } finally {
+            this.hideLoading();
+        }
+    }
+    
+    generateHTML() {
+        // Generate HTML from elements
+        let html = '<div class="kingsbuilder-page">';
+        
+        this.elements.forEach(element => {
+            if (element.visible !== false) {
+                html += this.elementToHTML(element);
+            }
+        });
+        
+        html += '</div>';
+        return html;
+    }
+    
+    generateCSS() {
+        // Generate CSS from elements
+        let css = '.kingsbuilder-page { margin: 0; padding: 20px; }';
+        
+        this.elements.forEach(element => {
+            if (element.styles) {
+                css += `#${element.id} { `;
+                for (const [property, value] of Object.entries(element.styles)) {
+                    css += `${property}: ${value}; `;
+                }
+                css += '} ';
+            }
+        });
+        
+        return css;
+    }
+    
+    elementToHTML(element) {
+        switch (element.type) {
+            case 'heading':
+                return `<h${element.level || 1} id="${element.id}">${element.content || 'Heading'}</h${element.level || 1}>`;
+            case 'text':
+                return `<p id="${element.id}">${element.content || 'Text'}</p>`;
+            case 'image':
+                return `<img id="${element.id}" src="${element.src || ''}" alt="${element.alt || ''}">`;
+            case 'button':
+                return `<button id="${element.id}" onclick="${element.onclick || ''}">${element.content || 'Button'}</button>`;
+            default:
+                return `<div id="${element.id}">${element.content || ''}</div>`;
+        }
+    }
+    
+    showSuccess(message) {
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'notification success';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+    
+    showError(message) {
+        // Show error notification
+        const notification = document.createElement('div');
+        notification.className = 'notification error';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+    
+    showLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
+        }
+    }
+    
+    hideLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
         }
     }
     

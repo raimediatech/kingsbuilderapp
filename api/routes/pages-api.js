@@ -185,36 +185,72 @@ router.get('/:pageId', async (req, res) => {
 // Create a new page
 router.post('/', async (req, res) => {
   try {
-    const { title, slug, content, template } = req.body;
-    const shop = req.query.shop || req.headers['x-shopify-shop-domain'] || req.cookies?.shopOrigin;
+    const { title, slug, content, template, shop: bodyShop } = req.body;
+    const shop = bodyShop || req.query.shop || req.headers['x-shopify-shop-domain'] || req.cookies?.shopOrigin;
     
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter is required' });
+    console.log('🚀 Creating page:', { title, shop });
+    
+    if (!shop || shop === 'unknown.myshopify.com') {
+      return res.status(400).json({ error: 'Valid shop parameter is required' });
     }
     
     if (!title) {
       return res.status(400).json({ error: 'Title is required' });
     }
     
-    // Generate a unique ID
-    const pageId = Date.now().toString();
+    // Try to create a real Shopify page first
+    const shopifyApi = require('../shopify');
+    let shopifyPage = null;
     
-    // Create new page
-    const newPage = {
-      id: pageId,
-      title,
-      slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      status: 'draft',
-      content: content || { elements: [] },
-      template: template || null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    try {
+      const pageData = {
+        page: {
+          title: title,
+          handle: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          body_html: content?.html || `<div class="page-content"><h1>${title}</h1><p>Start building your page...</p></div>`,
+          published: false
+        }
+      };
+      
+      shopifyPage = await shopifyApi.createShopifyPage(shop, pageData);
+      console.log('✅ Created Shopify page:', shopifyPage);
+      
+      // Return the real Shopify page
+      res.status(201).json({ 
+        page: {
+          id: shopifyPage.id,
+          title: shopifyPage.title,
+          handle: shopifyPage.handle,
+          status: shopifyPage.published_at ? 'published' : 'draft',
+          shopifyUrl: `https://${shop}/admin/pages/${shopifyPage.id}`,
+          frontendUrl: `https://${shop}/pages/${shopifyPage.handle}`,
+          isShopifyPage: true,
+          createdAt: shopifyPage.created_at,
+          updatedAt: shopifyPage.updated_at
+        }
+      });
+      
+    } catch (shopifyError) {
+      console.error('❌ Failed to create Shopify page:', shopifyError);
+      
+      // Fallback to mock page
+      const pageId = Date.now().toString();
+      const newPage = {
+        id: pageId,
+        title,
+        slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        status: 'draft',
+        content: content || { elements: [] },
+        template: template || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isShopifyPage: false
+      };
+      
+      pages.push(newPage);
+      res.status(201).json({ page: newPage });
+    }
     
-    // Add to pages array
-    pages.push(newPage);
-    
-    res.status(201).json({ page: newPage });
   } catch (error) {
     console.error('Error creating page:', error);
     res.status(500).json({ error: 'Failed to create page', details: error.message });

@@ -52,6 +52,11 @@ class KingsDashboard {
         // Get real shop name from multiple sources
         let realShop = shop;
         
+        // CRITICAL FIX: Try to extract shop from parent URL when embedded
+        if (window.parent !== window && (!realShop || realShop === 'unknown.myshopify.com')) {
+            realShop = this.extractShopFromParentUrl();
+        }
+        
         // If shop is not in URL params, try to get it from parent window
         if (!realShop || realShop === 'unknown.myshopify.com') {
             realShop = this.getShopFromParent();
@@ -74,6 +79,7 @@ class KingsDashboard {
         // If we still don't have a real shop, show error
         if (this.context.shop === 'unknown.myshopify.com') {
             console.error('❌ Unable to determine shop - this will cause API calls to fail');
+            // Don't show permission error immediately - give user a chance to see the issue
         }
     }
     
@@ -192,6 +198,40 @@ class KingsDashboard {
         } catch (e) {
             return 'Cannot access parent URL';
         }
+    }
+    
+    extractShopFromParentUrl() {
+        try {
+            // Try to get shop from parent window location
+            const parentUrl = window.parent.location.href;
+            console.log('🔍 Parent URL:', parentUrl);
+            
+            // Extract shop from Shopify admin URL patterns
+            // e.g., https://admin.shopify.com/store/SHOPNAME/apps/...
+            // e.g., https://SHOPNAME.myshopify.com/admin/apps/...
+            
+            if (parentUrl.includes('admin.shopify.com/store/')) {
+                const shopMatch = parentUrl.match(/admin\.shopify\.com\/store\/([^\/]+)/);
+                if (shopMatch) {
+                    const shopName = shopMatch[1];
+                    console.log('✅ Extracted shop from admin URL:', shopName);
+                    return shopName + '.myshopify.com';
+                }
+            }
+            
+            if (parentUrl.includes('.myshopify.com')) {
+                const shopMatch = parentUrl.match(/https?:\/\/([^\/]+)\.myshopify\.com/);
+                if (shopMatch) {
+                    const shopName = shopMatch[1];
+                    console.log('✅ Extracted shop from myshopify URL:', shopName);
+                    return shopName + '.myshopify.com';
+                }
+            }
+            
+        } catch (e) {
+            console.warn('Cannot extract shop from parent URL:', e.message);
+        }
+        return null;
     }
     
     getShopFromParent() {
@@ -354,12 +394,16 @@ class KingsDashboard {
             const shop = this.context.shop || this.getShopOrigin();
             if (shop === 'unknown.myshopify.com') {
                 console.error('❌ Shop origin not available - cannot load pages');
-                this.showError('Shop information not available. Please refresh the page.');
+                this.showError('Shop information not available. Please check if you are accessing the app from within Shopify Admin.');
                 return;
             }
             
-            // Show permission error instead of generic error
-            this.showPermissionError();
+            // Only show permission error for legitimate auth issues
+            if (error.message.includes('403') || error.message.includes('401') || error.message.includes('Unauthorized')) {
+                this.showPermissionError();
+            } else {
+                this.showError('Failed to load pages. Please try again.');
+            }
         } finally {
             this.hideLoading();
         }
