@@ -368,11 +368,14 @@ class KingsDashboard {
                 console.log(`🔗 Shop: ${shopName}`);
                 console.log(`🌐 Frontend URL: ${frontendUrl}`);
                 
+                const dateValue = page.updated_at || page.created_at;
+                console.log(`📅 Page "${page.title}" date value:`, dateValue);
+                
                 return {
                     id: page.id,
                     title: page.title,
                     status: page.published_at ? 'published' : 'draft',
-                    lastModified: this.formatDate(page.updated_at || page.created_at),
+                    lastModified: this.formatDate(dateValue),
                     views: 0, // TODO: Integrate with Google Analytics or Shopify Analytics
                     conversions: 0, // TODO: Integrate with conversion tracking
                     handle: page.handle,
@@ -444,7 +447,7 @@ class KingsDashboard {
     
     loadDemoPages() {
         console.log('📋 Loading demo pages...');
-        this.pages = [
+        const demoPages = [
             {
                 id: 'demo-1',
                 title: '🛍️ [DEMO] Homepage Hero Section',
@@ -473,6 +476,15 @@ class KingsDashboard {
                 isDemo: true
             }
         ];
+        
+        // Process dates properly 
+        this.pages = demoPages.map(page => {
+            console.log(`📅 Demo page "${page.title}" date value:`, page.lastModified);
+            return {
+                ...page,
+                lastModified: this.formatDate(page.lastModified)
+            };
+        });
         
         this.renderPages();
     }
@@ -555,10 +567,25 @@ window.top.location.href = installUrl;
     
     formatDate(dateString) {
         try {
+            if (!dateString) {
+                return 'Never';
+            }
+            
             const date = new Date(dateString);
-            return date.toLocaleDateString();
+            
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                return 'Never';
+            }
+            
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
         } catch (e) {
-            return dateString;
+            console.warn('Date formatting error:', e);
+            return 'Never';
         }
     }
 
@@ -995,19 +1022,22 @@ window.top.location.href = installUrl;
         console.log('🎭 Showing demo pages:', demoPages);
         
         // Store demo pages
-        this.pages = demoPages.map(page => ({
-            id: page.id,
-            title: page.title,
-            status: page.status,
-            lastModified: this.formatDate(page.lastModified),
-            views: page.views,
-            conversions: page.conversions,
-            handle: page.handle,
-            shopifyUrl: page.shopifyUrl,
-            frontendUrl: page.frontendUrl,
-            isShopifyPage: true,
-            isDemoPage: true
-        }));
+        this.pages = demoPages.map(page => {
+            console.log(`📅 Demo page "${page.title}" date value:`, page.lastModified);
+            return {
+                id: page.id,
+                title: page.title,
+                status: page.status,
+                lastModified: this.formatDate(page.lastModified),
+                views: page.views,
+                conversions: page.conversions,
+                handle: page.handle,
+                shopifyUrl: page.shopifyUrl,
+                frontendUrl: page.frontendUrl,
+                isShopifyPage: true,
+                isDemoPage: true
+            };
+        });
         
         // Show demo notice
         this.showDemoNotice(message);
