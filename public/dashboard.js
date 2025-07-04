@@ -68,14 +68,19 @@ class KingsDashboard {
         }
         
         // Update container class
-        const pagesContainer = document.getElementById('pagesContainer');
+        const pagesContainer = document.getElementById('pagesGrid');
         if (pagesContainer) {
-            pagesContainer.className = mode === 'grid' ? 'pages-grid' : 'pages-list';
+            const newClassName = mode === 'grid' ? 'pages-grid' : 'pages-list';
+            pagesContainer.className = newClassName;
+            console.log(`📋 Updated container class to: ${newClassName}`);
+        } else {
+            console.error('❌ pagesGrid container not found!');
         }
         
         // Re-render pages if they exist
         if (this.pages.length > 0) {
             this.renderPages();
+            console.log(`📋 Re-rendered ${this.pages.length} pages in ${mode} mode`);
         }
         
         console.log(`📋 View mode changed to: ${mode}`);
