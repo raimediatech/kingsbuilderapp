@@ -438,6 +438,45 @@ app.get('/api/shopify/products', async (req, res) => {
   }
 });
 
+// API endpoint to force reauth with new scopes
+app.post('/api/force-reauth', async (req, res) => {
+  try {
+    const shop = req.body.shop || req.query.shop;
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Shop parameter required' });
+    }
+    
+    console.log('🔄 Force reauth requested for shop:', shop);
+    
+    // Clear existing cookies
+    res.clearCookie('accessToken');
+    res.clearCookie('shopOrigin');
+    
+    // Build OAuth URL with correct scopes
+    const apiKey = process.env.SHOPIFY_API_KEY;
+    const scopes = 'read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_content,write_content';
+    const redirectUri = 'https://kingsbuilderapp.vercel.app/auth/callback';
+    
+    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${apiKey}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${shop}`;
+    
+    console.log('🚀 Generating OAuth URL with full scopes');
+    
+    res.json({
+      success: true,
+      authUrl: authUrl,
+      message: 'Redirect to this URL to complete authentication'
+    });
+    
+  } catch (error) {
+    console.error('❌ Force reauth error:', error);
+    res.status(500).json({ 
+      error: 'Failed to initiate reauth',
+      message: error.message 
+    });
+  }
+});
+
 // API endpoint to get shop information
 app.get('/api/shopify/shop', async (req, res) => {
   try {

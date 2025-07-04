@@ -161,15 +161,14 @@ class KingsDashboard {
             
             if (!response.ok) {
                 if (response.status === 401) {
-                    throw new Error('Authentication required - please reinstall the app');
+                    console.log('🔐 Authentication required - starting OAuth flow');
+                    this.startEmbeddedOAuth();
+                    return;
                 }
                 if (response.status === 403) {
-                    const errorData = await response.json();
-                    if (errorData.message && errorData.message.includes('content permissions')) {
-                        this.showPermissionError();
-                        return;
-                    }
-                    throw new Error('Permission denied - app needs to be reconfigured');
+                    console.log('🚫 Permission denied - need content scopes');
+                    this.showPermissionError();
+                    return;
                 }
                 throw new Error(`Shopify API Error: ${response.status}`);
             }
@@ -198,10 +197,8 @@ class KingsDashboard {
         } catch (error) {
             console.error('❌ Failed to load Shopify pages:', error.message);
             
-            // Show error message to user
-            this.showError(`Failed to load pages: ${error.message}`);
-            this.pages = [];
-            this.renderPages();
+            // Show permission error instead of generic error
+            this.showPermissionError();
         } finally {
             this.hideLoading();
         }
@@ -705,6 +702,11 @@ window.top.location.href = installUrl;
     
     forceReauth() {
         console.log('🔄 Force reauth requested');
+        this.startEmbeddedOAuth();
+    }
+    
+    startEmbeddedOAuth() {
+        console.log('🔐 Starting embedded OAuth flow');
         
         // Get shop from URL
         const shop = this.getShopOrigin();
@@ -720,30 +722,93 @@ window.top.location.href = installUrl;
             installBtn.disabled = true;
         }
         
-        // Build OAuth URL with ALL required scopes
-        const apiKey = '128d69fb5441ba3eda3ae4694c71b175';
-        const scopes = 'read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_content,write_content';
-        const redirectUri = window.location.origin + '/auth/callback';
-        
-        const params = new URLSearchParams({
-            client_id: apiKey,
-            scope: scopes,
-            redirect_uri: redirectUri,
-            state: shop
-        });
-        
-        const authUrl = `https://${shop}/admin/oauth/authorize?${params.toString()}`;
-        
-        console.log('🚀 Forcing OAuth with full scopes:', authUrl);
-        
-        // Clear existing cookies and redirect
+        // Clear existing cookies first
         document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie = 'shopOrigin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         
-        // Redirect to OAuth
-        setTimeout(() => {
-            window.top.location.href = authUrl;
-        }, 1000);
+        // Use App Bridge for embedded OAuth if available
+        if (this.app && window.AppBridge) {
+            console.log('🌉 Using App Bridge for OAuth');
+            
+            try {
+                const authenticatedFetch = window.AppBridge.authenticatedFetch(this.app);
+                
+                // Make a test request to trigger OAuth if needed
+                authenticatedFetch('/api/shopify/pages?shop=' + shop)
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('✅ Authentication successful');
+                            this.loadPages();
+                        } else {
+                            console.log('❌ Authentication failed, falling back to redirect');
+                            this.fallbackOAuth(shop);
+                        }
+                    })
+                    .catch(error => {
+                        console.log('❌ App Bridge auth failed:', error);
+                        this.fallbackOAuth(shop);
+                    });
+                    
+            } catch (error) {
+                console.log('❌ App Bridge not working:', error);
+                this.fallbackOAuth(shop);
+            }
+        } else {
+            console.log('🚀 No App Bridge - using direct OAuth');
+            this.fallbackOAuth(shop);
+        }
+    }
+    
+    async fallbackOAuth(shop) {
+        try {
+            console.log('🔄 Requesting reauth from server');
+            
+            // Call server endpoint to get proper OAuth URL
+            const response = await fetch('/api/force-reauth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ shop: shop }),
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Got OAuth URL from server:', data.authUrl);
+                
+                // Redirect to OAuth
+                setTimeout(() => {
+                    window.top.location.href = data.authUrl;
+                }, 1000);
+            } else {
+                throw new Error('Failed to get OAuth URL from server');
+            }
+            
+        } catch (error) {
+            console.error('❌ Server reauth failed:', error);
+            
+            // Fallback to direct OAuth
+            const apiKey = '128d69fb5441ba3eda3ae4694c71b175';
+            const scopes = 'read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_content,write_content';
+            const redirectUri = window.location.origin + '/auth/callback';
+            
+            const params = new URLSearchParams({
+                client_id: apiKey,
+                scope: scopes,
+                redirect_uri: redirectUri,
+                state: shop
+            });
+            
+            const authUrl = `https://${shop}/admin/oauth/authorize?${params.toString()}`;
+            
+            console.log('🚀 Fallback - Redirecting to OAuth with full scopes:', authUrl);
+            
+            // Redirect to OAuth
+            setTimeout(() => {
+                window.top.location.href = authUrl;
+            }, 1000);
+        }
     }
     
     delay(ms) {
