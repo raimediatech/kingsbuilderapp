@@ -254,6 +254,12 @@ app.get('/auth/callback', async (req, res) => {
         secure: true,
         sameSite: 'none'
       });
+      res.cookie('shopifyAccessToken', tokenData.access_token, { 
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+      });
       
       // Also store in session for backend access
       const { storeAccessToken } = require('./utils/session');
@@ -822,8 +828,15 @@ app.get('/api/shopify/pages', async (req, res) => {
       return res.status(400).json({ error: 'Shop parameter is required' });
     }
     
-    const accessToken = req.cookies?.shopifyAccessToken;
+    const accessToken = req.cookies?.shopifyAccessToken || req.cookies?.accessToken;
+    console.log('🔑 Access token check:', { 
+      shopifyAccessToken: !!req.cookies?.shopifyAccessToken,
+      accessToken: !!req.cookies?.accessToken,
+      shop: shop
+    });
+    
     if (!accessToken) {
+      console.log('❌ No access token found in cookies');
       return res.status(401).json({ error: 'No access token found' });
     }
     

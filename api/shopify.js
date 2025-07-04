@@ -143,6 +143,12 @@ async function getShopifyPages(shop, accessToken, req) {
     });
 
     console.log(`Successfully fetched ${response.data.pages ? response.data.pages.length : 0} pages`);
+    
+    // Log sample page to see what fields are available
+    if (response.data.pages && response.data.pages.length > 0) {
+      console.log('📄 Sample page data from Shopify API:', JSON.stringify(response.data.pages[0], null, 2));
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error fetching Shopify pages:', error.message);
