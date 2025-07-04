@@ -885,6 +885,117 @@ html, body {
     display: none;
 }
 
+/* Navigator Items */
+.navigator-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 4px;
+    margin-bottom: 4px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.navigator-item:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+}
+
+.navigator-item.selected {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.navigator-item.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.navigator-item-drag-handle {
+    padding: 4px;
+    margin-right: 8px;
+    color: var(--text-tertiary);
+    cursor: grab;
+    flex-shrink: 0;
+}
+
+.navigator-item-drag-handle:hover {
+    color: var(--text-secondary);
+}
+
+.navigator-item-drag-handle:active {
+    cursor: grabbing;
+}
+
+.navigator-item-icon {
+    padding: 4px;
+    margin-right: 8px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.navigator-item.selected .navigator-item-icon {
+    color: white;
+}
+
+.navigator-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.navigator-item-title {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.navigator-item-subtitle {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.navigator-item.selected .navigator-item-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.navigator-item-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.navigator-item-actions button {
+    padding: 4px;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.navigator-item-actions button:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.navigator-item.selected .navigator-item-actions button {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.navigator-item.selected .navigator-item-actions button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
 /* Context Menu */
 .context-menu {
     position: fixed;

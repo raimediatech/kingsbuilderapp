@@ -877,9 +877,14 @@ class KingsBuilder {
             return;
         }
         
-        const elementsHTML = this.elements.map(element => `
+        const elementsHTML = this.elements.map((element, index) => `
             <div class="navigator-item ${this.selectedElement?.id === element.id ? 'selected' : ''}" 
+                 data-element-id="${element.id}" data-index="${index}"
+                 draggable="true"
                  onclick="kingsBuilder.selectElementById('${element.id}')">
+                <div class="navigator-item-drag-handle">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
                 <div class="navigator-item-icon">
                     <i class="${this.getElementIcon(element.type)}"></i>
                 </div>
@@ -888,14 +893,17 @@ class KingsBuilder {
                     <div class="navigator-item-subtitle">${this.getElementPreview(element)}</div>
                 </div>
                 <div class="navigator-item-actions">
-                    <button onclick="kingsBuilder.toggleElementVisibility('${element.id}')" title="Toggle Visibility">
-                        <i class="fas fa-eye"></i>
+                    <button onclick="event.stopPropagation(); kingsBuilder.toggleElementVisibility('${element.id}')" title="Toggle Visibility">
+                        <i class="fas fa-eye${element.visible === false ? '-slash' : ''}"></i>
                     </button>
                 </div>
             </div>
         `).join('');
         
         navigatorContent.innerHTML = elementsHTML;
+        
+        // Initialize drag and drop for navigator items
+        this.initNavigatorDragDrop();
     }
     
     getElementIcon(type) {
@@ -928,6 +936,96 @@ class KingsBuilder {
         const element = this.elements.find(e => e.id === elementId);
         if (element) {
             this.selectElement(element);
+        }
+    }
+    
+    initNavigatorDragDrop() {
+        const navigatorContent = document.getElementById('navigatorContent');
+        if (!navigatorContent) return;
+        
+        let draggedItem = null;
+        
+        navigatorContent.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('navigator-item')) {
+                draggedItem = e.target;
+                e.target.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                console.log('🎯 Navigator drag started:', draggedItem.dataset.elementId);
+            }
+        });
+        
+        navigatorContent.addEventListener('dragend', (e) => {
+            if (e.target.classList.contains('navigator-item')) {
+                e.target.classList.remove('dragging');
+                draggedItem = null;
+            }
+        });
+        
+        navigatorContent.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const afterElement = this.getDragAfterElement(navigatorContent, e.clientY);
+            if (afterElement == null) {
+                navigatorContent.appendChild(draggedItem);
+            } else {
+                navigatorContent.insertBefore(draggedItem, afterElement);
+            }
+        });
+        
+        navigatorContent.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (draggedItem) {
+                const draggedElementId = draggedItem.dataset.elementId;
+                const newIndex = [...navigatorContent.children].indexOf(draggedItem);
+                
+                console.log('🎯 Reordering element:', draggedElementId, 'to index:', newIndex);
+                this.reorderElement(draggedElementId, newIndex);
+            }
+        });
+    }
+    
+    getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.navigator-item:not(.dragging)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+    
+    reorderElement(elementId, newIndex) {
+        const element = this.elements.find(el => el.id === elementId);
+        if (!element) return;
+        
+        const oldIndex = this.elements.indexOf(element);
+        if (oldIndex === newIndex) return;
+        
+        // Remove from old position
+        this.elements.splice(oldIndex, 1);
+        // Insert at new position
+        this.elements.splice(newIndex, 0, element);
+        
+        // Update the canvas
+        this.renderCanvas();
+        this.updateNavigator();
+        
+        console.log('✅ Element reordered:', element.type, 'from', oldIndex, 'to', newIndex);
+    }
+    
+    toggleElementVisibility(elementId) {
+        const element = this.elements.find(el => el.id === elementId);
+        if (element) {
+            element.visible = element.visible !== false ? false : true;
+            this.renderCanvas();
+            this.updateNavigator();
+            console.log('👁️ Element visibility toggled:', element.type, element.visible);
         }
     }
     

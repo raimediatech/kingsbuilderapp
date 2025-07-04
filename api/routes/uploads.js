@@ -6,10 +6,14 @@ const path = require('path');
 const fs = require('fs');
 const shopifyApi = require('../shopify');
 
-// Create uploads directory if it doesn't exist
+// Create uploads directory if it doesn't exist (skip on Vercel)
 const uploadsDir = path.join(__dirname, '../../public/uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (error) {
+  console.warn('Cannot create uploads directory (probably on Vercel):', error.message);
 }
 
 // Configure multer for file uploads
@@ -19,8 +23,12 @@ const storage = multer.diskStorage({
     const shop = req.query.shop || req.shopifyShop || req.headers['x-shopify-shop-domain'] || req.cookies?.shopOrigin;
     const shopDir = path.join(uploadsDir, shop ? shop.replace(/[^a-z0-9]/gi, '_') : 'default');
     
-    if (!fs.existsSync(shopDir)) {
-      fs.mkdirSync(shopDir, { recursive: true });
+    try {
+      if (!fs.existsSync(shopDir)) {
+        fs.mkdirSync(shopDir, { recursive: true });
+      }
+    } catch (error) {
+      console.warn('Cannot create shop directory (probably on Vercel):', error.message);
     }
     
     cb(null, shopDir);

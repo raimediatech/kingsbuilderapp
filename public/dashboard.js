@@ -44,23 +44,36 @@ class KingsDashboard {
             embedded, 
             shop, 
             isIframe: window.parent !== window,
-            userAgent: navigator.userAgent.includes('Shopify')
+            userAgent: navigator.userAgent.includes('Shopify'),
+            currentUrl: window.location.href,
+            parentUrl: this.getParentUrl()
         });
+        
+        // Get real shop name from multiple sources
+        let realShop = shop;
+        
+        // If shop is not in URL params, try to get it from parent window
+        if (!realShop || realShop === 'unknown.myshopify.com') {
+            realShop = this.getShopFromParent();
+        }
+        
+        // If still no shop, try referrer
+        if (!realShop || realShop === 'unknown.myshopify.com') {
+            realShop = this.getShopFromReferrer();
+        }
         
         // Set context for use throughout the app
         this.context = {
             embedded: embedded || '0',
-            shop: shop || this.getShopOrigin(),
+            shop: realShop || 'unknown.myshopify.com',
             isIframe: window.parent !== window
         };
         
         console.log('📝 Context set:', this.context);
         
-        // If we're supposed to be embedded but we're not in an iframe
-        if (embedded === '1' && shop && window.parent === window) {
-            console.log('⚠️ Should be embedded but not in iframe - may need to redirect');
-            // The app should normally be loaded within Shopify admin
-            // If it's not embedded, it means user accessed directly
+        // If we still don't have a real shop, show error
+        if (this.context.shop === 'unknown.myshopify.com') {
+            console.error('❌ Unable to determine shop - this will cause API calls to fail');
         }
     }
     
@@ -173,6 +186,42 @@ class KingsDashboard {
         }
     }
     
+    getParentUrl() {
+        try {
+            return window.parent.location.href;
+        } catch (e) {
+            return 'Cannot access parent URL';
+        }
+    }
+    
+    getShopFromParent() {
+        try {
+            const parentHostname = window.parent.location.hostname;
+            if (parentHostname && parentHostname.includes('.myshopify.com')) {
+                console.log('✅ Shop found from parent window:', parentHostname);
+                return parentHostname;
+            }
+        } catch (e) {
+            console.warn('Cannot access parent window hostname');
+        }
+        return null;
+    }
+    
+    getShopFromReferrer() {
+        try {
+            if (document.referrer) {
+                const referrerUrl = new URL(document.referrer);
+                if (referrerUrl.hostname.includes('.myshopify.com')) {
+                    console.log('✅ Shop found from referrer:', referrerUrl.hostname);
+                    return referrerUrl.hostname;
+                }
+            }
+        } catch (e) {
+            console.warn('Cannot parse referrer URL');
+        }
+        return null;
+    }
+    
     getShopOrigin() {
         // Try to get shop from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
@@ -182,12 +231,8 @@ class KingsDashboard {
             return shop.includes('.') ? shop : `${shop}.myshopify.com`;
         }
         
-        // Try to get from parent window
-        try {
-            return window.parent.location.hostname;
-        } catch (e) {
-            return 'unknown.myshopify.com';
-        }
+        // Try other methods
+        return this.getShopFromParent() || this.getShopFromReferrer() || 'unknown.myshopify.com';
     }
     
 
@@ -304,6 +349,14 @@ class KingsDashboard {
             
         } catch (error) {
             console.error('❌ Failed to load Shopify pages:', error.message);
+            
+            // Check if shop is unknown - don't show permission error
+            const shop = this.context.shop || this.getShopOrigin();
+            if (shop === 'unknown.myshopify.com') {
+                console.error('❌ Shop origin not available - cannot load pages');
+                this.showError('Shop information not available. Please refresh the page.');
+                return;
+            }
             
             // Show permission error instead of generic error
             this.showPermissionError();
@@ -763,6 +816,16 @@ window.top.location.href = installUrl;
         this.showLoading();
         
         try {
+            const shop = this.context.shop || this.getShopOrigin();
+            
+            if (shop === 'unknown.myshopify.com') {
+                console.error('❌ Cannot create page - shop not available');
+                alert('Error: Shop information not available. Please refresh the page and try again.');
+                return;
+            }
+            
+            console.log('🚀 Creating page with shop:', shop);
+            
             // Create real Shopify page
             const response = await fetch('/api/pages', {
                 method: 'POST',
@@ -777,7 +840,7 @@ window.top.location.href = installUrl;
                     html: '<div class="page-content"><h1>' + title + '</h1><p>Start building your page...</p></div>',
                     css: '',
                     elements: [],
-                    shop: this.context.shop
+                    shop: shop
                 })
             });
             
@@ -809,10 +872,19 @@ window.top.location.href = installUrl;
     editPage(pageId) {
         const page = this.pages.find(p => p.id === pageId);
         if (page) {
-            const shop = this.context.shop;
+            const shop = this.context.shop || this.getShopOrigin();
+            
+            if (shop === 'unknown.myshopify.com') {
+                console.error('❌ Shop origin not available - cannot edit page');
+                alert('Error: Shop information not available. Please refresh the page and try again.');
+                return;
+            }
+            
             const builderUrl = `/builder?pageId=${pageId}&title=${encodeURIComponent(page.title)}&shop=${shop}&embedded=1`;
             
             console.log('🔧 Opening page editor:', builderUrl);
+            console.log('🔧 Shop:', shop);
+            console.log('🔧 Page ID:', pageId);
             
             // For embedded apps, navigate within the current window
             if (this.context.embedded === '1') {
