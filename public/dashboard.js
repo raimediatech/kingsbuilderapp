@@ -6,6 +6,7 @@ class KingsDashboard {
         this.pages = [];
         this.templates = [];
         this.isLoading = false;
+        this.viewMode = 'grid'; // 'grid' or 'list'
         
         this.init();
     }
@@ -29,6 +30,9 @@ class KingsDashboard {
         this.updateConnectionStatus();
         
         console.log('✅ KingsBuilder Dashboard Ready!');
+        
+        // Initialize view mode
+        this.setViewMode('grid');
     }
     
     checkEmbeddedContext() {
@@ -51,6 +55,32 @@ class KingsDashboard {
         }
     }
     
+    setViewMode(mode) {
+        this.viewMode = mode;
+        
+        // Update button states
+        const gridBtn = document.getElementById('gridViewBtn');
+        const listBtn = document.getElementById('listViewBtn');
+        
+        if (gridBtn && listBtn) {
+            gridBtn.classList.toggle('active', mode === 'grid');
+            listBtn.classList.toggle('active', mode === 'list');
+        }
+        
+        // Update container class
+        const pagesContainer = document.getElementById('pagesContainer');
+        if (pagesContainer) {
+            pagesContainer.className = mode === 'grid' ? 'pages-grid' : 'pages-list';
+        }
+        
+        // Re-render pages if they exist
+        if (this.pages.length > 0) {
+            this.renderPages();
+        }
+        
+        console.log(`📋 View mode changed to: ${mode}`);
+    }
+    
     initEventListeners() {
         // Tab navigation
         document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -70,6 +100,17 @@ class KingsDashboard {
         const installConnectBtn = document.getElementById('installConnectBtn');
         if (installConnectBtn) {
             installConnectBtn.addEventListener('click', () => this.forceReauth());
+        }
+        
+        // View toggle buttons
+        const gridViewBtn = document.getElementById('gridViewBtn');
+        const listViewBtn = document.getElementById('listViewBtn');
+        
+        if (gridViewBtn) {
+            gridViewBtn.addEventListener('click', () => this.setViewMode('grid'));
+        }
+        if (listViewBtn) {
+            listViewBtn.addEventListener('click', () => this.setViewMode('list'));
         }
         
         // Modal controls
@@ -185,11 +226,13 @@ class KingsDashboard {
             if (!response.ok) {
                 if (response.status === 401) {
                     console.log('🔐 Authentication required - starting OAuth flow');
+                    this.showInstallButton();
                     this.startEmbeddedOAuth();
                     return;
                 }
                 if (response.status === 403) {
                     console.log('🚫 Permission denied - need content scopes');
+                    this.showInstallButton();
                     this.showPermissionError();
                     return;
                 }
@@ -446,7 +489,7 @@ window.top.location.href = installUrl;
             const pageType = page.isShopifyPage ? 'shopify' : page.isKingsBuilderPage ? 'kingsbuilder' : 'demo';
             const typeIcon = page.isShopifyPage ? 'fab fa-shopify' : page.isKingsBuilderPage ? 'fas fa-crown' : 'fas fa-flask';
             const typeLabel = page.isShopifyPage ? 'Shopify Page' : page.isKingsBuilderPage ? 'KingsBuilder Page' : 'Demo Page';
-            const typeColor = page.isShopifyPage ? '#95c93d' : page.isKingsBuilderPage ? '#667eea' : '#f59e0b';
+            const typeColor = page.isShopifyPage ? '#000000' : page.isKingsBuilderPage ? '#667eea' : '#f59e0b';
             
             return `
                 <div class="page-card ${pageType}" onclick="dashboard.editPage('${page.id}')">
@@ -721,6 +764,21 @@ window.top.location.href = installUrl;
         if (existingNotice) {
             existingNotice.remove();
             console.log('🧹 Cleared demo notice - app is now properly connected');
+        }
+        
+        // Also hide the Install & Connect button
+        const installBtn = document.getElementById('installConnectBtn');
+        if (installBtn) {
+            installBtn.style.display = 'none';
+            console.log('🧹 Hid Install & Connect button - app is connected');
+        }
+    }
+    
+    showInstallButton() {
+        const installBtn = document.getElementById('installConnectBtn');
+        if (installBtn) {
+            installBtn.style.display = 'inline-block';
+            console.log('🔧 Showing Install & Connect button - connection needed');
         }
     }
     
