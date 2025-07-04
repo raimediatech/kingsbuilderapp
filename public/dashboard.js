@@ -370,16 +370,13 @@ class KingsDashboard {
                 
                 const dateValue = page.updated_at || page.created_at;
                 console.log(`📅 Page "${page.title}" date value:`, dateValue);
-                
-                // If no date from API, use current date as fallback
-                const fallbackDate = new Date().toISOString();
-                const finalDate = dateValue || fallbackDate;
+                console.log(`📅 Full page object:`, page);
                 
                 return {
                     id: page.id,
                     title: page.title,
                     status: page.published_at ? 'published' : 'draft',
-                    lastModified: this.formatDate(finalDate),
+                    lastModified: this.formatDate(dateValue),
                     views: 0, // TODO: Integrate with Google Analytics or Shopify Analytics
                     conversions: 0, // TODO: Integrate with conversion tracking
                     handle: page.handle,

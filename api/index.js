@@ -844,6 +844,11 @@ app.get('/api/shopify/pages', async (req, res) => {
     const result = await shopifyApi.getShopifyPages(shop, accessToken);
     const pages = result.pages || [];
     
+    console.log('📊 API Response - Total pages:', pages.length);
+    if (pages.length > 0) {
+      console.log('📊 Sample page from API:', JSON.stringify(pages[0], null, 2));
+    }
+    
     res.json({ pages: pages, totalPages: pages.length, demoMode: false });
     
   } catch (error) {
