@@ -1,10 +1,19 @@
 # This file stores configurations for your Shopify app.
 
-scopes = "write_products,read_products,write_customers,read_customers,write_orders,read_orders,read_content,write_content"
+name = "KingsBuilder"
+client_id = "128d69fb5441ba3eda3ae4694c71b175"
+application_url = "https://kingsbuilderapp.vercel.app"
+embedded = true
 
 [access_scopes]
 # Use the new access scopes system
 scopes = "write_products,read_products,write_customers,read_customers,write_orders,read_orders,read_content,write_content"
+
+[auth]
+redirect_urls = ["https://kingsbuilderapp.vercel.app/auth/callback"]
+
+[webhooks]
+api_version = "2025-01"
 
 [build]
 include_config_on_deploy = true
