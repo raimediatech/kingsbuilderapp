@@ -135,7 +135,7 @@ async function getShopifyPages(shop, accessToken, req) {
     
     const response = await axios({
       method: 'GET',
-      url: `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/pages.json`,
+      url: `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/pages.json?fields=id,title,handle,body_html,published_at,created_at,updated_at,template_suffix,summary_on_blog_index,author,author_display_name,tags,metafields`,
       headers: {
         'Content-Type': 'application/json',
         'X-Shopify-Access-Token': token
