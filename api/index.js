@@ -255,8 +255,11 @@ app.get('/auth/callback', async (req, res) => {
         sameSite: 'none'
       });
       
-      // Redirect back to dashboard with token as query parameter 
-      res.redirect(`/dashboard?shop=${shop}&access_token=${tokenData.access_token}&embedded=1`);
+      // For embedded apps, redirect to the Shopify admin URL with the app
+      const shopName = shop.replace('.myshopify.com', '');
+      const shopifyAdminUrl = `https://admin.shopify.com/store/${shopName}/apps/${process.env.SHOPIFY_APP_HANDLE || 'kingsbuilder'}`;
+      console.log('🔄 Redirecting to Shopify admin embedded URL:', shopifyAdminUrl);
+      res.redirect(shopifyAdminUrl);
     } else {
       throw new Error('Failed to get access token');
     }

@@ -184,6 +184,9 @@ class KingsDashboard {
             
             console.log(`✅ Loaded ${data.pages.length} real Shopify pages`);
             
+            // Clear any existing demo notice since we have real pages
+            this.clearDemoNotice();
+            
             this.pages = data.pages.map(page => ({
                 id: page.id,
                 title: page.title,
@@ -682,6 +685,14 @@ window.top.location.href = installUrl;
         
         // Render the demo pages
         this.renderPages();
+    }
+    
+    clearDemoNotice() {
+        const existingNotice = document.querySelector('.demo-notice');
+        if (existingNotice) {
+            existingNotice.remove();
+            console.log('🧹 Cleared demo notice - app is now properly connected');
+        }
     }
     
     showDemoNotice(message) {
