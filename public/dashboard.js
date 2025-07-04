@@ -274,18 +274,28 @@ class KingsDashboard {
             url.searchParams.set('installed', '1');
             window.history.replaceState({}, '', url.toString());
             
-            this.pages = data.pages.map(page => ({
-                id: page.id,
-                title: page.title,
-                status: page.published_at ? 'published' : 'draft',
-                lastModified: this.formatDate(page.updated_at || page.created_at),
-                views: 0, // TODO: Integrate with Google Analytics or Shopify Analytics
-                conversions: 0, // TODO: Integrate with conversion tracking
-                handle: page.handle,
-                shopifyUrl: `https://${this.context.shop}/admin/pages/${page.id}`,
-                frontendUrl: `https://${this.context.shop.includes('.') ? this.context.shop : this.context.shop + '.myshopify.com'}/pages/${page.handle}`,
-                isShopifyPage: true
-            }));
+            this.pages = data.pages.map(page => {
+                const shopName = this.context.shop || this.getShopOrigin();
+                const shopDomain = shopName.includes('.') ? shopName : shopName + '.myshopify.com';
+                const frontendUrl = `https://${shopDomain}/pages/${page.handle}`;
+                
+                console.log(`📄 Page: ${page.title}`);
+                console.log(`🔗 Shop: ${shopName}`);
+                console.log(`🌐 Frontend URL: ${frontendUrl}`);
+                
+                return {
+                    id: page.id,
+                    title: page.title,
+                    status: page.published_at ? 'published' : 'draft',
+                    lastModified: this.formatDate(page.updated_at || page.created_at),
+                    views: 0, // TODO: Integrate with Google Analytics or Shopify Analytics
+                    conversions: 0, // TODO: Integrate with conversion tracking
+                    handle: page.handle,
+                    shopifyUrl: `https://${shopName}/admin/pages/${page.id}`,
+                    frontendUrl: frontendUrl,
+                    isShopifyPage: true
+                };
+            });
             
             // Skip loading KingsBuilder pages - all pages are now loaded from Shopify
             // await this.loadKingsBuilderPages();
@@ -464,6 +474,25 @@ window.top.location.href = installUrl;
         // - Conversion tracking
         console.log('📊 Analytics integration coming soon...');
         return { views: 0, conversions: 0 };
+    }
+
+    // Test function to verify URL generation
+    testPageUrl(pageId) {
+        const page = this.pages.find(p => p.id === pageId);
+        if (page) {
+            console.log('🔧 URL Test for page:', page.title);
+            console.log('🌐 Frontend URL:', page.frontendUrl);
+            console.log('🛍️ Shopify URL:', page.shopifyUrl);
+            console.log('🎯 Testing URL...');
+            
+            // Test the URL by opening it
+            if (page.frontendUrl && page.frontendUrl !== 'https://undefined/pages/undefined') {
+                window.open(page.frontendUrl, '_blank');
+            } else {
+                console.error('❌ Invalid URL generated!');
+                alert('Error: Invalid URL generated. Check console for details.');
+            }
+        }
     }
     
     renderPages() {
