@@ -355,70 +355,110 @@ body.dashboard-body {
 }
 
 /* List View Layout */
-.pages-list .page-card {
+.pages-list .page-card,
+.page-card-list {
     display: flex;
     flex-direction: row;
     align-items: center;
     height: 80px;
     margin-bottom: 10px;
     position: relative;
+    padding: 15px 20px;
 }
 
-.pages-list .page-preview {
+.pages-list .page-preview,
+.page-card-list .page-preview {
     width: 60px;
     height: 60px;
     margin-right: 15px;
     flex-shrink: 0;
-}
-
-.pages-list .page-info {
-    flex: 1;
     display: flex;
-    flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    min-width: 0; /* Allows flex items to shrink */
+    justify-content: center;
+    background: #f8fafc;
+    border-radius: 8px;
 }
 
-.pages-list .page-details {
+.pages-list .page-info,
+.page-card-list .page-info {
     flex: 1;
     min-width: 0; /* Allows flex items to shrink */
     margin-right: 15px;
 }
 
-.pages-list .page-stats {
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    margin-right: 15px;
-    flex-shrink: 0;
+.pages-list .page-details,
+.page-card-list .page-details {
+    flex: 1;
+    min-width: 0; /* Allows flex items to shrink */
 }
 
-.pages-list .page-actions {
+.pages-list .page-stats,
+.page-card-list .page-stats {
+    display: inline-block;
+    color: #6b7280;
+    font-size: 12px;
+    margin-right: 10px;
+}
+
+.pages-list .page-actions,
+.page-card-list .page-actions {
+    display: flex;
+    gap: 5px;
     margin-left: auto;
     flex-shrink: 0;
 }
 
-.pages-list .page-type-badge {
-    position: absolute;
-    top: 5px;
-    right: 5px;
+.pages-list .page-type-badge,
+.page-card-list .page-type-badge {
+    position: static;
     font-size: 10px;
-    padding: 2px 6px;
-    z-index: 1;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 10px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
-.pages-list .page-title {
+.pages-list .page-title,
+.page-card-list .page-title {
     margin-bottom: 5px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
+    color: var(--text-primary);
 }
 
-.pages-list .page-meta {
+.pages-list .page-meta,
+.page-card-list .page-meta {
     font-size: 12px;
     color: #666;
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.page-card-list .page-meta span {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.page-card-list .page-status {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.page-card-list .status-published {
+    background: #10b981;
+    color: white;
+}
+
+.page-card-list .status-draft {
+    background: #f59e0b;
+    color: white;
 }
 
 .page-card.demo {
