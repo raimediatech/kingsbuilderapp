@@ -276,8 +276,8 @@ class KingsDashboard {
                 isShopifyPage: true
             }));
             
-            // Also load KingsBuilder created pages
-            await this.loadKingsBuilderPages();
+            // Skip loading KingsBuilder pages - all pages are now loaded from Shopify
+            // await this.loadKingsBuilderPages();
             
             this.renderPages();
             
@@ -718,20 +718,7 @@ window.top.location.href = installUrl;
                 const result = await response.json();
                 console.log('✅ Created new Shopify page:', result);
                 
-                // Add new page to list
-                const newPage = {
-                    id: result.page.id,
-                    title: result.page.title,
-                    status: 'draft',
-                    lastModified: new Date().toISOString().split('T')[0],
-                    views: 0,
-                    conversions: 0,
-                    type: type,
-                    isShopifyPage: true
-                };
-                
-                this.pages.unshift(newPage);
-                this.renderPages();
+                // Don't add to local array - it will be loaded from Shopify
                 this.hideModal();
                 
                 // Redirect to builder with proper parameters
