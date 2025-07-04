@@ -117,7 +117,8 @@ app.get('/', (req, res) => {
       res.clearCookie('accessToken');
       res.clearCookie('shopOrigin');
       
-      const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_products%2Cwrite_products%2Cread_content%2Cwrite_content&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+      const scopes = 'read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_content,write_content';
+      const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${encodeURIComponent(scopes)}&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
       
       res.send(`
         <script>
@@ -151,7 +152,8 @@ app.get('/', (req, res) => {
     
     // Need OAuth flow
     console.log('🔐 Starting OAuth flow for shop:', shop);
-    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_products%2Cwrite_products%2Cread_content%2Cwrite_content&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+    const scopes = 'read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_content,write_content';
+    const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${encodeURIComponent(scopes)}&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
     
     res.send(`
       <script>
@@ -183,7 +185,8 @@ app.get('/install', (req, res) => {
   }
   
   // FORCE TOP WINDOW OAUTH - THIS WORKS
-  const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=read_content,write_content,read_products,write_products&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
+  const scopes = 'read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_content,write_content';
+  const authUrl = `https://${shop}/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${encodeURIComponent(scopes)}&redirect_uri=https://kingsbuilderapp.vercel.app/auth/callback&state=${shop}`;
   
   res.send(`
     <script>
@@ -302,6 +305,42 @@ app.get('/api/shopify/pages', async (req, res) => {
     
     console.log('📄 Fetching pages from Shopify for shop:', shop);
     
+    // FIRST: Check what scopes the current token has
+    console.log('🔍 Checking token scopes...');
+    try {
+      const tokenCheckResponse = await fetch(`https://${shop}/admin/oauth/access_scopes.json`, {
+        headers: {
+          'X-Shopify-Access-Token': accessToken,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (tokenCheckResponse.ok) {
+        const scopeData = await tokenCheckResponse.json();
+        console.log('📋 Current token scopes:', scopeData.access_scopes?.map(s => s.handle));
+        
+        // Check if we have content scopes
+        const hasContentScopes = scopeData.access_scopes?.some(s => s.handle === 'read_content' || s.handle === 'write_content');
+        if (!hasContentScopes) {
+          console.log('🚨 TOKEN MISSING CONTENT SCOPES - FORCING RE-AUTH');
+          
+          // Clear the old token cookies
+          res.clearCookie('accessToken');
+          res.clearCookie('shopOrigin');
+          
+          // Return 401 to trigger re-auth
+          return res.status(401).json({
+            error: 'Token missing content scopes',
+            message: 'App needs to be reinstalled with content permissions',
+            requiresReauth: true,
+            currentScopes: scopeData.access_scopes?.map(s => s.handle) || []
+          });
+        }
+      }
+    } catch (scopeError) {
+      console.log('⚠️ Could not check token scopes:', scopeError.message);
+    }
+    
     // Fetch pages from Shopify API
     const apiUrl = `https://${shop}/admin/api/2023-10/pages.json`;
     console.log('📡 Making API request to:', apiUrl);
@@ -319,8 +358,23 @@ app.get('/api/shopify/pages', async (req, res) => {
       const errorText = await response.text();
       console.log('❌ Shopify API Error Details:', errorText);
       
-      // CHECK IF IT'S A PERMISSION ERROR - RETURN DEMO PAGES
+      // CHECK IF IT'S A PERMISSION ERROR - FORCE RE-AUTH
       if (errorText.includes('merchant approval') || errorText.includes('read_content')) {
+        console.log('🚨 MISSING CONTENT PERMISSIONS - FORCING RE-AUTH');
+        
+        // Clear the old token from database
+        await db.query('DELETE FROM tokens WHERE shop = ?', [shop]);
+        
+        // Return 401 to trigger re-auth
+        return res.status(401).json({
+          error: 'Missing content permissions',
+          message: 'App needs to be reinstalled with content permissions',
+          requiresReauth: true
+        });
+      }
+      
+      // FALLBACK: If other permission errors, show demo pages
+      if (errorText.includes('permission') || errorText.includes('scope')) {
         console.log('🔄 BYPASS: Returning demo pages due to missing permissions');
         
         const demoPages = [
@@ -603,7 +657,7 @@ app.get('/install', (req, res) => {
   
   // Build OAuth URL
   const clientId = process.env.SHOPIFY_API_KEY || 'your-client-id';
-  const scopes = 'read_content,write_content,read_products,write_products';
+  const scopes = 'read_products,write_products,read_customers,write_customers,read_orders,write_orders,read_content,write_content';
   const redirectUri = encodeURIComponent(`${req.protocol}://${req.get('host')}/auth/callback`);
   const state = Math.random().toString(36).substring(2, 15);
   

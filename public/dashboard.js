@@ -702,7 +702,7 @@ window.top.location.href = installUrl;
                         <div>
                             <strong>Demo Mode:</strong> ${message}
                             <div class="demo-actions">
-                                <button class="btn btn-primary btn-sm" onclick="window.dashboard.reinstallApp()">
+                                <button class="btn btn-primary btn-sm" onclick="window.dashboard.forceReinstall()">
                                     <i class="fas fa-sync-alt"></i>
                                     Install & Connect
                                 </button>
@@ -735,9 +735,9 @@ window.top.location.href = installUrl;
                             <li>🔒 <strong>Read and write content (pages)</strong> - Missing</li>
                         </ul>
                     </div>
-                    <button class="btn btn-primary" onclick="window.dashboard.reinstallApp()">
+                    <button class="btn btn-primary" onclick="window.dashboard.forceReinstall()">
                         <i class="fas fa-sync-alt"></i>
-                        Reinstall App with Permissions
+                        Clear Cache & Reinstall
                     </button>
                     <button class="btn btn-secondary" onclick="window.dashboard.loadDemoPages()">
                         <i class="fas fa-eye"></i>
@@ -761,6 +761,34 @@ window.top.location.href = installUrl;
         // Force reauth with new scopes
         const reinstallUrl = `/?shop=${shop}&force_reauth=true`;
         console.log('Redirecting to:', reinstallUrl);
+        window.top.location.href = reinstallUrl;
+    }
+    
+    forceReinstall() {
+        console.log('🧹 Force clearing cache and reinstalling...');
+        
+        // Clear all cookies
+        document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
+        
+        // Clear localStorage
+        localStorage.clear();
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        
+        // Get shop from URL
+        const shop = this.getShopOrigin();
+        if (!shop) {
+            alert('Could not detect shop domain. Please try again from your Shopify admin.');
+            return;
+        }
+        
+        // Add timestamp to force fresh install
+        const timestamp = Date.now();
+        const reinstallUrl = `/?shop=${shop}&force_reauth=true&clear_cache=${timestamp}`;
+        console.log('🚀 Redirecting to clean install:', reinstallUrl);
         window.top.location.href = reinstallUrl;
     }
     
