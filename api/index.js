@@ -814,6 +814,66 @@ app.get('/builder', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/builder.html'));
 });
 
+// API endpoint for Shopify pages - CRITICAL FOR DASHBOARD
+app.get('/api/shopify/pages', async (req, res) => {
+  try {
+    const shop = req.query.shop || req.cookies?.shopOrigin;
+    if (!shop) {
+      return res.status(400).json({ error: 'Shop parameter is required' });
+    }
+    
+    const accessToken = req.cookies?.shopifyAccessToken;
+    if (!accessToken) {
+      return res.status(401).json({ error: 'No access token found' });
+    }
+    
+    const shopifyApi = require('./shopify');
+    const result = await shopifyApi.getShopifyPages(shop, accessToken);
+    const pages = result.pages || [];
+    
+    res.json({ pages: pages, totalPages: pages.length, demoMode: false });
+    
+  } catch (error) {
+    console.error('❌ API: Error fetching pages:', error);
+    
+    // Return demo pages with proper dates
+    const demoPages = [
+      {
+        id: 'demo-1',
+        title: '🛍️ [DEMO] Homepage Hero Section',
+        status: 'published',
+        created_at: '2024-01-15T10:00:00Z',
+        updated_at: '2024-01-15T10:00:00Z',
+        handle: 'homepage-hero'
+      },
+      {
+        id: 'demo-2',
+        title: '🛍️ [DEMO] Product Landing Page',
+        status: 'draft',
+        created_at: '2024-01-14T10:00:00Z',
+        updated_at: '2024-01-14T10:00:00Z',
+        handle: 'product-landing'
+      },
+      {
+        id: 'demo-3',
+        title: '🛍️ [DEMO] About Us Page',
+        status: 'published',
+        created_at: '2024-01-13T10:00:00Z',
+        updated_at: '2024-01-13T10:00:00Z',
+        handle: 'about-us'
+      }
+    ];
+    
+    res.json({
+      pages: demoPages,
+      totalPages: demoPages.length,
+      demoMode: true,
+      needsPermissions: true,
+      message: 'Unable to connect to Shopify API. Showing demo pages.'
+    });
+  }
+});
+
 // Dashboard route  
 app.get('/dashboard', (req, res) => {
   const shop = req.query.shop;

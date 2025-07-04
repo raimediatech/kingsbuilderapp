@@ -452,7 +452,8 @@ class KingsDashboard {
                 id: 'demo-1',
                 title: '🛍️ [DEMO] Homepage Hero Section',
                 status: 'published',
-                lastModified: '2024-01-15',
+                created_at: '2024-01-15T10:00:00Z',
+                updated_at: '2024-01-15T10:00:00Z',
                 views: 1234,
                 conversions: 45,
                 isDemo: true
@@ -461,7 +462,8 @@ class KingsDashboard {
                 id: 'demo-2', 
                 title: '🛍️ [DEMO] Product Landing Page',
                 status: 'draft',
-                lastModified: '2024-01-14',
+                created_at: '2024-01-14T10:00:00Z',
+                updated_at: '2024-01-14T10:00:00Z',
                 views: 892,
                 conversions: 23,
                 isDemo: true
@@ -470,7 +472,8 @@ class KingsDashboard {
                 id: 'demo-3',
                 title: '🛍️ [DEMO] About Us Page', 
                 status: 'published',
-                lastModified: '2024-01-13',
+                created_at: '2024-01-13T10:00:00Z',
+                updated_at: '2024-01-13T10:00:00Z',
                 views: 567,
                 conversions: 12,
                 isDemo: true
@@ -479,10 +482,11 @@ class KingsDashboard {
         
         // Process dates properly 
         this.pages = demoPages.map(page => {
-            console.log(`📅 Demo page "${page.title}" date value:`, page.lastModified);
+            const dateValue = page.updated_at || page.created_at;
+            console.log(`📅 Demo page "${page.title}" date value:`, dateValue);
             return {
                 ...page,
-                lastModified: this.formatDate(page.lastModified)
+                lastModified: this.formatDate(dateValue)
             };
         });
         
