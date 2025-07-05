@@ -72,7 +72,68 @@ class KingsBuilder {
         // Save initial state
         this.saveState();
         
+        // Initialize Shopify image upload
+        this.initShopifyImageUpload();
+        
         console.log('✅ KingsBuilder Ready!');
+    }
+    
+    // Initialize Shopify image upload functionality
+    initShopifyImageUpload() {
+        // Add upload button to image elements
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('upload-shopify-image')) {
+                this.openShopifyImagePicker(e.target);
+            }
+        });
+    }
+    
+    // Open Shopify image picker
+    async openShopifyImagePicker(button) {
+        try {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    await this.uploadToShopify(file, button);
+                }
+            };
+            input.click();
+        } catch (error) {
+            console.error('Error opening image picker:', error);
+        }
+    }
+    
+    // Upload image to Shopify
+    async uploadToShopify(file, button) {
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const response = await fetch('/api/upload-image', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Update the image element with the Shopify URL
+                const imageElement = button.closest('.kingsbuilder-element').querySelector('img');
+                if (imageElement) {
+                    imageElement.src = result.imageUrl;
+                    imageElement.alt = result.alt || 'Shopify Image';
+                }
+                console.log('✅ Image uploaded to Shopify:', result.imageUrl);
+            } else {
+                console.error('❌ Upload failed:', result.error);
+            }
+        } catch (error) {
+            console.error('Error uploading to Shopify:', error);
+        }
     }
     
     initEventListeners() {
@@ -1427,6 +1488,8 @@ class KingsBuilder {
                 },
                 credentials: 'include', // Include cookies for authentication
                 body: JSON.stringify({
+                    id: this.context.pageId, // Include pageId for existing pages
+                    pageId: this.context.pageId, // Also include as pageId
                     title: pageTitle,
                     url: pageUrl,
                     status: pageStatus,

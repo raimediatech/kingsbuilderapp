@@ -453,7 +453,7 @@ router.post('/pages/:pageId/publish', async (req, res) => {
   }
 });
 
-// Create a new page
+// Create a new page OR update existing page (handles both scenarios)
 router.post('/pages', async (req, res) => {
   try {
     const pageData = req.body;
@@ -466,36 +466,77 @@ router.post('/pages', async (req, res) => {
     // Get access token from session or environment
     const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
     
-    // Create a basic HTML template for the new page
-    const bodyHtml = `
-      <div class="kings-builder-page">
-        <div class="kings-builder-element kings-builder-header">
-          <h1>${pageData.title || 'New Page'}</h1>
-        </div>
-        <div class="kings-builder-element kings-builder-paragraph">
-          <p>This is a new page created with KingsBuilder. Edit this page in the page builder.</p>
-        </div>
-      </div>
-      <style>
-        .kings-builder-page {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-        .kings-builder-element {
-          margin-bottom: 20px;
-        }
-      </style>
-    `;
+    // Check if this is updating an existing page
+    const pageId = pageData.id || pageData.pageId;
     
-    // Prepare data for Shopify API
-    const shopifyPageData = {
-      title: pageData.title || 'New Page',
-      body_html: bodyHtml,
-      handle: pageData.handle || (pageData.title || 'new-page').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      published: false // Save as draft
-    };
-    
-    // Create page in Shopify
-    const result = await shopifyApi.createShopifyPage(shop, accessToken, shopifyPageData, req);
+    if (pageId && pageId !== 'new' && pageId !== null) {
+      // UPDATE EXISTING PAGE
+      console.log(`🔄 Updating existing page ${pageId}`);
+      
+      // Build HTML content from widgets or body_html
+      let bodyHtml = pageData.body_html || '';
+      
+      if (pageData.widgets && pageData.widgets.length > 0) {
+        bodyHtml = `
+          <div class="kings-builder-page">
+            ${pageData.widgets.map(widget => widget.html || '').join('\n')}
+          </div>
+          <style>
+            .kings-builder-page {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            }
+            .kings-builder-element {
+              margin-bottom: 20px;
+            }
+          </style>
+        `;
+      }
+      
+      // Prepare data for Shopify API
+      const shopifyPageData = {
+        title: pageData.title,
+        body_html: bodyHtml,
+        published: pageData.published || false
+      };
+      
+      // Update page in Shopify
+      const result = await shopifyApi.updateShopifyPage(shop, accessToken, pageId, shopifyPageData, req);
+      
+      return res.json({ success: true, page: result.page, pageId: pageId });
+    } else {
+      // CREATE NEW PAGE
+      console.log(`➕ Creating new page`);
+      
+      // Create a basic HTML template for the new page
+      const bodyHtml = `
+        <div class="kings-builder-page">
+          <div class="kings-builder-element kings-builder-header">
+            <h1>${pageData.title || 'New Page'}</h1>
+          </div>
+          <div class="kings-builder-element kings-builder-paragraph">
+            <p>This is a new page created with KingsBuilder. Edit this page in the page builder.</p>
+          </div>
+        </div>
+        <style>
+          .kings-builder-page {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+          }
+          .kings-builder-element {
+            margin-bottom: 20px;
+          }
+        </style>
+      `;
+      
+      // Prepare data for Shopify API
+      const shopifyPageData = {
+        title: pageData.title || 'New Page',
+        body_html: bodyHtml,
+        handle: pageData.handle || (pageData.title || 'new-page').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        published: false // Save as draft
+      };
+      
+      // Create page in Shopify
+      const result = await shopifyApi.createShopifyPage(shop, accessToken, shopifyPageData, req);
     
     // Save version history if MongoDB is available
     if (PageVersion) {
@@ -570,6 +611,35 @@ router.delete('/pages/:pageId', async (req, res) => {
   } catch (error) {
     console.error('Error deleting page:', error);
     res.status(500).json({ error: 'Failed to delete page', details: error.message });
+  }
+});
+
+// Upload image to Shopify
+router.post('/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    const { shop } = req.query;
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Shop parameter is required' });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+    
+    // Get access token from session or environment
+    const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
+    
+    // Upload to Shopify Files API
+    const result = await shopifyApi.uploadImageToShopify(shop, accessToken, req.file.path, req.file.originalname);
+    
+    // Clean up uploaded file
+    fs.unlinkSync(req.file.path);
+    
+    res.json({ success: true, imageUrl: result.imageUrl, alt: result.alt });
+  } catch (error) {
+    console.error('Error uploading image to Shopify:', error);
+    res.status(500).json({ error: 'Failed to upload image to Shopify' });
   }
 });
 

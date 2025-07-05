@@ -655,21 +655,24 @@ html, body {
     text-align: center;
 }
 
-/* Canvas Container */
+/* Canvas Container - Full Area for Builder */
 .kingsbuilder-canvas-container {
     flex: 1;
     overflow: auto;
-    padding: 20px;
+    padding: 0; /* Removed padding for full area */
+    margin: 0; /* Removed margin for full area */
     position: relative;
 }
 
 .kingsbuilder-canvas {
-    margin: 0 auto;
+    margin: 0; /* Removed margin for full area */
+    padding: 0; /* Removed padding for full area */
     background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-lg);
-    min-height: 600px;
+    border: none; /* Removed border for full area */
+    border-radius: 0; /* Removed border radius for full area */
+    box-shadow: none; /* Removed shadow for full area */
+    min-height: 100vh; /* Full viewport height */
+    width: 100%; /* Full width */
     position: relative;
     transition: all var(--transition-normal);
 }
