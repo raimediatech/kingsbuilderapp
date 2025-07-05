@@ -258,6 +258,40 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Create a new page
+router.post('/', async (req, res) => {
+  try {
+    const { title, content, template } = req.body;
+    const shop = req.query.shop || req.headers['x-shopify-shop-domain'] || req.cookies?.shopOrigin || 'default';
+    
+    // Generate new page ID
+    const pageId = Date.now().toString();
+    
+    // Create new page object
+    const newPage = {
+      id: pageId,
+      title: title || 'New Page',
+      slug: (title || 'new-page').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+      content: content || '',
+      template: template || 'default',
+      shop: shop,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Add to pages array
+    pages.push(newPage);
+    
+    console.log(`Created new page: ${newPage.title} (ID: ${pageId})`);
+    
+    res.status(201).json({ page: newPage });
+  } catch (error) {
+    console.error('Error creating page:', error);
+    res.status(500).json({ error: 'Failed to create page', details: error.message });
+  }
+});
+
 // Update a page
 router.put('/:pageId', async (req, res) => {
   try {
@@ -425,5 +459,8 @@ router.delete('/:pageId', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete page', details: error.message });
   }
 });
+
+// Export pages array so other modules can access it
+router.getPages = () => pages;
 
 module.exports = router;

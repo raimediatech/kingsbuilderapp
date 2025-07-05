@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const shopifyApi = require('../shopify');
 const { PageModel } = require('../database');
+const axios = require('axios');
 
 // Dashboard home page
 router.get('/', async (req, res) => {
@@ -22,29 +23,37 @@ router.get('/', async (req, res) => {
     // Remove X-Frame-Options as it's deprecated and causing issues
     res.removeHeader('X-Frame-Options');
 
-    // Get pages from Shopify or database
+    // Get pages from KingsBuilder pages-api (where pages are actually saved)
     let pages = [];
 
-    if (shop && accessToken) {
-      try {
-        const result = await shopifyApi.getShopifyPages(shop, accessToken);
-        pages = result.pages || [];
-        console.log(`Retrieved ${pages.length} pages from Shopify`);
-      } catch (error) {
-        console.error('Error fetching pages from Shopify:', error);
-        // Fall back to database
-        const dbPages = await PageModel.find({ shop });
-        pages = dbPages.map(page => ({
-          id: page.pageId,
-          title: page.title,
-          handle: page.handle,
-          body_html: page.bodyHtml,
-          published: page.published
-        }));
-        console.log(`Retrieved ${pages.length} pages from database`);
+    try {
+      // Load pages from our pages-api directly
+      const pagesApi = require('./pages-api');
+      const kingsBuilderPages = pagesApi.getPages ? pagesApi.getPages() : [];
+      console.log(`Retrieved ${kingsBuilderPages.length} pages from KingsBuilder`);
+      
+      // Also try to get Shopify pages if we have access
+      if (shop && accessToken) {
+        try {
+          const result = await shopifyApi.getShopifyPages(shop, accessToken);
+          const shopifyPages = result.pages || [];
+          console.log(`Retrieved ${shopifyPages.length} pages from Shopify`);
+          
+          // Combine both sources, prioritizing KingsBuilder pages
+          pages = [...kingsBuilderPages, ...shopifyPages];
+        } catch (error) {
+          console.error('Error fetching pages from Shopify:', error);
+          // Use only KingsBuilder pages
+          pages = kingsBuilderPages;
+        }
+      } else {
+        // Use only KingsBuilder pages
+        pages = kingsBuilderPages;
       }
-    } else {
-      console.log('No shop or access token available, using mock data');
+    } catch (error) {
+      console.error('Error fetching pages from KingsBuilder:', error);
+      // Fall back to mock data
+      console.log('Using mock data as fallback');
       pages = [
         { id: '1', title: 'Homepage', body_html: '<p>Welcome to our store</p>', handle: 'home', published: true },
         { id: '2', title: 'About Us', body_html: '<p>Our company story</p>', handle: 'about', published: true },

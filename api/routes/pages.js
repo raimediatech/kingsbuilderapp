@@ -482,11 +482,34 @@ router.get('/', async (req, res) => {
 });
 
 // Create new page
-router.get('/new', (req, res) => {
+router.get('/new', async (req, res) => {
   const shop = req.query.shop || req.cookies?.shopOrigin;
   
   if (!shop) {
     return res.redirect('/install');
+  }
+  
+  try {
+    // Create a new page entry first
+    const axios = require('axios');
+    const baseURL = `${req.protocol}://${req.get('host')}`;
+    
+    const response = await axios.post(`${baseURL}/api/pages`, {
+      title: 'New Page',
+      content: '',
+      template: 'default'
+    }, {
+      params: { shop }
+    });
+    
+    const newPage = response.data.page;
+    
+    // Redirect to builder with the new page ID
+    res.redirect(`/builder?pageId=${newPage.id}&title=${encodeURIComponent(newPage.title)}&shop=${encodeURIComponent(shop)}`);
+    return;
+  } catch (error) {
+    console.error('Error creating new page:', error);
+    // Fall back to the form if API call fails
   }
   
   res.send(`
