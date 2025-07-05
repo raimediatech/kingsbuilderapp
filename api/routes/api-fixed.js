@@ -527,11 +527,16 @@ router.post('/pages', async (req, res) => {
         </style>
       `;
       
-      // Prepare data for Shopify API
+      // Prepare data for Shopify API - Generate unique handle to avoid conflicts
+      let baseHandle = (pageData.title || 'new-page').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      if (baseHandle.length === 0) baseHandle = 'new-page';
+      const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+      const uniqueHandle = `${baseHandle}-${timestamp}`;
+      
       const shopifyPageData = {
         title: pageData.title || 'New Page',
         body_html: bodyHtml,
-        handle: pageData.handle || (pageData.title || 'new-page').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        handle: uniqueHandle,
         published: false // Save as draft
       };
       
@@ -615,28 +620,35 @@ router.delete('/pages/:pageId', async (req, res) => {
 });
 
 // Upload image to Shopify
-router.post('/upload-image', upload.single('image'), async (req, res) => {
+router.post('/upload-image', async (req, res) => {
   try {
-    const { shop } = req.query;
+    const shop = req.body.shop || req.query.shop;
     
     if (!shop) {
       return res.status(400).json({ error: 'Shop parameter is required' });
     }
     
-    if (!req.file) {
+    if (!req.files || !req.files.image) {
       return res.status(400).json({ error: 'No image file provided' });
     }
     
     // Get access token from session or environment
     const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
     
+    const imageFile = req.files.image;
+    
     // Upload to Shopify Files API
-    const result = await shopifyApi.uploadImageToShopify(shop, accessToken, req.file.path, req.file.originalname);
+    const result = await shopifyApi.uploadImage(shop, accessToken, imageFile);
     
-    // Clean up uploaded file
-    fs.unlinkSync(req.file.path);
-    
-    res.json({ success: true, imageUrl: result.imageUrl, alt: result.alt });
+    if (result.success) {
+      res.json({ 
+        success: true, 
+        imageUrl: result.imageUrl,
+        alt: imageFile.name 
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to upload image to Shopify' });
+    }
   } catch (error) {
     console.error('Error uploading image to Shopify:', error);
     res.status(500).json({ error: 'Failed to upload image to Shopify' });

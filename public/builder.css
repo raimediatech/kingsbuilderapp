@@ -1137,7 +1137,7 @@ html, body {
     }
     
     .kingsbuilder-canvas-container {
-        padding: 10px;
+        padding: 0; /* Removed padding for full area */
     }
     
     .canvas-frame {

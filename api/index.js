@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const fileUpload = require('express-fileupload');
 const path = require('path');
 const app = express();
 
@@ -33,6 +34,13 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser(process.env.SESSION_SECRET || 'kings-builder-session-secret'));
+
+// Enable file uploads
+app.use(fileUpload({
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  abortOnLimit: true,
+  createParentPath: true
+}));
 
 // Simple test route to check if the server is working
 app.get('/test', (req, res) => {

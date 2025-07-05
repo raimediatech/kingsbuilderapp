@@ -111,6 +111,9 @@ class KingsBuilder {
         try {
             const formData = new FormData();
             formData.append('image', file);
+            formData.append('shop', this.context.shop);
+            
+            console.log('📤 Uploading image to Shopify:', file.name);
             
             const response = await fetch('/api/upload-image', {
                 method: 'POST',
@@ -128,11 +131,14 @@ class KingsBuilder {
                     imageElement.alt = result.alt || 'Shopify Image';
                 }
                 console.log('✅ Image uploaded to Shopify:', result.imageUrl);
+                this.showNotification('Image uploaded successfully!', 'success');
             } else {
                 console.error('❌ Upload failed:', result.error);
+                this.showNotification('Failed to upload image: ' + result.error, 'error');
             }
         } catch (error) {
             console.error('Error uploading to Shopify:', error);
+            this.showNotification('Error uploading image', 'error');
         }
     }
     
