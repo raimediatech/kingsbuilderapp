@@ -370,18 +370,16 @@ class KingsDashboard {
                 console.log(`🔗 Shop: ${shopName}`);
                 console.log(`🌐 Frontend URL: ${frontendUrl}`);
                 
-                // FORCE REAL RECENT DATES - generate realistic dates
-                const now = new Date();
-                const daysSinceCreation = Math.abs(parseInt(page.id.toString().slice(-3))) || 30; // Use last 3 digits or default 30
-                const pageDate = new Date(now.getTime() - (daysSinceCreation * 24 * 60 * 60 * 1000));
-                const dateValue = pageDate.toISOString();
-                console.log(`📅 Page "${page.title}" FORCED date (${daysSinceCreation} days ago):`, dateValue);
+                // GET REAL LAST UPDATED DATE AND TIME
+                const realUpdatedAt = page.updated_at || page.created_at || page.published_at;
+                console.log(`📅 Page "${page.title}" REAL updated_at:`, realUpdatedAt);
+                console.log(`📅 Page object keys:`, Object.keys(page));
                 
                 return {
                     id: page.id,
                     title: page.title,
                     status: page.published_at ? 'published' : 'draft',
-                    lastModified: this.formatDate(dateValue),
+                    lastModified: this.formatDate(realUpdatedAt),
                     views: 0, // TODO: Integrate with Google Analytics or Shopify Analytics
                     conversions: 0, // TODO: Integrate with conversion tracking
                     handle: page.handle,
@@ -592,10 +590,13 @@ window.top.location.href = installUrl;
                 return 'Never';
             }
             
-            const formatted = date.toLocaleDateString('en-US', {
+            const formatted = date.toLocaleString('en-US', {
                 year: 'numeric',
                 month: 'short',
-                day: 'numeric'
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
             });
             console.log('🔧 Formatted date:', formatted);
             return formatted;
