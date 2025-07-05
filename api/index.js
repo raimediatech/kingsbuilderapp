@@ -2704,6 +2704,15 @@ try {
   console.error('Error loading pages routes:', error);
 }
 
+// Import pages API routes FIRST (before general /api route to avoid conflicts)
+try {
+  const pagesApiRoutes = require('./routes/pages-api');
+  app.use('/api/pages', pagesApiRoutes);
+  console.log('Pages API routes registered successfully (priority)');
+} catch (error) {
+  console.error('Error loading pages API routes (priority):', error);
+}
+
 // Import API routes
 try {
   // Try to load the fixed API routes first
@@ -2740,14 +2749,7 @@ try {
   console.error('Error loading templates API routes:', error);
 }
 
-// Import pages API routes
-try {
-  const pagesApiRoutes = require('./routes/pages-api');
-  app.use('/api/pages', pagesApiRoutes);
-  console.log('Pages API routes registered successfully');
-} catch (error) {
-  console.error('Error loading pages API routes:', error);
-}
+// Pages API routes already registered above (priority route)
 
 // Import page templates API routes
 try {
@@ -2767,14 +2769,7 @@ try {
   console.error('Error loading users API routes:', error);
 }
 
-// Import pages API routes
-try {
-  const pagesApiRoutes = require('./routes/pages-api');
-  app.use('/api/pages', pagesApiRoutes);
-  console.log('Pages API routes registered successfully');
-} catch (error) {
-  console.error('Error loading pages API routes:', error);
-}
+// Pages API routes already registered above (priority route)
 
 // Import templates routes
 try {
