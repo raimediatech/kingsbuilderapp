@@ -370,10 +370,9 @@ class KingsDashboard {
                 console.log(`🔗 Shop: ${shopName}`);
                 console.log(`🌐 Frontend URL: ${frontendUrl}`);
                 
-                // GET REAL LAST UPDATED DATE AND TIME
-                const realUpdatedAt = page.updated_at || page.created_at || page.published_at;
-                console.log(`📅 Page "${page.title}" REAL updated_at:`, realUpdatedAt);
-                console.log(`📅 Page object keys:`, Object.keys(page));
+                // GET REAL LAST UPDATED DATE AND TIME FROM API RESPONSE
+                const realUpdatedAt = page.lastModified || page.createdAt;
+                console.log(`📅 Page "${page.title}" REAL lastModified:`, realUpdatedAt);
                 
                 return {
                     id: page.id,
@@ -575,18 +574,14 @@ window.top.location.href = installUrl;
     
     formatDate(dateString) {
         try {
-            console.log('🔧 formatDate called with:', dateString);
             if (!dateString) {
-                console.log('🔧 No dateString provided');
                 return 'Never';
             }
             
             const date = new Date(dateString);
-            console.log('🔧 Parsed date:', date);
             
             // Check if date is valid
             if (isNaN(date.getTime())) {
-                console.log('🔧 Invalid date');
                 return 'Never';
             }
             
@@ -595,10 +590,9 @@ window.top.location.href = installUrl;
                 month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
+                minute: '2-digit'
             });
-            console.log('🔧 Formatted date:', formatted);
+            console.log(`✅ Formatted date: ${dateString} → ${formatted}`);
             return formatted;
         } catch (e) {
             console.warn('Date formatting error:', e);
