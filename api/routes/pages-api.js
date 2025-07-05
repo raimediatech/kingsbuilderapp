@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { requirePermission, PERMISSIONS } = require('../models/user');
+const shopifyApi = require('../shopify');
 
 // Mock database for pages (replace with actual database in production)
 let pages = [
@@ -313,18 +314,85 @@ router.post('/:pageId/publish', async (req, res) => {
       return res.status(404).json({ error: 'Page not found' });
     }
     
-    // Update page
+    const pageData = pages[pageIndex];
+    
+    // Get access token from session or environment
+    const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
+    
+    if (!accessToken) {
+      return res.status(401).json({ error: 'Access token is required' });
+    }
+    
+    // Generate the final HTML for the page
+    const bodyHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${pageData.title || 'KingsBuilder Page'}</title>
+          <style>
+            body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+            .page-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+            .builder-element { margin-bottom: 20px; }
+            .builder-element h1, .builder-element h2, .builder-element h3 { margin: 0 0 10px 0; }
+            .builder-element p { margin: 0 0 15px 0; line-height: 1.6; }
+            .builder-element img { max-width: 100%; height: auto; }
+            @media (max-width: 768px) {
+              .page-container { padding: 10px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="page-container">
+            ${content || pageData.content || ''}
+          </div>
+        </body>
+      </html>
+    `;
+    
+    // Generate unique handle to avoid conflicts
+    let baseHandle = (pageData.title || 'new-page').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    if (baseHandle.length === 0) baseHandle = 'new-page';
+    const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+    const uniqueHandle = `${baseHandle}-${timestamp}`;
+    
+    // Prepare data for Shopify API
+    const shopifyPageData = {
+      title: pageData.title || 'New Page',
+      body_html: bodyHtml,
+      handle: uniqueHandle,
+      published: true // Publish the page
+    };
+    
+    console.log('Publishing page to Shopify:', {
+      shop,
+      title: shopifyPageData.title,
+      handle: shopifyPageData.handle
+    });
+    
+    // Create page in Shopify using existing API
+    const shopifyResult = await shopifyApi.createShopifyPage(shop, accessToken, shopifyPageData, req);
+    console.log('Page created in Shopify:', shopifyResult.id);
+    
+    // Update local page
     const updatedPage = {
-      ...pages[pageIndex],
+      ...pageData,
       status: 'published',
-      content: content || pages[pageIndex].content,
+      content: content || pageData.content,
+      shopifyId: shopifyResult.id,
+      shopifyHandle: shopifyResult.handle,
       updatedAt: new Date().toISOString()
     };
     
     // Replace page in array
     pages[pageIndex] = updatedPage;
     
-    res.json({ page: updatedPage });
+    res.json({ 
+      page: updatedPage,
+      shopifyPage: shopifyResult,
+      message: 'Page published successfully to Shopify'
+    });
   } catch (error) {
     console.error('Error publishing page:', error);
     res.status(500).json({ error: 'Failed to publish page', details: error.message });
