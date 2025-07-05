@@ -221,6 +221,12 @@ class KingsBuilder {
             previewBtn.addEventListener('click', () => this.preview());
         }
         
+        // Save button
+        const saveBtn = document.getElementById('saveBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.savePage());
+        }
+        
         // Publish button
         const publishBtn = document.getElementById('publishBtn');
         if (publishBtn) {
@@ -1648,7 +1654,115 @@ class KingsBuilder {
     
     async savePage() {
         console.log('💾 Auto-saving page...');
-        // Implement auto-save functionality
+        
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pageId = urlParams.get('pageId');
+            const shop = urlParams.get('shop');
+            
+            if (!pageId || pageId === 'new') {
+                console.log('⚠️ Cannot save new page without ID');
+                return;
+            }
+            
+            // Get page title
+            const titleInput = document.getElementById('pageTitle');
+            const pageTitle = titleInput ? titleInput.value.trim() : 'Untitled Page';
+            
+            // Get page content
+            const canvas = document.getElementById('kingsbuilder-canvas');
+            const pageContent = canvas ? canvas.innerHTML : '';
+            
+            // Save page data
+            const saveData = {
+                title: pageTitle,
+                content: pageContent,
+                updatedAt: new Date().toISOString()
+            };
+            
+            console.log('💾 Saving page:', { pageId, title: pageTitle, contentLength: pageContent.length });
+            
+            const response = await fetch(`/api/pages/${pageId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(saveData)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Failed to save page: ${errorData.error || response.statusText}`);
+            }
+            
+            const result = await response.json();
+            console.log('✅ Page saved successfully:', result);
+            
+            // Show success indicator
+            this.showSaveStatus('saved');
+            
+        } catch (error) {
+            console.error('❌ Error saving page:', error);
+            this.showSaveStatus('error');
+        }
+    }
+    
+    showSaveStatus(status) {
+        // Remove existing status indicators
+        const existingStatus = document.querySelector('.save-status');
+        if (existingStatus) {
+            existingStatus.remove();
+        }
+        
+        // Create status indicator
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'save-status';
+        statusDiv.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+        `;
+        
+        if (status === 'saved') {
+            statusDiv.textContent = '✅ Page saved';
+            statusDiv.style.backgroundColor = '#10b981';
+            statusDiv.style.color = 'white';
+        } else if (status === 'error') {
+            statusDiv.textContent = '❌ Save failed';
+            statusDiv.style.backgroundColor = '#ef4444';
+            statusDiv.style.color = 'white';
+        } else if (status === 'saving') {
+            statusDiv.textContent = '💾 Saving...';
+            statusDiv.style.backgroundColor = '#f59e0b';
+            statusDiv.style.color = 'white';
+        }
+        
+        document.body.appendChild(statusDiv);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            if (statusDiv.parentNode) {
+                statusDiv.remove();
+            }
+        }, 3000);
+    }
+    
+    async exit() {
+        // Save before exiting
+        await this.savePage();
+        
+        // Navigate back to dashboard
+        const urlParams = new URLSearchParams(window.location.search);
+        const shop = urlParams.get('shop');
+        const shopParam = shop ? `?shop=${encodeURIComponent(shop)}` : '';
+        
+        window.location.href = `/dashboard${shopParam}`;
     }
     
     async loadPageData() {
@@ -1779,6 +1893,61 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing KingsBuilder - Visual Page Builder...');
     console.log('🏢 Created by Kingsmen Marketing Agency');
     window.kingsBuilder = new KingsBuilder();
+    
+    // Set up auto-save functionality
+    let saveTimer;
+    
+    // Auto-save when user stops typing/editing
+    function triggerAutoSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+            if (window.kingsBuilder) {
+                window.kingsBuilder.savePage();
+            }
+        }, 2000); // Save 2 seconds after user stops editing
+    }
+    
+    // Listen for page title changes
+    const titleInput = document.getElementById('pageTitle');
+    if (titleInput) {
+        titleInput.addEventListener('input', triggerAutoSave);
+    }
+    
+    // Listen for canvas content changes
+    const canvas = document.getElementById('kingsbuilder-canvas');
+    if (canvas) {
+        // Use MutationObserver to detect changes
+        const observer = new MutationObserver(triggerAutoSave);
+        observer.observe(canvas, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeOldValue: true,
+            characterData: true
+        });
+    }
+    
+    // Save when user leaves the page
+    window.addEventListener('beforeunload', function(e) {
+        if (window.kingsBuilder) {
+            // Try to save immediately
+            window.kingsBuilder.savePage();
+        }
+    });
+    
+    // Save when user navigates away
+    window.addEventListener('pagehide', function(e) {
+        if (window.kingsBuilder) {
+            window.kingsBuilder.savePage();
+        }
+    });
+    
+    // Save when tab loses focus
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden && window.kingsBuilder) {
+            window.kingsBuilder.savePage();
+        }
+    });
 });
 
 // Export for module systems
