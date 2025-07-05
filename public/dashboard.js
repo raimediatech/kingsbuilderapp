@@ -316,7 +316,8 @@ class KingsDashboard {
             const shop = this.getShopOrigin();
             
             // Fetch real pages from Shopify API (server handles authentication via cookies)
-            const response = await fetch(`/api/shopify/pages?shop=${shop}`, {
+            const timestamp = Date.now();
+            const response = await fetch(`/api/shopify/pages?shop=${shop}&_t=${timestamp}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -350,6 +351,7 @@ class KingsDashboard {
             }
             
             console.log(`✅ Loaded ${data.pages.length} real Shopify pages`);
+            console.log('🚨 RAW API Response:', JSON.stringify(data, null, 2));
             
             // Clear any existing demo notice since we have real pages
             this.clearDemoNotice();
