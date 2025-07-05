@@ -952,10 +952,12 @@ window.top.location.href = installUrl;
     }
     
     editPage(pageId) {
-        console.log('🔧 editPage called with pageId:', pageId);
+        console.log('🔧 editPage called with pageId:', pageId, typeof pageId);
         console.log('🔧 Available pages:', this.pages.map(p => ({ id: p.id, title: p.title })));
         
-        const page = this.pages.find(p => p.id === pageId);
+        // Convert pageId to number for comparison (API returns numbers, onclick passes strings)
+        const numericPageId = parseInt(pageId, 10);
+        const page = this.pages.find(p => p.id === numericPageId);
         if (!page) {
             console.error('❌ Page not found with ID:', pageId);
             alert('Error: Page not found. Please refresh the page and try again.');
@@ -973,11 +975,11 @@ window.top.location.href = installUrl;
             return;
         }
         
-        const builderUrl = `/builder?pageId=${pageId}&title=${encodeURIComponent(page.title)}&shop=${shop}&embedded=1`;
+        const builderUrl = `/builder?pageId=${numericPageId}&title=${encodeURIComponent(page.title)}&shop=${shop}&embedded=1`;
         
         console.log('🔧 Opening page editor:', builderUrl);
         console.log('🔧 Shop:', shop);
-        console.log('🔧 Page ID:', pageId);
+        console.log('🔧 Page ID:', numericPageId);
         console.log('🔧 Embedded context:', this.context.embedded);
         
         // For embedded apps, navigate within the current window
