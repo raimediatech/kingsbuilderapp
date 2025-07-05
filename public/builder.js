@@ -1500,8 +1500,8 @@ class KingsBuilder {
                 },
                 credentials: 'include', // Include cookies for authentication
                 body: JSON.stringify({
-                    id: this.context.pageId, // Include pageId for existing pages
-                    pageId: this.context.pageId, // Also include as pageId
+                    id: this.pageId, // Include pageId for existing pages
+                    pageId: this.pageId, // Also include as pageId
                     title: pageTitle,
                     url: pageUrl,
                     status: pageStatus,
@@ -1682,7 +1682,7 @@ class KingsBuilder {
             
             console.log('💾 Saving page:', { pageId, title: pageTitle, contentLength: pageContent.length });
             
-            const response = await fetch(`/api/pages/${pageId}`, {
+            const response = await fetch(`/api/pages/${pageId}?shop=${encodeURIComponent(shop)}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1783,8 +1783,8 @@ class KingsBuilder {
                     }
                 }
                 
-                // Load page content from Shopify
-                const response = await fetch(`/api/shopify/pages/${pageId}`, {
+                // Load page content from KingsBuilder API
+                const response = await fetch(`/api/pages/${pageId}?shop=${encodeURIComponent(shop)}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

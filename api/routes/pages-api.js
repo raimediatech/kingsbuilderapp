@@ -170,10 +170,24 @@ router.get('/:pageId', async (req, res) => {
     }
     
     // Find page by ID
-    const page = pages.find(p => p.id === pageId);
+    let page = pages.find(p => p.id === pageId);
     
     if (!page) {
-      return res.status(404).json({ error: 'Page not found' });
+      // Create a new page if it doesn't exist (fallback for missing pages)
+      console.log(`Page ${pageId} not found, creating new page...`);
+      page = {
+        id: pageId,
+        title: 'New Page',
+        slug: 'new-page',
+        content: '',
+        template: 'default',
+        shop: shop,
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      pages.push(page);
+      console.log(`Created new page with ID: ${pageId}`);
     }
     
     res.json({ page });
