@@ -133,7 +133,7 @@ async function getShopifyPages(shop, accessToken, req) {
     
     console.log(`Fetching pages for shop: ${shop}`);
     
-    const apiUrl = `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/pages.json?fields=id,title,handle,body_html,published_at,created_at,updated_at,template_suffix,summary_on_blog_index,author,author_display_name,tags,metafields`;
+    const apiUrl = `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/pages.json`;
     console.log(`🔗 API URL: ${apiUrl}`);
     
     const response = await axios({
