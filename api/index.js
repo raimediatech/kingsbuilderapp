@@ -252,7 +252,7 @@ app.get('/auth/callback', async (req, res) => {
       // Store both shop and access token in cookies with proper settings for embedded apps
       res.cookie('shopOrigin', shop, { 
         maxAge: 24 * 60 * 60 * 1000,
-        httpOnly: true,
+        httpOnly: false, // Allow JS to read this
         secure: true,
         sameSite: 'none'
       });
@@ -709,7 +709,7 @@ app.get('/install', (req, res) => {
   const shopDomain = shop.includes('.') ? shop : `${shop}.myshopify.com`;
   
   // Store shop in session
-  res.cookie('shopOrigin', shopDomain, { httpOnly: true, secure: false });
+  res.cookie('shopOrigin', shopDomain, { httpOnly: false, secure: false }); // Allow JS to read this
   
   // Build OAuth URL
   const clientId = process.env.SHOPIFY_API_KEY || 'your-client-id';
@@ -764,7 +764,7 @@ app.get('/auth/callback', async (req, res) => {
     
     // Store access token and shop info
     res.cookie('accessToken', tokenData.access_token, { httpOnly: true, secure: false });
-    res.cookie('shopOrigin', shopOrigin, { httpOnly: true, secure: false });
+    res.cookie('shopOrigin', shopOrigin, { httpOnly: false, secure: false }); // Allow JS to read this
     
     console.log('✅ OAuth successful for shop:', shopOrigin);
     
@@ -949,7 +949,7 @@ app.get('/dashboard', (req, res) => {
     
     res.cookie('shopOrigin', shop, { 
       maxAge: 24 * 60 * 60 * 1000,
-      httpOnly: true,
+      httpOnly: false, // Allow JS to read this
       secure: true,
       sameSite: 'none'
     });
@@ -2638,7 +2638,7 @@ app.get('/auth/callback', async (req, res) => {
     req.session.accessToken = tokenData.access_token;
     
     // Set cookies for future requests
-    res.cookie('shopOrigin', shop, { maxAge: 24 * 60 * 60 * 1000 }); // 24 hours
+    res.cookie('shopOrigin', shop, { maxAge: 24 * 60 * 60 * 1000, httpOnly: false }); // 24 hours, allow JS to read
     res.cookie('accessToken', tokenData.access_token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
     
     // Create webhook for app uninstall (optional)
