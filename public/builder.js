@@ -184,9 +184,9 @@ class KingsBuilder {
         });
         
         // Back to elements button
-        const backBtn = document.getElementById('backToElements');
-        if (backBtn) {
-            backBtn.addEventListener('click', () => {
+        const backToElementsBtn = document.getElementById('backToElements');
+        if (backToElementsBtn) {
+            backToElementsBtn.addEventListener('click', () => {
                 this.switchTab('elements');
             });
         }
