@@ -151,6 +151,41 @@ router.delete('/:handle', async (req, res) => {
 router.post('/:handle/publish', async (req, res) => {
   try {
     const { handle } = req.params;
+    const { shop, accessToken } = req.body;
+
+    if (!shop || !accessToken) {
+      return res.status(400).json({ error: 'Shop and access token are required' });
+    }
+
+    const pageData = await PageModel.findOne(shop, handle);
+    if (!pageData) {
+      return res.status(404).json({ error: 'Page not found' });
+    }
+
+    const response = await fetch(`https://${shop}/admin/api/2023-10/pages/${pageData.shopifyPageId}.json`, {
+      method: 'PUT',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ page: pageData }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      console.error('❌ Shopify publish failed:', result);
+      return res.status(500).json({ error: 'Shopify publish failed', details: result });
+    }
+
+    console.log('✅ Page successfully published to Shopify');
+    res.json(result);
+  } catch (error) {
+    console.error('Error publishing page:', error);
+    res.status(500).json({ error: 'Internal error during publishing' });
+  }
+
+  try {
+    const { handle } = req.params;
     const shop = req.query.shop;
     
     if (!shop) {
