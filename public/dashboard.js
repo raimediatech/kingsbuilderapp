@@ -1051,10 +1051,17 @@ window.top.location.href = installUrl;
         console.log('🔧 Page ID:', numericPageId);
         console.log('🔧 Embedded context:', this.context.embedded);
         
-        // For embedded apps, navigate within the current window
-        if (this.context.embedded === '1') {
-            console.log('🔧 Navigating to builder in same window');
-            window.location.href = builderUrl;
+        // For embedded apps, we need to tell Shopify to navigate within the admin
+        if (this.context.embedded === '1' || window.parent !== window) {
+            console.log('🔧 Navigating to builder within Shopify admin');
+            
+            // Try to use App Bridge navigation if available
+            if (this.app && this.app.navigation) {
+                this.app.navigation.navigate(builderUrl);
+            } else {
+                // Fallback: navigate parent window to keep it within Shopify
+                window.parent.location.href = builderUrl;
+            }
         } else {
             console.log('🔧 Opening builder in new window');
             window.open(builderUrl, '_blank');

@@ -1806,11 +1806,19 @@ class KingsBuilder {
                         }
                     }
                     
-                    // Set page content
-                    if (page.body_html) {
-                        const canvas = document.getElementById('kingsbuilder-canvas');
-                        if (canvas) {
+                    // Set page content - check both content and body_html
+                    const canvas = document.getElementById('kingsbuilder-canvas');
+                    if (canvas) {
+                        if (page.content) {
+                            // Use KingsBuilder content if available
+                            canvas.innerHTML = page.content;
+                            console.log('✅ Loaded KingsBuilder content');
+                        } else if (page.body_html) {
+                            // Fallback to Shopify body_html
                             canvas.innerHTML = page.body_html;
+                            console.log('✅ Loaded Shopify body_html');
+                        } else {
+                            console.log('⚠️ No content found for page');
                         }
                     }
                     

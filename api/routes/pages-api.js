@@ -169,27 +169,60 @@ router.get('/:pageId', async (req, res) => {
       return res.status(400).json({ error: 'Shop parameter is required' });
     }
     
-    // Find page by ID (handle both string and number comparison)
-    let page = pages.find(p => p.id == pageId || p.id === parseInt(pageId, 10));
+    // Get access token
+    const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
     
-    if (!page) {
-      // Create a new page if it doesn't exist (fallback for missing pages)
-      console.log(`📄 Page ${pageId} not found, creating new page...`);
-      page = {
-        id: pageId,
-        title: 'New Page',
-        slug: 'new-page',
-        content: {
-          elements: []
-        },
-        template: 'default',
-        shop: shop,
-        status: 'draft',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      pages.push(page);
-      console.log(`✅ Created new page with ID: ${pageId}`);
+    if (!accessToken) {
+      return res.status(401).json({ error: 'Access token not found' });
+    }
+    
+    console.log(`📄 Fetching page ${pageId} from Shopify for shop: ${shop}`);
+    
+    try {
+      // Fetch page from Shopify API
+      const shopifyResponse = await fetch(`https://${shop}/admin/api/2023-10/pages/${pageId}.json`, {
+        method: 'GET',
+        headers: {
+          'X-Shopify-Access-Token': accessToken,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (shopifyResponse.ok) {
+        const shopifyData = await shopifyResponse.json();
+        const shopifyPage = shopifyData.page;
+        
+        // Find page in local array to get KingsBuilder content
+        let localPage = pages.find(p => p.id == pageId || p.id === parseInt(pageId, 10));
+        
+        // Merge Shopify page with local KingsBuilder content
+        const page = {
+          id: shopifyPage.id,
+          title: shopifyPage.title,
+          slug: shopifyPage.handle,
+          content: localPage ? localPage.content : null, // KingsBuilder content
+          body_html: shopifyPage.body_html, // Shopify content
+          template: 'default',
+          shop: shop,
+          status: shopifyPage.published_at ? 'published' : 'draft',
+          isShopifyPage: true,
+          handle: shopifyPage.handle,
+          published_at: shopifyPage.published_at,
+          createdAt: shopifyPage.created_at,
+          updatedAt: shopifyPage.updated_at
+        };
+        
+        console.log(`✅ Found Shopify page: ${shopifyPage.title}`);
+        console.log(`📄 KingsBuilder content available: ${localPage ? 'Yes' : 'No'}`);
+        
+        res.json({ page });
+      } else {
+        console.log(`❌ Shopify page ${pageId} not found`);
+        res.status(404).json({ error: 'Page not found' });
+      }
+    } catch (error) {
+      console.error('Error fetching page from Shopify:', error);
+      res.status(500).json({ error: 'Failed to fetch page from Shopify' });
     }
     
     res.json({ page });
