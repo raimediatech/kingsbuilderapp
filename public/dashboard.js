@@ -1051,9 +1051,28 @@ window.top.location.href = installUrl;
         console.log('🔧 Page ID:', numericPageId);
         console.log('🔧 Embedded context:', this.context.embedded);
         
-        // Open builder as modal overlay within current page to stay embedded
-        console.log('🔧 Opening builder as modal overlay');
-        this.openBuilderModal(builderUrl, page.title, numericPageId, shop);
+        // For embedded apps, use App Bridge navigation to stay within Shopify
+        if (this.context.embedded === '1' || window.parent !== window) {
+            console.log('🔧 Using App Bridge navigation to stay within Shopify');
+            
+            // Try to use App Bridge navigation if available
+            if (window.app && window.app.Router) {
+                window.app.Router.dispatch(window.app.Router.Action.NAVIGATE, {
+                    url: builderUrl
+                });
+            } else if (this.app && this.app.Router) {
+                this.app.Router.dispatch(this.app.Router.Action.NAVIGATE, {
+                    url: builderUrl
+                });
+            } else {
+                // Fallback: navigate the current window (stays in iframe)
+                console.log('🔧 Fallback: navigating current window');
+                window.location.href = builderUrl;
+            }
+        } else {
+            console.log('🔧 Opening builder in new window');
+            window.open(builderUrl, '_blank');
+        }
     }
     
     openBuilderModal(builderUrl, title, pageId, shop) {

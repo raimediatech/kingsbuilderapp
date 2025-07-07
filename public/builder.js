@@ -165,6 +165,14 @@ class KingsBuilder {
         // Panel controls
         this.bindPanelControls();
         
+        // Back to Dashboard button
+        const backBtn = document.getElementById('backToDashboard');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                this.backToDashboard();
+            });
+        }
+        
         // Category toggles
         document.querySelectorAll('.category-header').forEach(header => {
             header.addEventListener('click', () => {
@@ -1763,6 +1771,18 @@ class KingsBuilder {
         const shopParam = shop ? `?shop=${encodeURIComponent(shop)}` : '';
         
         window.location.href = `/dashboard${shopParam}`;
+    }
+    
+    backToDashboard() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const shop = urlParams.get('shop');
+        const embedded = urlParams.get('embedded');
+        
+        // Navigate back to dashboard
+        const dashboardUrl = `/?shop=${shop}&embedded=${embedded}`;
+        
+        console.log('🔙 Returning to dashboard:', dashboardUrl);
+        window.location.href = dashboardUrl;
     }
     
     async loadPageData() {
