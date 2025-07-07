@@ -169,8 +169,8 @@ router.get('/:pageId', async (req, res) => {
       return res.status(400).json({ error: 'Shop parameter is required' });
     }
     
-    // Find page by ID
-    let page = pages.find(p => p.id === pageId);
+    // Find page by ID (handle both string and number comparison)
+    let page = pages.find(p => p.id == pageId || p.id === parseInt(pageId, 10));
     
     if (!page) {
       // Create a new page if it doesn't exist (fallback for missing pages)
@@ -291,8 +291,8 @@ router.put('/:pageId', async (req, res) => {
     console.log(`🔄 Updating page ${pageId} for shop: ${shop}`);
     console.log('Update data:', { title, slug, content: content ? 'provided' : 'not provided', template });
     
-    // Find page index
-    const pageIndex = pages.findIndex(p => p.id === pageId);
+    // Find page index (handle both string and number comparison)
+    const pageIndex = pages.findIndex(p => p.id == pageId || p.id === parseInt(pageId, 10));
     
     if (pageIndex === -1) {
       console.log(`❌ Page ${pageId} not found in local pages. Creating new page.`);
@@ -355,8 +355,8 @@ router.post('/:pageId/publish', async (req, res) => {
       return res.status(400).json({ error: 'Shop parameter is required' });
     }
     
-    // Find page index
-    const pageIndex = pages.findIndex(p => p.id === pageId);
+    // Find page index (handle both string and number comparison)
+    const pageIndex = pages.findIndex(p => p.id == pageId || p.id === parseInt(pageId, 10));
     
     if (pageIndex === -1) {
       return res.status(404).json({ error: 'Page not found' });
@@ -457,8 +457,8 @@ router.delete('/:pageId', async (req, res) => {
       return res.status(400).json({ error: 'Shop parameter is required' });
     }
     
-    // Find page index
-    const pageIndex = pages.findIndex(p => p.id === pageId);
+    // Find page index (handle both string and number comparison)
+    const pageIndex = pages.findIndex(p => p.id == pageId || p.id === parseInt(pageId, 10));
     
     if (pageIndex === -1) {
       return res.status(404).json({ error: 'Page not found' });

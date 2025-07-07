@@ -420,8 +420,9 @@ class KingsDashboard {
                 };
             });
             
-            // Also load KingsBuilder pages (pages created with the page builder)
-            await this.loadKingsBuilderPages();
+            // Skip loading KingsBuilder pages - only show Shopify pages in dashboard
+            // KingsBuilder pages should be integrated into Shopify, not shown separately
+            // await this.loadKingsBuilderPages();
             
             this.renderPages();
             
@@ -436,22 +437,11 @@ class KingsDashboard {
                 return;
             }
             
-            // Even if Shopify API fails, try to load KingsBuilder pages
-            console.log('📋 Shopify API failed, trying to load KingsBuilder pages...');
-            this.pages = []; // Reset pages array
-            await this.loadKingsBuilderPages();
-            
-            // If we have KingsBuilder pages, show them
-            if (this.pages.length > 0) {
-                console.log(`✅ Loaded ${this.pages.length} KingsBuilder pages as fallback`);
-                this.renderPages();
+            // Only show permission error for legitimate auth issues
+            if (error.message.includes('403') || error.message.includes('401') || error.message.includes('Unauthorized')) {
+                this.showPermissionError();
             } else {
-                // Only show permission error for legitimate auth issues
-                if (error.message.includes('403') || error.message.includes('401') || error.message.includes('Unauthorized')) {
-                    this.showPermissionError();
-                } else {
-                    this.showError('Failed to load pages. Please try again.');
-                }
+                this.showError('Failed to load pages. Please try again.');
             }
         } finally {
             this.hideLoading();
@@ -824,10 +814,9 @@ window.top.location.href = installUrl;
     
     updatePageStats() {
         const shopifyPages = this.pages.filter(p => p.isShopifyPage).length;
-        const kingsBuilderPages = this.pages.filter(p => p.isKingsBuilderPage).length;
         const totalPages = this.pages.length;
         
-        console.log(`📊 Page Stats - Shopify: ${shopifyPages}, KingsBuilder: ${kingsBuilderPages}, Total: ${totalPages}`);
+        console.log(`📊 Page Stats - Total: ${totalPages} Shopify Pages`);
         
         // Update header stats if exists
         const statsContainer = document.getElementById('pageStats');
@@ -835,15 +824,11 @@ window.top.location.href = installUrl;
             statsContainer.innerHTML = `
                 <span class="stat-item">
                     <i class="fab fa-shopify"></i>
-                    ${shopifyPages} Shopify Pages
+                    ${totalPages} Shopify Pages
                 </span>
                 <span class="stat-item">
-                    <i class="fas fa-crown"></i>
-                    ${kingsBuilderPages} KingsBuilder Pages
-                </span>
-                <span class="stat-item">
-                    <i class="fas fa-chart-line"></i>
-                    ${totalPages} Total Pages
+                    <i class="fas fa-check-circle"></i>
+                    Ready to Edit
                 </span>
             `;
         }
