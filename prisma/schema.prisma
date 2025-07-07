@@ -73,9 +73,12 @@ model PerformanceMetric {
 }
 
 
+
 model ShopifySession {
-  shop        String   @id
+  id          String   @id @map("_id") @db.ObjectId
+  shop        String   @unique
   accessToken String
   installedAt DateTime @default(now())
 }
+
 

@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 async function storeAccessToken(shop, accessToken) {
   if (!shop || !accessToken) return;
   await prisma.shopifySession.upsert({
+    create: { id: undefined,
     where: { shop },
     update: { accessToken },
     create: { shop, accessToken },
