@@ -13,6 +13,28 @@ router.get('/', async (req, res) => {
     
     // Get access token from various possible sources
     const accessToken = req.headers['x-shopify-access-token'] || req.shopifyAccessToken || req.cookies?.shopifyAccessToken;
+    
+    // Debug logging
+    console.log('🎯 Dashboard route hit:', {
+      shop_query: req.query.shop,
+      shop_cookie: req.cookies?.shopOrigin,
+      has_access_token: !!accessToken,
+      token_preview: accessToken ? `${accessToken.substring(0, 10)}...` : 'undefined...',
+      all_cookies: req.cookies ? Object.keys(req.cookies) : []
+    });
+    
+    // If no shop parameter but we have shop in cookies, redirect with shop parameter
+    if (!req.query.shop && req.cookies?.shopOrigin) {
+      const shopFromCookie = req.cookies.shopOrigin;
+      console.log(`📍 Redirecting to include shop parameter: ${shopFromCookie}`);
+      return res.redirect(`/dashboard?shop=${encodeURIComponent(shopFromCookie)}`);
+    }
+    
+    // If no shop at all, redirect to install
+    if (!shop) {
+      console.log('❌ No shop parameter found, redirecting to install');
+      return res.redirect('/install');
+    }
 
     // Set security headers for Shopify iframe embedding
     res.setHeader(
