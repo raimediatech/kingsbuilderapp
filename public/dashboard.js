@@ -1018,10 +1018,17 @@ window.top.location.href = installUrl;
         
         console.log('🔧 Found page:', page);
         
-        const shop = this.context.shop || this.getShopOrigin();
-        console.log('🔧 Shop context:', shop);
+        // Force use cookie shop - bypass context issues
+        const cookieShop = this.getCookieValue('shopOrigin');
+        const shop = cookieShop || this.context.shop || this.getShopOrigin();
+        console.log('🔧 Shop detection:', {
+            cookieShop,
+            contextShop: this.context.shop,
+            getShopOrigin: this.getShopOrigin(),
+            finalShop: shop
+        });
         
-        if (shop === 'unknown.myshopify.com') {
+        if (shop === 'unknown.myshopify.com' || !shop) {
             console.error('❌ Shop origin not available - cannot edit page');
             alert('Error: Shop information not available. Please refresh the page and try again.');
             return;

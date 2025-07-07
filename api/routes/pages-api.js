@@ -336,6 +336,47 @@ router.put('/:pageId', async (req, res) => {
     // Replace page in array
     pages[pageIndex] = updatedPage;
     
+    // CRITICAL FIX: Also update the Shopify page if it's a Shopify page
+    if (updatedPage.isShopifyPage && content) {
+      try {
+        console.log(`🔄 Updating Shopify page ${pageId} with new content`);
+        
+        // Get access token
+        const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
+        
+        if (accessToken) {
+          // Convert content to HTML
+          const bodyHtml = content.html || JSON.stringify(content);
+          
+          // Update Shopify page
+          const shopifyResponse = await fetch(`https://${shop}/admin/api/2023-10/pages/${pageId}.json`, {
+            method: 'PUT',
+            headers: {
+              'X-Shopify-Access-Token': accessToken,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              page: {
+                id: pageId,
+                title: title || updatedPage.title,
+                body_html: bodyHtml
+              }
+            })
+          });
+          
+          if (shopifyResponse.ok) {
+            console.log(`✅ Successfully updated Shopify page ${pageId}`);
+          } else {
+            console.error(`❌ Failed to update Shopify page ${pageId}:`, await shopifyResponse.text());
+          }
+        } else {
+          console.warn('⚠️  No access token available - page updated locally only');
+        }
+      } catch (error) {
+        console.error('Error updating Shopify page:', error);
+      }
+    }
+    
     console.log(`✅ Updated page: ${updatedPage.title}`);
     res.json({ page: updatedPage });
   } catch (error) {
