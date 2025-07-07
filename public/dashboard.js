@@ -476,13 +476,19 @@ class KingsDashboard {
                 const data = await response.json();
                 const kingsBuilderPages = data.pages || [];
                 
-                // Add to pages array with different styling
+                // Add to pages array with different styling, avoiding duplicates
                 kingsBuilderPages.forEach(page => {
-                    this.pages.push({
-                        ...page,
-                        isKingsBuilderPage: true,
-                        status: page.published ? 'published' : 'draft'
-                    });
+                    // Check if page already exists (by ID) to avoid duplicates
+                    const existingPage = this.pages.find(p => p.id === page.id);
+                    if (!existingPage) {
+                        this.pages.push({
+                            ...page,
+                            isKingsBuilderPage: true,
+                            status: page.published ? 'published' : 'draft'
+                        });
+                    } else {
+                        console.log(`🔄 Skipping duplicate page: ${page.title} (ID: ${page.id})`);
+                    }
                 });
                 
                 console.log(`✅ Loaded ${kingsBuilderPages.length} KingsBuilder pages`);

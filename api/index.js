@@ -929,12 +929,18 @@ app.get('/dashboard', (req, res) => {
     return res.status(400).send('Missing shop parameter for embedded app');
   }
   
-  // If someone accesses the dashboard directly (not embedded), redirect to Shopify admin
-  if (shop && embedded !== '1') {
-    const shopName = shop.replace('.myshopify.com', '');
-    const shopifyAdminUrl = `https://admin.shopify.com/store/${shopName}/apps/kingsbuilder`;
-    console.log('🔄 Redirecting standalone access to Shopify admin:', shopifyAdminUrl);
-    return res.redirect(shopifyAdminUrl);
+  // Only redirect if this is clearly a direct access (no cookies, no referrer from builder)
+  if (shop && embedded !== '1' && !req.cookies?.accessToken) {
+    const referrer = req.get('Referrer') || '';
+    const isFromBuilder = referrer.includes('builder') || referrer.includes('kingsbuilder');
+    
+    // Don't redirect if coming from the builder or if we have cookies
+    if (!isFromBuilder) {
+      const shopName = shop.replace('.myshopify.com', '');
+      const shopifyAdminUrl = `https://admin.shopify.com/store/${shopName}/apps/kingsbuilder`;
+      console.log('🔄 Redirecting standalone access to Shopify admin:', shopifyAdminUrl);
+      return res.redirect(shopifyAdminUrl);
+    }
   }
   
   // If we have an access token in the URL, store it in cookies
