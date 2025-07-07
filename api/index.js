@@ -333,7 +333,8 @@ app.get('/api/health', (req, res) => {
 // API endpoint to get real Shopify pages
 app.get('/api/shopify/pages', async (req, res) => {
   try {
-    const shop = req.query.shop || req.cookies?.shopOrigin;
+    // Prioritize cookie over query to avoid shop mismatch
+    const shop = req.cookies?.shopOrigin || req.query.shop;
     const accessToken = req.cookies?.accessToken;
     
     console.log('🔍 API Pages endpoint hit:', { 
@@ -344,12 +345,12 @@ app.get('/api/shopify/pages', async (req, res) => {
       all_cookies: Object.keys(req.cookies || {})
     });
     
-    if (!shop || !accessToken) {
-      console.log('❌ Missing auth data - returning 401');
+    if (!shop || !accessToken || shop === 'unknown.myshopify.com') {
+      console.log('❌ Missing or invalid auth data - returning 401');
       return res.status(401).json({ 
-        error: 'Shop or access token missing',
+        error: 'Shop or access token missing or invalid',
         requiresAuth: true,
-        debug: { shop: !!shop, accessToken: !!accessToken }
+        debug: { shop: shop, accessToken: !!accessToken }
       });
     }
     
@@ -521,9 +522,14 @@ app.get('/api/shopify/pages', async (req, res) => {
     
   } catch (error) {
     console.error('❌ Error fetching Shopify pages:', error);
-    res.status(500).json({ 
+    
+    // Return empty pages instead of error to avoid breaking the dashboard
+    res.json({ 
+      pages: [],
+      success: false,
       error: 'Failed to fetch pages from Shopify',
-      message: error.message 
+      message: error.message,
+      demoMode: false
     });
   }
 });
@@ -828,10 +834,11 @@ app.get('/builder', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/builder.html'));
 });
 
-// API endpoint for Shopify pages - CRITICAL FOR DASHBOARD
+// API endpoint for Shopify pages - CRITICAL FOR DASHBOARD (DUPLICATE - COMMENTED OUT)
+/* 
 app.get('/api/shopify/pages', async (req, res) => {
   try {
-    const shop = req.query.shop || req.cookies?.shopOrigin;
+    const shop = req.cookies?.shopOrigin || req.query.shop;
     if (!shop) {
       return res.status(400).json({ error: 'Shop parameter is required' });
     }
@@ -899,10 +906,12 @@ app.get('/api/shopify/pages', async (req, res) => {
     });
   }
 });
+*/
 
 // Dashboard route  
 app.get('/dashboard', (req, res) => {
-  const shop = req.query.shop;
+  // Prioritize cookie over query to avoid shop mismatch
+  const shop = req.cookies?.shopOrigin || req.query.shop;
   const embedded = req.query.embedded;
   const access_token = req.query.access_token;
   
@@ -910,7 +919,9 @@ app.get('/dashboard', (req, res) => {
     shop, 
     embedded, 
     has_access_token: !!access_token, 
-    token_preview: access_token?.substring(0, 10) + '...' 
+    token_preview: access_token?.substring(0, 10) + '...',
+    shop_from_cookie: req.cookies?.shopOrigin,
+    shop_from_query: req.query.shop
   });
   
   // For embedded apps, check if we have shop parameter
