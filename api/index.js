@@ -270,7 +270,7 @@ app.get('/auth/callback', async (req, res) => {
       });
       
       // Also store in session for backend access
-      const { storeAccessToken } = require('./utils/session');
+      const { storeAccessToken } = require('./utils/shop-session');
       storeAccessToken(shop, tokenData.access_token);
       console.log('💾 Access token stored in both cookies and session');
       
@@ -2575,7 +2575,7 @@ app.use((req, res, next) => {
     
     if (shop && accessToken) {
       // Import session management
-      const { storeAccessToken } = require('./utils/session');
+      const { storeAccessToken } = require('./utils/shop-session');
       storeAccessToken(shop, accessToken);
       console.log(`Stored access token for shop ${shop} in session`);
     }

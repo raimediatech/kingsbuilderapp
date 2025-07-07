@@ -4,8 +4,7 @@
   "scripts": {
     "build": "echo \"Build completed\"",
     "dev": "nodemon start.js",
-    "start": "node start.js",
-    "postinstall": "prisma generate && prisma db push"
+    "start": "node start.js"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
