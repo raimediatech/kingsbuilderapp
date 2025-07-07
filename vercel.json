@@ -1,8 +1,70 @@
 {
-  "rewrites": [
+  "version": 2,
+  "name": "kingsbuilder",
+  "builds": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "src": "api/index.js",
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "50mb",
+        "maxDuration": 30
+      }
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
     }
-  ]
+  ],
+  "routes": [
+    {
+      "src": "/health",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/install",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/auth/callback",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/dashboard",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/builder",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/pages",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/templates",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/settings",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/help",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

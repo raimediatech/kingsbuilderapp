@@ -351,7 +351,7 @@ router.put('/:pageId', async (req, res) => {
     // Store access token in session for future requests
     const accessToken = req.cookies?.shopifyAccessToken || req.cookies?.accessToken || req.headers['x-shopify-access-token'];
     if (accessToken && shop) {
-      const { storeAccessToken } = require('../utils/shop-session');
+      const { storeAccessToken } = require('../utils/session');
       storeAccessToken(shop, accessToken);
       console.log(`Stored access token for shop ${shop} in session`);
     }

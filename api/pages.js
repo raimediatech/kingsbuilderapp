@@ -1,4 +1,4 @@
-const { getAccessToken } = require('./utils/shop-session');
+const { getAccessToken } = require('./utils/session');
 
 const express = require('express');
 const { PageModel } = require('./database');
@@ -38,7 +38,7 @@ router.put('/:handle', async (req, res) => {
   try {
     const { handle } = req.params;
     const { shop } = req.body;
-    let accessToken = req.body.accessToken;
+    let accessToken = req.body.accessToken || getAccessToken(shop, req);
 
     if (!accessToken && shop) {
       const session = await getSession(req, res, shop);
@@ -86,7 +86,7 @@ router.post('/:handle/publish', async (req, res) => {
   try {
     const { handle } = req.params;
     const { shop } = req.body;
-    let accessToken = req.body.accessToken;
+    let accessToken = req.body.accessToken || getAccessToken(shop, req);
 
     if (!accessToken && shop) {
       const session = await getSession(req, res, shop);

@@ -1,6 +1,6 @@
 const axios = require('axios');
 // Import session management
-const { getAccessToken } = require('./utils/shop-session');
+const { getAccessToken } = require('./utils/session');
 
 // Load environment variables
 try {

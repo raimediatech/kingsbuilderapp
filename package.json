@@ -4,10 +4,7 @@
   "scripts": {
     "build": "echo \"Build completed\"",
     "dev": "nodemon start.js",
-    "start": "node start.js",
-    "postinstall": "npm run prisma:generate && npm run prisma:push",
-    "prisma:generate": "cross-env PRISMA_GENERATE_SKIP_ENV_CHECK=1 prisma generate",
-    "prisma:push": "cross-env PRISMA_GENERATE_SKIP_ENV_CHECK=1 prisma db push"
+    "start": "node start.js"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -26,10 +23,7 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
     "nodemailer": "^7.0.3",
-    "shopify-api-node": "^3.15.0",
-    "@prisma/client": "^6.11.1",
-    "prisma": "^6.11.1",
-    "cross-env": "^7.0.3"
+    "shopify-api-node": "^3.15.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
