@@ -8,11 +8,11 @@ const axios = require('axios');
 // Dashboard home page
 router.get('/', async (req, res) => {
   try {
-    // Get shop from various possible sources
-    const shop = req.query.shop || req.shopifyShop || req.headers['x-shopify-shop-domain'] || req.cookies?.shopOrigin;
+    // Get shop from various possible sources - prioritize cookie over query to avoid mismatch
+    const shop = req.cookies?.shopOrigin || req.query.shop || req.shopifyShop || req.headers['x-shopify-shop-domain'];
     
     // Get access token from various possible sources
-    const accessToken = req.headers['x-shopify-access-token'] || req.shopifyAccessToken || req.cookies?.shopifyAccessToken;
+    const accessToken = req.cookies?.shopifyAccessToken || req.cookies?.accessToken || req.headers['x-shopify-access-token'] || req.shopifyAccessToken;
     
     // Debug logging
     console.log('🎯 Dashboard route hit:', {
@@ -30,9 +30,15 @@ router.get('/', async (req, res) => {
       return res.redirect(`/dashboard?shop=${encodeURIComponent(shopFromCookie)}`);
     }
     
+    // If we have a shop mismatch, use the cookie value and redirect
+    if (req.query.shop && req.cookies?.shopOrigin && req.query.shop !== req.cookies.shopOrigin) {
+      console.log(`🔄 Shop mismatch detected. Query: ${req.query.shop}, Cookie: ${req.cookies.shopOrigin}. Using cookie value.`);
+      return res.redirect(`/dashboard?shop=${encodeURIComponent(req.cookies.shopOrigin)}`);
+    }
+    
     // If no shop at all, redirect to install
-    if (!shop) {
-      console.log('❌ No shop parameter found, redirecting to install');
+    if (!shop || shop === 'unknown.myshopify.com') {
+      console.log('❌ No valid shop parameter found, redirecting to install');
       return res.redirect('/install');
     }
 
@@ -52,7 +58,12 @@ router.get('/', async (req, res) => {
       // Load pages from our pages-api directly
       const pagesApi = require('./pages-api');
       const kingsBuilderPages = pagesApi.getPages ? pagesApi.getPages() : [];
-      console.log(`Retrieved ${kingsBuilderPages.length} pages from KingsBuilder`);
+      console.log(`📄 Retrieved ${kingsBuilderPages.length} pages from KingsBuilder`);
+      
+      // Log page details for debugging
+      if (kingsBuilderPages.length > 0) {
+        console.log('📋 KingsBuilder pages:', kingsBuilderPages.map(p => ({ id: p.id, title: p.title, status: p.status })));
+      }
       
       // Also try to get Shopify pages if we have access
       if (shop && accessToken) {
@@ -64,7 +75,7 @@ router.get('/', async (req, res) => {
           // Combine both sources, prioritizing KingsBuilder pages
           pages = [...kingsBuilderPages, ...shopifyPages];
         } catch (error) {
-          console.error('Error fetching pages from Shopify:', error);
+          console.error('❌ Error fetching pages from Shopify:', error);
           // Use only KingsBuilder pages
           pages = kingsBuilderPages;
         }
@@ -73,14 +84,20 @@ router.get('/', async (req, res) => {
         pages = kingsBuilderPages;
       }
     } catch (error) {
-      console.error('Error fetching pages from KingsBuilder:', error);
+      console.error('❌ Error fetching pages from KingsBuilder:', error);
       // Fall back to mock data
-      console.log('Using mock data as fallback');
+      console.log('📄 Using mock data as fallback');
       pages = [
         { id: '1', title: 'Homepage', body_html: '<p>Welcome to our store</p>', handle: 'home', published: true },
         { id: '2', title: 'About Us', body_html: '<p>Our company story</p>', handle: 'about', published: true },
         { id: '3', title: 'Contact', body_html: '<p>Get in touch</p>', handle: 'contact', published: true }
       ];
+    }
+    
+    // Log final page count
+    console.log(`📊 Total pages to display: ${pages.length}`);
+    if (pages.length > 0) {
+      console.log('📋 Final page list:', pages.map(p => ({ id: p.id, title: p.title, status: p.status || (p.published ? 'published' : 'draft') })));
     }
 
     // Render the dashboard
@@ -483,10 +500,10 @@ router.get('/', async (req, res) => {
                     ${pages.map(page => `
                       <tr>
                         <td>${page.title}</td>
-                        <td>${page.handle}</td>
+                        <td>${page.handle || page.slug || 'N/A'}</td>
                         <td>
-                          <span class="status ${page.published ? 'status-published' : 'status-draft'}">
-                            ${page.published ? 'Published' : 'Draft'}
+                          <span class="status ${(page.published || page.status === 'published') ? 'status-published' : 'status-draft'}">
+                            ${(page.published || page.status === 'published') ? 'Published' : 'Draft'}
                           </span>
                         </td>
                         <td class="actions">
@@ -496,9 +513,11 @@ router.get('/', async (req, res) => {
                           <button class="action-btn" title="Delete" onclick="deletePage('${page.id}')">
                             <i class="fas fa-trash"></i>
                           </button>
-                          <a href="https://${shop}/pages/${page.handle}" target="_blank" class="action-btn" title="View">
-                            <i class="fas fa-external-link-alt"></i>
-                          </a>
+                          ${page.handle || page.slug ? `
+                            <a href="https://${shop}/pages/${page.handle || page.slug}" target="_blank" class="action-btn" title="View">
+                              <i class="fas fa-external-link-alt"></i>
+                            </a>
+                          ` : ''}
                         </td>
                       </tr>
                     `).join('')}

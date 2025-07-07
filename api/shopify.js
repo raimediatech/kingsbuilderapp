@@ -154,36 +154,20 @@ async function getShopifyPages(shop, accessToken, req) {
     
     return response.data;
   } catch (error) {
-    console.error('Error fetching Shopify pages:', error.message);
+    console.error('❌ Error fetching Shopify pages:', error.message);
     if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
+      console.error('📡 API Response Status:', error.response.status);
+      console.error('❌ Shopify API Error Details:', error.response.data);
     }
     
-    // For testing, return mock data if there's an error
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Returning mock data due to error');
-      return {
-        pages: [
-          {
-            id: '1',
-            title: 'Home Page (Mock)',
-            body_html: '<h1>Welcome to our store</h1><p>This is a sample page.</p>',
-            handle: 'home',
-            published_at: new Date().toISOString()
-          },
-          {
-            id: '2',
-            title: 'About Us (Mock)',
-            body_html: '<h1>About Our Store</h1><p>We are a premium Shopify store.</p>',
-            handle: 'about',
-            published_at: new Date().toISOString()
-          }
-        ]
-      };
-    }
+    // Log the full API request for debugging
+    console.log('📡 Making API request to:', `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/pages.json`);
     
-    throw error;
+    // Always return empty pages array instead of throwing error
+    console.log('📄 Returning empty pages array due to API error');
+    return {
+      pages: []
+    };
   }
 }
 

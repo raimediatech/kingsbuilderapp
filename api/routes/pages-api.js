@@ -174,12 +174,14 @@ router.get('/:pageId', async (req, res) => {
     
     if (!page) {
       // Create a new page if it doesn't exist (fallback for missing pages)
-      console.log(`Page ${pageId} not found, creating new page...`);
+      console.log(`📄 Page ${pageId} not found, creating new page...`);
       page = {
         id: pageId,
         title: 'New Page',
         slug: 'new-page',
-        content: '',
+        content: {
+          elements: []
+        },
         template: 'default',
         shop: shop,
         status: 'draft',
@@ -187,7 +189,7 @@ router.get('/:pageId', async (req, res) => {
         updatedAt: new Date().toISOString()
       };
       pages.push(page);
-      console.log(`Created new page with ID: ${pageId}`);
+      console.log(`✅ Created new page with ID: ${pageId}`);
     }
     
     res.json({ page });
@@ -219,15 +221,16 @@ router.post('/', async (req, res) => {
     
     try {
       const pageData = {
-        page: {
-          title: title,
-          handle: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-          body_html: content?.html || `<div class="page-content"><h1>${title}</h1><p>Start building your page...</p></div>`,
-          published: false
-        }
+        title: title,
+        handle: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        body_html: content?.html || `<div class="page-content"><h1>${title}</h1><p>Start building your page...</p></div>`,
+        published: false
       };
       
-      shopifyPage = await shopifyApi.createShopifyPage(shop, pageData);
+      // Get access token from session/cookies
+      const accessToken = req.cookies?.shopifyAccessToken || req.cookies?.accessToken || req.headers['x-shopify-access-token'];
+      
+      shopifyPage = await shopifyApi.createShopifyPage(shop, accessToken, pageData, req);
       console.log('✅ Created Shopify page:', shopifyPage);
       
       // Return the real Shopify page
@@ -272,39 +275,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Create a new page
-router.post('/', async (req, res) => {
-  try {
-    const { title, content, template } = req.body;
-    const shop = req.query.shop || req.headers['x-shopify-shop-domain'] || req.cookies?.shopOrigin || 'default';
-    
-    // Generate new page ID
-    const pageId = Date.now().toString();
-    
-    // Create new page object
-    const newPage = {
-      id: pageId,
-      title: title || 'New Page',
-      slug: (title || 'new-page').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
-      content: content || '',
-      template: template || 'default',
-      shop: shop,
-      status: 'draft',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    // Add to pages array
-    pages.push(newPage);
-    
-    console.log(`Created new page: ${newPage.title} (ID: ${pageId})`);
-    
-    res.status(201).json({ page: newPage });
-  } catch (error) {
-    console.error('Error creating page:', error);
-    res.status(500).json({ error: 'Failed to create page', details: error.message });
-  }
-});
+// This duplicate route is removed - we already have a create route above
 
 // Update a page
 router.put('/:pageId', async (req, res) => {
@@ -317,14 +288,42 @@ router.put('/:pageId', async (req, res) => {
       return res.status(400).json({ error: 'Shop parameter is required' });
     }
     
+    console.log(`🔄 Updating page ${pageId} for shop: ${shop}`);
+    console.log('Update data:', { title, slug, content: content ? 'provided' : 'not provided', template });
+    
     // Find page index
     const pageIndex = pages.findIndex(p => p.id === pageId);
     
     if (pageIndex === -1) {
-      return res.status(404).json({ error: 'Page not found' });
+      console.log(`❌ Page ${pageId} not found in local pages. Creating new page.`);
+      
+      // Create new page if it doesn't exist
+      const newPage = {
+        id: pageId,
+        title: title || 'New Page',
+        slug: slug || 'new-page',
+        content: content || '',
+        template: template || 'default',
+        shop: shop,
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      pages.push(newPage);
+      console.log(`✅ Created new page: ${newPage.title}`);
+      return res.json({ page: newPage });
     }
     
-    // Update page
+    // Store access token in session for future requests
+    const accessToken = req.cookies?.shopifyAccessToken || req.cookies?.accessToken || req.headers['x-shopify-access-token'];
+    if (accessToken && shop) {
+      const { storeAccessToken } = require('../utils/session');
+      storeAccessToken(shop, accessToken);
+      console.log(`Stored access token for shop ${shop} in session`);
+    }
+    
+    // Update existing page
     const updatedPage = {
       ...pages[pageIndex],
       title: title || pages[pageIndex].title,
@@ -337,6 +336,7 @@ router.put('/:pageId', async (req, res) => {
     // Replace page in array
     pages[pageIndex] = updatedPage;
     
+    console.log(`✅ Updated page: ${updatedPage.title}`);
     res.json({ page: updatedPage });
   } catch (error) {
     console.error('Error updating page:', error);
