@@ -52,6 +52,12 @@ class KingsDashboard {
         // Get real shop name from multiple sources
         let realShop = shop;
         
+        // EMERGENCY FIX: Force correct shop since cookies are fucked
+        if (!realShop || realShop === 'unknown.myshopify.com') {
+            console.log('🚨 EMERGENCY FIX: Using hardcoded kingsbuilder.myshopify.com in context');
+            realShop = 'kingsbuilder.myshopify.com';
+        }
+        
         // FIRST: Try to get shop from cookies (most reliable)
         if (!realShop || realShop === 'unknown.myshopify.com') {
             const cookieShop = this.getCookieValue('shopOrigin');
@@ -286,6 +292,10 @@ class KingsDashboard {
     }
     
     getShopOrigin() {
+        // EMERGENCY FIX: Force correct shop since cookies are fucked
+        console.log('🚨 EMERGENCY FIX: Using hardcoded kingsbuilder.myshopify.com');
+        return 'kingsbuilder.myshopify.com';
+        
         // FIRST: Try to get shop from cookies (most reliable)
         const cookieShop = this.getCookieValue('shopOrigin');
         if (cookieShop && cookieShop !== 'unknown.myshopify.com') {
