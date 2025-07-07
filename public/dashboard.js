@@ -262,17 +262,49 @@ class KingsDashboard {
         return null;
     }
     
+    getCookieValue(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return null;
+    }
+    
     getShopOrigin() {
+        // FIRST: Try to get shop from cookies (most reliable)
+        const cookieShop = this.getCookieValue('shopOrigin');
+        if (cookieShop && cookieShop !== 'unknown.myshopify.com') {
+            console.log('🍪 Using shop from cookie:', cookieShop);
+            return cookieShop;
+        }
+        
         // Try to get shop from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const shop = urlParams.get('shop');
         
-        if (shop) {
-            return shop.includes('.') ? shop : `${shop}.myshopify.com`;
+        if (shop && shop !== 'unknown.myshopify.com') {
+            const shopOrigin = shop.includes('.') ? shop : `${shop}.myshopify.com`;
+            console.log('🔗 Using shop from URL:', shopOrigin);
+            return shopOrigin;
         }
         
         // Try other methods
-        return this.getShopFromParent() || this.getShopFromReferrer() || 'unknown.myshopify.com';
+        const parentShop = this.getShopFromParent();
+        const referrerShop = this.getShopFromReferrer();
+        
+        if (parentShop && parentShop !== 'unknown.myshopify.com') {
+            console.log('👨‍👩‍👧‍👦 Using shop from parent:', parentShop);
+            return parentShop;
+        }
+        
+        if (referrerShop && referrerShop !== 'unknown.myshopify.com') {
+            console.log('🔗 Using shop from referrer:', referrerShop);
+            return referrerShop;
+        }
+        
+        console.log('❌ Could not determine shop origin, falling back to unknown');
+        return 'unknown.myshopify.com';
     }
     
 
@@ -388,8 +420,8 @@ class KingsDashboard {
                 };
             });
             
-            // Skip loading KingsBuilder pages - all pages are now loaded from Shopify
-            // await this.loadKingsBuilderPages();
+            // Also load KingsBuilder pages (pages created with the page builder)
+            await this.loadKingsBuilderPages();
             
             this.renderPages();
             
@@ -404,11 +436,22 @@ class KingsDashboard {
                 return;
             }
             
-            // Only show permission error for legitimate auth issues
-            if (error.message.includes('403') || error.message.includes('401') || error.message.includes('Unauthorized')) {
-                this.showPermissionError();
+            // Even if Shopify API fails, try to load KingsBuilder pages
+            console.log('📋 Shopify API failed, trying to load KingsBuilder pages...');
+            this.pages = []; // Reset pages array
+            await this.loadKingsBuilderPages();
+            
+            // If we have KingsBuilder pages, show them
+            if (this.pages.length > 0) {
+                console.log(`✅ Loaded ${this.pages.length} KingsBuilder pages as fallback`);
+                this.renderPages();
             } else {
-                this.showError('Failed to load pages. Please try again.');
+                // Only show permission error for legitimate auth issues
+                if (error.message.includes('403') || error.message.includes('401') || error.message.includes('Unauthorized')) {
+                    this.showPermissionError();
+                } else {
+                    this.showError('Failed to load pages. Please try again.');
+                }
             }
         } finally {
             this.hideLoading();
@@ -420,7 +463,8 @@ class KingsDashboard {
             // Load pages created with KingsBuilder (from our database)
             console.log('📋 Loading KingsBuilder created pages...');
             
-            const response = await fetch('/api/pages', {
+            const shop = this.getShopOrigin();
+            const response = await fetch(`/api/pages?shop=${shop}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
