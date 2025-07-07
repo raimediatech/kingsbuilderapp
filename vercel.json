@@ -4,9 +4,5 @@
       "src": "package.json",
       "use": "@vercel/node"
     }
-  ],
-  "env": {
-    "PRISMA_GENERATE_SKIP_ENV_CHECK": "1",
-    "DATABASE_URL": "@database_url"
-  }
+  ]
 }
