@@ -1,4 +1,4 @@
-const { storeAccessToken } = require('./utils/session');
+const { storeAccessToken } = require('./utils/shop-session');
 // Enhanced Shopify Auth Module
 
 // Load environment variables

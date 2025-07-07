@@ -71,3 +71,11 @@ model PerformanceMetric {
   deviceType           String?
   timestamp            DateTime @default(now())
 }
+
+
+model ShopifySession {
+  shop        String   @id
+  accessToken String
+  installedAt DateTime @default(now())
+}
+
