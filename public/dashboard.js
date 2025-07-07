@@ -52,6 +52,15 @@ class KingsDashboard {
         // Get real shop name from multiple sources
         let realShop = shop;
         
+        // FIRST: Try to get shop from cookies (most reliable)
+        if (!realShop || realShop === 'unknown.myshopify.com') {
+            const cookieShop = this.getCookieValue('shopOrigin');
+            if (cookieShop && cookieShop !== 'unknown.myshopify.com') {
+                console.log('🍪 Using shop from cookie in context:', cookieShop);
+                realShop = cookieShop;
+            }
+        }
+        
         // CRITICAL FIX: Try to extract shop from parent URL when embedded
         if (window.parent !== window && (!realShop || realShop === 'unknown.myshopify.com')) {
             realShop = this.extractShopFromParentUrl();
