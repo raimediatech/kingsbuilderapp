@@ -169,8 +169,12 @@ router.get('/:pageId', async (req, res) => {
       return res.status(400).json({ error: 'Shop parameter is required' });
     }
     
-    // Get access token
-    const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
+    // Get access token from multiple sources
+    const accessToken = req.headers['x-shopify-access-token'] || 
+                      req.session?.accessToken || 
+                      req.cookies?.shopifyAccessToken || 
+                      req.cookies?.accessToken ||
+                      process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
     
     if (!accessToken) {
       return res.status(401).json({ error: 'Access token not found' });
@@ -378,10 +382,16 @@ router.put('/:pageId', async (req, res) => {
         console.log(`🔄 Updating Shopify page ${pageId} with new content`);
         console.log(`📝 Content type: ${typeof content}, length: ${content.length || 'N/A'}`);
         
-        // Get access token
-        const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
+        // Get access token from multiple sources
+        const accessToken = req.headers['x-shopify-access-token'] || 
+                          req.session?.accessToken || 
+                          req.cookies?.shopifyAccessToken || 
+                          req.cookies?.accessToken ||
+                          process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
         
         if (accessToken) {
+          console.log('🔑 Using access token for Shopify API update');
+          
           // Convert content to HTML
           const bodyHtml = typeof content === 'string' ? content : (content.html || JSON.stringify(content));
           

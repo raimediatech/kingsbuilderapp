@@ -1705,11 +1705,21 @@ class KingsBuilder {
             
             console.log('💾 Saving page:', { pageId, title: pageTitle, contentLength: pageContent.length });
             
+            // Get access token
+            const accessToken = this.getAccessToken();
+            console.log('🔑 Access token available:', !!accessToken);
+            
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            
+            if (accessToken) {
+                headers['X-Shopify-Access-Token'] = accessToken;
+            }
+            
             const response = await fetch(`/api/pages/${pageId}?shop=${encodeURIComponent(shop)}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
                 body: JSON.stringify(saveData)
             });
             
