@@ -2,6 +2,15 @@
 // Created by Kingsmen Marketing Agency
 
 class KingsBuilder {
+
+  getAccessToken() {
+    const token = localStorage.getItem('shopifyAccessToken');
+    if (token) return token;
+
+    const meta = document.querySelector('meta[name="shopify-access-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
+
     constructor() {
         this.currentDevice = 'desktop';
         this.selectedElement = null;

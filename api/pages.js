@@ -30,6 +30,17 @@ router.get('/', async (req, res) => {
 router.get('/:handle', async (req, res) => {
   try {
     const { handle } = req.params;
+
+    let accessToken = req.body.accessToken;
+    if (!accessToken && req.query.shop) {
+      const session = await getSession(req, res, req.query.shop);
+      accessToken = session?.accessToken;
+    }
+    if (!accessToken) {
+      console.warn('⚠️ No access token available - cannot update Shopify');
+      return res.status(400).json({ error: 'Missing access token' });
+    }
+
     const shop = req.query.shop;
     
     if (!shop) {
@@ -99,6 +110,17 @@ router.post('/', async (req, res) => {
 router.put('/:handle', async (req, res) => {
   try {
     const { handle } = req.params;
+
+    let accessToken = req.body.accessToken;
+    if (!accessToken && req.query.shop) {
+      const session = await getSession(req, res, req.query.shop);
+      accessToken = session?.accessToken;
+    }
+    if (!accessToken) {
+      console.warn('⚠️ No access token available - cannot update Shopify');
+      return res.status(400).json({ error: 'Missing access token' });
+    }
+
     const shop = req.query.shop;
     
     if (!shop) {
@@ -128,6 +150,17 @@ router.put('/:handle', async (req, res) => {
 router.delete('/:handle', async (req, res) => {
   try {
     const { handle } = req.params;
+
+    let accessToken = req.body.accessToken;
+    if (!accessToken && req.query.shop) {
+      const session = await getSession(req, res, req.query.shop);
+      accessToken = session?.accessToken;
+    }
+    if (!accessToken) {
+      console.warn('⚠️ No access token available - cannot update Shopify');
+      return res.status(400).json({ error: 'Missing access token' });
+    }
+
     const shop = req.query.shop;
     
     if (!shop) {
@@ -151,6 +184,17 @@ router.delete('/:handle', async (req, res) => {
 router.post('/:handle/publish', async (req, res) => {
   try {
     const { handle } = req.params;
+
+    let accessToken = req.body.accessToken;
+    if (!accessToken && req.query.shop) {
+      const session = await getSession(req, res, req.query.shop);
+      accessToken = session?.accessToken;
+    }
+    if (!accessToken) {
+      console.warn('⚠️ No access token available - cannot update Shopify');
+      return res.status(400).json({ error: 'Missing access token' });
+    }
+
     const { shop, accessToken } = req.body;
 
     if (!shop || !accessToken) {
@@ -186,6 +230,17 @@ router.post('/:handle/publish', async (req, res) => {
 
   try {
     const { handle } = req.params;
+
+    let accessToken = req.body.accessToken;
+    if (!accessToken && req.query.shop) {
+      const session = await getSession(req, res, req.query.shop);
+      accessToken = session?.accessToken;
+    }
+    if (!accessToken) {
+      console.warn('⚠️ No access token available - cannot update Shopify');
+      return res.status(400).json({ error: 'Missing access token' });
+    }
+
     const shop = req.query.shop;
     
     if (!shop) {
@@ -210,6 +265,17 @@ router.post('/:handle/publish', async (req, res) => {
 router.post('/:handle/unpublish', async (req, res) => {
   try {
     const { handle } = req.params;
+
+    let accessToken = req.body.accessToken;
+    if (!accessToken && req.query.shop) {
+      const session = await getSession(req, res, req.query.shop);
+      accessToken = session?.accessToken;
+    }
+    if (!accessToken) {
+      console.warn('⚠️ No access token available - cannot update Shopify');
+      return res.status(400).json({ error: 'Missing access token' });
+    }
+
     const shop = req.query.shop;
     
     if (!shop) {
@@ -234,6 +300,17 @@ router.post('/:handle/unpublish', async (req, res) => {
 router.get('/:handle/analytics', async (req, res) => {
   try {
     const { handle } = req.params;
+
+    let accessToken = req.body.accessToken;
+    if (!accessToken && req.query.shop) {
+      const session = await getSession(req, res, req.query.shop);
+      accessToken = session?.accessToken;
+    }
+    if (!accessToken) {
+      console.warn('⚠️ No access token available - cannot update Shopify');
+      return res.status(400).json({ error: 'Missing access token' });
+    }
+
     const shop = req.query.shop;
     const days = parseInt(req.query.days) || 30;
     
