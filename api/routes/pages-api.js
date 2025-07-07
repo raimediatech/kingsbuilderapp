@@ -363,23 +363,27 @@ router.put('/:pageId', async (req, res) => {
       slug: slug || pages[pageIndex].slug,
       content: content || pages[pageIndex].content,
       template: template !== undefined ? template : pages[pageIndex].template,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      isShopifyPage: true // Force this to be true for all Shopify pages
     };
     
     // Replace page in array
     pages[pageIndex] = updatedPage;
     
     // CRITICAL FIX: Also update the Shopify page if it's a Shopify page
+    console.log(`🔍 Checking Shopify update: isShopifyPage=${updatedPage.isShopifyPage}, hasContent=${!!content}`);
+    
     if (updatedPage.isShopifyPage && content) {
       try {
         console.log(`🔄 Updating Shopify page ${pageId} with new content`);
+        console.log(`📝 Content type: ${typeof content}, length: ${content.length || 'N/A'}`);
         
         // Get access token
         const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
         
         if (accessToken) {
           // Convert content to HTML
-          const bodyHtml = content.html || JSON.stringify(content);
+          const bodyHtml = typeof content === 'string' ? content : (content.html || JSON.stringify(content));
           
           // Update Shopify page
           const shopifyResponse = await fetch(`https://${shop}/admin/api/2023-10/pages/${pageId}.json`, {
