@@ -167,8 +167,10 @@ class KingsBuilder {
         
         // Back to Dashboard button
         const backBtn = document.getElementById('backToDashboard');
+        console.log('🔍 Back button found:', !!backBtn);
         if (backBtn) {
             backBtn.addEventListener('click', () => {
+                console.log('🔙 Back button clicked');
                 this.backToDashboard();
             });
         }
@@ -316,6 +318,10 @@ class KingsBuilder {
     
     initDragAndDrop() {
         console.log('🎯 Initializing enhanced drag and drop...');
+        
+        // Debug: Check if elements exist
+        const elementItems = document.querySelectorAll('.element-item');
+        console.log('🔍 Found element items:', elementItems.length);
         
         // Element items drag start
         document.addEventListener('dragstart', (e) => {
@@ -1779,7 +1785,7 @@ class KingsBuilder {
         const embedded = urlParams.get('embedded');
         
         // Navigate back to dashboard
-        const dashboardUrl = `/?shop=${shop}&embedded=${embedded}`;
+        const dashboardUrl = `/dashboard?shop=${shop}&embedded=${embedded}`;
         
         console.log('🔙 Returning to dashboard:', dashboardUrl);
         window.location.href = dashboardUrl;

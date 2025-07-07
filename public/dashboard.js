@@ -1051,24 +1051,10 @@ window.top.location.href = installUrl;
         console.log('🔧 Page ID:', numericPageId);
         console.log('🔧 Embedded context:', this.context.embedded);
         
-        // For embedded apps, use App Bridge navigation to stay within Shopify
+        // For embedded apps, just navigate within the current window
         if (this.context.embedded === '1' || window.parent !== window) {
-            console.log('🔧 Using App Bridge navigation to stay within Shopify');
-            
-            // Try to use App Bridge navigation if available
-            if (window.app && window.app.Router) {
-                window.app.Router.dispatch(window.app.Router.Action.NAVIGATE, {
-                    url: builderUrl
-                });
-            } else if (this.app && this.app.Router) {
-                this.app.Router.dispatch(this.app.Router.Action.NAVIGATE, {
-                    url: builderUrl
-                });
-            } else {
-                // Fallback: navigate the current window (stays in iframe)
-                console.log('🔧 Fallback: navigating current window');
-                window.location.href = builderUrl;
-            }
+            console.log('🔧 Navigating to builder within current window');
+            window.location.href = builderUrl;
         } else {
             console.log('🔧 Opening builder in new window');
             window.open(builderUrl, '_blank');
