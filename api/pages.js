@@ -1,328 +1,128 @@
-// api/pages.js - API for page management with database
+
 const express = require('express');
-const { PageModel, AnalyticsModel } = require('./database');
+const { PageModel } = require('./database');
+const { getSession } = require('../api/utils/session');
+const fetch = require('node-fetch');
+
 const router = express.Router();
 
 // Get all pages
 router.get('/', async (req, res) => {
   try {
     const shop = req.query.shop;
-    const status = req.query.status;
-    
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter is required' });
-    }
-    
-    const filters = {};
-    if (status) {
-      filters.status = status;
-    }
-    
-    const pages = await PageModel.findByShop(shop, filters);
+    if (!shop) return res.status(400).json({ error: 'Shop is required' });
+
+    const pages = await PageModel.findByShop(shop);
     res.json(pages);
-  } catch (error) {
-    console.error('Error fetching pages:', error);
+  } catch (err) {
+    console.error('Error fetching pages:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Get a specific page
+// Get single page
 router.get('/:handle', async (req, res) => {
   try {
-    const { handle } = req.params;
-
-    let accessToken = req.body.accessToken;
-    if (!accessToken && req.query.shop) {
-      const session = await getSession(req, res, req.query.shop);
-      accessToken = session?.accessToken;
-    }
-    if (!accessToken) {
-      console.warn('⚠️ No access token available - cannot update Shopify');
-      return res.status(400).json({ error: 'Missing access token' });
-    }
-
     const shop = req.query.shop;
-    
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter is required' });
-    }
-    
+    const { handle } = req.params;
     const page = await PageModel.findOne(shop, handle);
-    
-    if (!page) {
-      return res.status(404).json({ error: 'Page not found' });
-    }
-    
-    // Record page view for analytics
-    await AnalyticsModel.recordPageView(shop, handle, {
-      userAgent: req.headers['user-agent'],
-      ip: req.ip
-    });
-    
     res.json(page);
-  } catch (error) {
-    console.error('Error fetching page:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch page' });
   }
 });
 
-// Create a new page
-router.post('/', async (req, res) => {
-  try {
-    const { title, handle, template, shop, content, metaDescription, metaTitle } = req.body;
-    
-    if (!title || !handle || !shop) {
-      return res.status(400).json({ error: 'Title, handle, and shop are required' });
-    }
-    
-    // Check if handle already exists for this shop
-    const existingPage = await PageModel.findOne(shop, handle);
-    
-    if (existingPage) {
-      return res.status(400).json({ error: 'A page with this handle already exists' });
-    }
-    
-    const newPage = {
-      title,
-      handle,
-      template: template || 'blank',
-      shop,
-      content: content || {},
-      status: 'draft',
-      metaDescription: metaDescription || '',
-      metaTitle: metaTitle || title,
-      settings: {
-        seoEnabled: true,
-        commentsEnabled: false,
-        socialSharingEnabled: true
-      }
-    };
-    
-    const createdPage = await PageModel.create(newPage);
-    res.status(201).json(createdPage);
-  } catch (error) {
-    console.error('Error creating page:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Update a page
+// Update a page and push to Shopify
 router.put('/:handle', async (req, res) => {
   try {
     const { handle } = req.params;
-
+    const { shop } = req.body;
     let accessToken = req.body.accessToken;
-    if (!accessToken && req.query.shop) {
-      const session = await getSession(req, res, req.query.shop);
+
+    if (!accessToken && shop) {
+      const session = await getSession(req, res, shop);
       accessToken = session?.accessToken;
     }
-    if (!accessToken) {
-      console.warn('⚠️ No access token available - cannot update Shopify');
-      return res.status(400).json({ error: 'Missing access token' });
-    }
 
-    const shop = req.query.shop;
-    
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter is required' });
-    }
-    
+    if (!accessToken) return res.status(400).json({ error: 'Missing accessToken' });
+
     const updateData = { ...req.body };
-    delete updateData.shop; // Don't allow shop to be changed
-    delete updateData.handle; // Don't allow handle to be changed
-    delete updateData._id; // Don't allow _id to be changed
-    
-    const success = await PageModel.update(shop, handle, updateData);
-    
-    if (!success) {
-      return res.status(404).json({ error: 'Page not found' });
-    }
-    
-    const updatedPage = await PageModel.findOne(shop, handle);
-    res.json(updatedPage);
-  } catch (error) {
-    console.error('Error updating page:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+    delete updateData._id;
+    delete updateData.accessToken;
 
-// Delete a page
-router.delete('/:handle', async (req, res) => {
-  try {
-    const { handle } = req.params;
+    await PageModel.update(shop, handle, updateData);
 
-    let accessToken = req.body.accessToken;
-    if (!accessToken && req.query.shop) {
-      const session = await getSession(req, res, req.query.shop);
-      accessToken = session?.accessToken;
-    }
-    if (!accessToken) {
-      console.warn('⚠️ No access token available - cannot update Shopify');
-      return res.status(400).json({ error: 'Missing access token' });
-    }
-
-    const shop = req.query.shop;
-    
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter is required' });
-    }
-    
-    const success = await PageModel.delete(shop, handle);
-    
-    if (!success) {
-      return res.status(404).json({ error: 'Page not found' });
-    }
-    
-    res.status(204).send();
-  } catch (error) {
-    console.error('Error deleting page:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Publish a page
-router.post('/:handle/publish', async (req, res) => {
-  try {
-    const { handle } = req.params;
-
-    let accessToken = req.body.accessToken;
-    if (!accessToken && req.query.shop) {
-      const session = await getSession(req, res, req.query.shop);
-      accessToken = session?.accessToken;
-    }
-    if (!accessToken) {
-      console.warn('⚠️ No access token available - cannot update Shopify');
-      return res.status(400).json({ error: 'Missing access token' });
-    }
-
-    const { shop, accessToken } = req.body;
-
-    if (!shop || !accessToken) {
-      return res.status(400).json({ error: 'Shop and access token are required' });
-    }
-
-    const pageData = await PageModel.findOne(shop, handle);
-    if (!pageData) {
-      return res.status(404).json({ error: 'Page not found' });
-    }
-
-    const response = await fetch(`https://${shop}/admin/api/2023-10/pages/${pageData.shopifyPageId}.json`, {
+    const shopifyRes = await fetch(`https://${shop}/admin/api/2023-10/pages/${updateData.shopifyPageId}.json`, {
       method: 'PUT',
       headers: {
         'X-Shopify-Access-Token': accessToken,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ page: pageData }),
+      body: JSON.stringify({
+        page: {
+          id: updateData.shopifyPageId,
+          title: updateData.title,
+          body_html: updateData.content,
+        }
+      })
     });
 
-    const result = await response.json();
-    if (!response.ok) {
-      console.error('❌ Shopify publish failed:', result);
-      return res.status(500).json({ error: 'Shopify publish failed', details: result });
+    const result = await shopifyRes.json();
+    if (!shopifyRes.ok) {
+      console.error('Shopify update failed:', result);
+      return res.status(500).json({ error: 'Failed to update on Shopify', details: result });
     }
 
-    console.log('✅ Page successfully published to Shopify');
     res.json(result);
-  } catch (error) {
-    console.error('Error publishing page:', error);
-    res.status(500).json({ error: 'Internal error during publishing' });
-  }
-
-  try {
-    const { handle } = req.params;
-
-    let accessToken = req.body.accessToken;
-    if (!accessToken && req.query.shop) {
-      const session = await getSession(req, res, req.query.shop);
-      accessToken = session?.accessToken;
-    }
-    if (!accessToken) {
-      console.warn('⚠️ No access token available - cannot update Shopify');
-      return res.status(400).json({ error: 'Missing access token' });
-    }
-
-    const shop = req.query.shop;
-    
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter is required' });
-    }
-    
-    const success = await PageModel.publish(shop, handle);
-    
-    if (!success) {
-      return res.status(404).json({ error: 'Page not found' });
-    }
-    
-    const publishedPage = await PageModel.findOne(shop, handle);
-    res.json(publishedPage);
-  } catch (error) {
-    console.error('Error publishing page:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  } catch (err) {
+    console.error('Error updating page:', err);
+    res.status(500).json({ error: 'Internal error' });
   }
 });
 
-// Unpublish a page
-router.post('/:handle/unpublish', async (req, res) => {
+// Publish endpoint
+router.post('/:handle/publish', async (req, res) => {
   try {
     const { handle } = req.params;
-
+    const { shop } = req.body;
     let accessToken = req.body.accessToken;
-    if (!accessToken && req.query.shop) {
-      const session = await getSession(req, res, req.query.shop);
+
+    if (!accessToken && shop) {
+      const session = await getSession(req, res, shop);
       accessToken = session?.accessToken;
     }
-    if (!accessToken) {
-      console.warn('⚠️ No access token available - cannot update Shopify');
-      return res.status(400).json({ error: 'Missing access token' });
+
+    if (!accessToken) return res.status(400).json({ error: 'Missing accessToken' });
+
+    const page = await PageModel.findOne(shop, handle);
+    if (!page) return res.status(404).json({ error: 'Page not found' });
+
+    const shopifyRes = await fetch(`https://${shop}/admin/api/2023-10/pages/${page.shopifyPageId}.json`, {
+      method: 'PUT',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        page: {
+          id: page.shopifyPageId,
+          title: page.title,
+          body_html: page.content,
+          published: true
+        }
+      })
+    });
+
+    const result = await shopifyRes.json();
+    if (!shopifyRes.ok) {
+      console.error('Shopify publish failed:', result);
+      return res.status(500).json({ error: 'Failed to publish to Shopify', details: result });
     }
 
-    const shop = req.query.shop;
-    
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter is required' });
-    }
-    
-    const success = await PageModel.unpublish(shop, handle);
-    
-    if (!success) {
-      return res.status(404).json({ error: 'Page not found' });
-    }
-    
-    const unpublishedPage = await PageModel.findOne(shop, handle);
-    res.json(unpublishedPage);
-  } catch (error) {
-    console.error('Error unpublishing page:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Get page analytics
-router.get('/:handle/analytics', async (req, res) => {
-  try {
-    const { handle } = req.params;
-
-    let accessToken = req.body.accessToken;
-    if (!accessToken && req.query.shop) {
-      const session = await getSession(req, res, req.query.shop);
-      accessToken = session?.accessToken;
-    }
-    if (!accessToken) {
-      console.warn('⚠️ No access token available - cannot update Shopify');
-      return res.status(400).json({ error: 'Missing access token' });
-    }
-
-    const shop = req.query.shop;
-    const days = parseInt(req.query.days) || 30;
-    
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter is required' });
-    }
-    
-    const stats = await AnalyticsModel.getPageStats(shop, handle, days);
-    res.json(stats);
-  } catch (error) {
-    console.error('Error fetching page analytics:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.json(result);
+  } catch (err) {
+    console.error('Error publishing page:', err);
+    res.status(500).json({ error: 'Internal error' });
   }
 });
 
