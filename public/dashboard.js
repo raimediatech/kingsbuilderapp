@@ -274,6 +274,11 @@ class KingsDashboard {
     getCookieValue(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
+        console.log(`🍪 getCookieValue(${name}):`, { 
+            fullCookie: document.cookie, 
+            parts: parts.length,
+            result: parts.length === 2 ? parts.pop().split(';').shift() : null
+        });
         if (parts.length === 2) {
             return parts.pop().split(';').shift();
         }
@@ -353,8 +358,11 @@ class KingsDashboard {
         try {
             console.log('📄 Loading real Shopify pages...');
             
-            // Get shop from URL or detect it
-            const shop = this.getShopOrigin();
+            // Get shop from context or detect it
+            const shop = this.context.shop || this.getShopOrigin();
+            console.log('📄 Using shop for API call:', shop);
+            console.log('📄 Context shop:', this.context.shop);
+            console.log('📄 getShopOrigin() result:', this.getShopOrigin());
             
             // Fetch real pages from Shopify API (server handles authentication via cookies)
             const timestamp = Date.now();
