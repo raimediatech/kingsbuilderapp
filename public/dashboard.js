@@ -1051,21 +1051,77 @@ window.top.location.href = installUrl;
         console.log('🔧 Page ID:', numericPageId);
         console.log('🔧 Embedded context:', this.context.embedded);
         
-        // For embedded apps, we need to tell Shopify to navigate within the admin
-        if (this.context.embedded === '1' || window.parent !== window) {
-            console.log('🔧 Navigating to builder within Shopify admin');
-            
-            // Try to use App Bridge navigation if available
-            if (this.app && this.app.navigation) {
-                this.app.navigation.navigate(builderUrl);
-            } else {
-                // Fallback: navigate parent window to keep it within Shopify
-                window.parent.location.href = builderUrl;
-            }
-        } else {
-            console.log('🔧 Opening builder in new window');
-            window.open(builderUrl, '_blank');
-        }
+        // Open builder as modal overlay within current page to stay embedded
+        console.log('🔧 Opening builder as modal overlay');
+        this.openBuilderModal(builderUrl, page.title, numericPageId, shop);
+    }
+    
+    openBuilderModal(builderUrl, title, pageId, shop) {
+        // Create modal overlay
+        const modal = document.createElement('div');
+        modal.id = 'builder-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        // Create modal content
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            width: 95%;
+            height: 95%;
+            background: white;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        `;
+        
+        // Create close button
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '×';
+        closeBtn.style.cssText = `
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            font-size: 24px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10001;
+        `;
+        closeBtn.onclick = () => {
+            document.body.removeChild(modal);
+            this.loadPages(); // Refresh pages after editing
+        };
+        
+        // Create iframe for builder
+        const iframe = document.createElement('iframe');
+        iframe.src = builderUrl;
+        iframe.style.cssText = `
+            width: 100%;
+            height: 100%;
+            border: none;
+        `;
+        
+        // Assemble modal
+        modalContent.appendChild(closeBtn);
+        modalContent.appendChild(iframe);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+        
+        console.log('✅ Builder modal opened');
     }
     
     duplicatePage(pageId) {
