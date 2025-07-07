@@ -4,5 +4,11 @@
       "src": "package.json",
       "use": "@vercel/node"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!api).*)",
+      "destination": "/public/index.html"
+    }
   ]
 }
