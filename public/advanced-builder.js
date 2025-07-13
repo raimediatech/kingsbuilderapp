@@ -92,6 +92,57 @@ class KingsBuilderAdvanced extends KingsBuilder {
         console.log('✅ Parent functionality preserved');
     }
     
+    // Force setup element interactions 
+    setupElementInteractions() {
+        console.log('🔧 Setting up element interactions...');
+        
+        // Remove ALL existing click listeners from canvas
+        const canvas = document.querySelector('.canvas-frame');
+        if (canvas) {
+            // Clone the node to remove all event listeners
+            const newCanvas = canvas.cloneNode(true);
+            canvas.parentNode.replaceChild(newCanvas, canvas);
+            
+            // Add our event listeners to the new canvas
+            newCanvas.addEventListener('click', (e) => {
+                const element = e.target.closest('.kb-element');
+                if (element && element.hasAttribute('data-element-id')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const elementId = element.getAttribute('data-element-id');
+                    const elementData = this.elements.find(el => el.id === elementId);
+                    if (elementData) {
+                        console.log('🖱️ ELEMENT CLICKED:', elementData.type, elementId);
+                        this.selectElement(elementData);
+                    }
+                }
+            });
+            
+            newCanvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                const element = e.target.closest('.kb-element');
+                if (element && element.hasAttribute('data-element-id')) {
+                    const elementId = element.getAttribute('data-element-id');
+                    const elementData = this.elements.find(el => el.id === elementId);
+                    if (elementData) {
+                        console.log('🖱️ RIGHT-CLICK:', elementData.type, elementId);
+                        this.selectElement(elementData);
+                        this.showContextMenu(e, elementData);
+                    }
+                }
+            });
+            
+            console.log('✅ Element interactions set up on canvas');
+        }
+        
+        // Also setup for any existing elements
+        document.querySelectorAll('.kb-element').forEach(element => {
+            element.style.cursor = 'pointer';
+            element.title = 'Click to edit, right-click for options';
+        });
+    }
+    
     // Enhanced element creation with container support
     createElement(type, position = {}, parentContainer = null) {
         const elementId = `kb_element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -753,13 +804,23 @@ class KingsBuilderAdvanced extends KingsBuilder {
         }
     }
     
+    // OVERRIDE: Show properties - use advanced properties instead
+    showProperties(element) {
+        this.showAdvancedProperties(element);
+    }
+    
     // Show advanced properties panel with tabs
     showAdvancedProperties(element) {
+        console.log('🎛️ SHOWING ADVANCED PROPERTIES for:', element?.type, element?.id);
+        
         // Switch to properties tab
         this.switchTab('properties');
         
         const propertiesContent = document.getElementById('propertiesContent');
-        if (!propertiesContent) return;
+        if (!propertiesContent) {
+            console.error('❌ Properties content not found!');
+            return;
+        }
         
         const advancedForm = this.createAdvancedPropertiesForm(element);
         propertiesContent.innerHTML = advancedForm;
@@ -767,7 +828,7 @@ class KingsBuilderAdvanced extends KingsBuilder {
         // Initialize advanced controls
         this.initAdvancedPropertyControls(element);
         
-        console.log(`🎛️ Showing advanced properties for ${element.type}`);
+        console.log(`✅ Advanced properties displayed for ${element.type}`);
     }
     
     // Create advanced properties form with tabs
@@ -1845,12 +1906,23 @@ class KingsBuilderAdvanced extends KingsBuilder {
     
     // Initialize advanced color pickers
     initAdvancedColorPickers() {
+        console.log('🎨 Initializing color pickers...');
+        
         const colorPreviews = document.querySelectorAll('.color-preview');
         const colorInputs = document.querySelectorAll('.color-input');
         const clearButtons = document.querySelectorAll('.color-clear');
         
+        console.log(`Found ${colorPreviews.length} color previews, ${colorInputs.length} inputs, ${clearButtons.length} clear buttons`);
+        
+        // Check if Pickr is available
+        if (typeof Pickr === 'undefined') {
+            console.warn('⚠️ Pickr library not loaded, using fallback color picker');
+            this.initFallbackColorPickers();
+            return;
+        }
+        
         // Initialize Pickr color pickers
-        colorPreviews.forEach(preview => {
+        colorPreviews.forEach((preview, index) => {
             const property = preview.getAttribute('data-property');
             const input = preview.parentElement.querySelector('.color-input');
             const currentColor = input.value || '#000000';
@@ -1940,6 +2012,76 @@ class KingsBuilderAdvanced extends KingsBuilder {
         });
         
         console.log(`🎨 Initialized ${colorPreviews.length} advanced color pickers`);
+    }
+    
+    // Fallback color picker if Pickr fails to load
+    initFallbackColorPickers() {
+        console.log('🎨 Initializing fallback color pickers...');
+        
+        const colorPreviews = document.querySelectorAll('.color-preview');
+        const colorInputs = document.querySelectorAll('.color-input');
+        const clearButtons = document.querySelectorAll('.color-clear');
+        
+        // Simple color picker fallback
+        colorPreviews.forEach(preview => {
+            const property = preview.getAttribute('data-property');
+            const input = preview.parentElement.querySelector('.color-input');
+            
+            // Create hidden color input
+            const colorInput = document.createElement('input');
+            colorInput.type = 'color';
+            colorInput.style.opacity = '0';
+            colorInput.style.position = 'absolute';
+            colorInput.style.pointerEvents = 'none';
+            colorInput.value = input.value || '#000000';
+            preview.appendChild(colorInput);
+            
+            // Click preview to open color picker
+            preview.addEventListener('click', () => {
+                colorInput.click();
+            });
+            
+            // Handle color change
+            colorInput.addEventListener('change', (e) => {
+                const color = e.target.value;
+                input.value = color;
+                preview.style.backgroundColor = color;
+                this.updateElementStyleLive(property, color);
+            });
+        });
+        
+        // Handle text input changes
+        colorInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const value = e.target.value;
+                const property = e.target.name;
+                const preview = e.target.parentElement.querySelector('.color-preview');
+                
+                if (this.isValidColor(value)) {
+                    preview.style.backgroundColor = value;
+                    const colorInput = preview.querySelector('input[type="color"]');
+                    if (colorInput) colorInput.value = value;
+                    this.updateElementStyleLive(property, value);
+                }
+            });
+        });
+        
+        // Handle clear buttons
+        clearButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const property = button.getAttribute('data-property');
+                const container = button.parentElement;
+                const input = container.querySelector('.color-input');
+                const preview = container.querySelector('.color-preview');
+                
+                input.value = '';
+                preview.style.backgroundColor = 'transparent';
+                this.updateElementStyleLive(property, '');
+            });
+        });
+        
+        console.log(`🎨 Fallback color pickers initialized for ${colorPreviews.length} elements`);
     }
     
     // Check if color value is valid

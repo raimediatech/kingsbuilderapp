@@ -1,47 +1,51 @@
-// Advanced KingsBuilder Initialization Override
-// This ensures the advanced builder properly replaces the basic one
+// Advanced KingsBuilder FORCE Initialization
+// This COMPLETELY replaces the basic builder
 
-// Override the basic builder initialization
+console.log('🚀 FORCING Advanced KingsBuilder initialization...');
+
+// IMMEDIATELY override the basic KingsBuilder class
+const OriginalKingsBuilder = window.KingsBuilder || KingsBuilder;
+
+// Prevent basic KingsBuilder from initializing
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔄 Overriding basic KingsBuilder with Advanced version...');
+    // Kill any existing builder
+    if (window.kingsBuilder) {
+        console.log('🔥 Destroying existing basic builder...');
+        window.kingsBuilder = null;
+    }
     
-    // Wait for basic builder to initialize first
+    // Wait for DOM and scripts to load
     setTimeout(() => {
-        if (window.kingsBuilder && !(window.kingsBuilder instanceof KingsBuilderAdvanced)) {
-            console.log('📈 Upgrading to KingsBuilderAdvanced...');
-            
-            // Backup existing data
-            const existingData = {
-                elements: window.kingsBuilder.elements || [],
-                history: window.kingsBuilder.history || [],
-                historyIndex: window.kingsBuilder.historyIndex || -1,
-                selectedElement: window.kingsBuilder.selectedElement || null,
-                shop: window.kingsBuilder.shop,
-                pageId: window.kingsBuilder.pageId
-            };
-            
-            // Create new advanced builder
-            const newBuilder = new KingsBuilderAdvanced();
-            
-            // Transfer data
-            newBuilder.elements = existingData.elements;
-            newBuilder.history = existingData.history;
-            newBuilder.historyIndex = existingData.historyIndex;
-            newBuilder.selectedElement = existingData.selectedElement;
-            newBuilder.shop = existingData.shop;
-            newBuilder.pageId = existingData.pageId;
-            
-            // Replace the builder
-            window.kingsBuilder = newBuilder;
-            
-            console.log('✅ Successfully upgraded to KingsBuilderAdvanced!');
-            
-            // If there was a selected element, reselect it with advanced properties
-            if (existingData.selectedElement) {
-                setTimeout(() => {
-                    newBuilder.selectElement(existingData.selectedElement);
-                }, 100);
-            }
+        console.log('🚀 Creating ADVANCED KingsBuilder...');
+        
+        // Force create the advanced builder
+        window.kingsBuilder = new KingsBuilderAdvanced();
+        
+        // Force initialization
+        if (window.kingsBuilder.initializeBuilder) {
+            window.kingsBuilder.initializeBuilder();
         }
-    }, 300);
+        
+        console.log('✅ ADVANCED KingsBuilder FORCED initialization complete!');
+        
+        // Add debugging
+        window.kingsBuilder.debug = true;
+        
+        // Force element interaction setup
+        setTimeout(() => {
+            console.log('🔧 Setting up element interactions...');
+            window.kingsBuilder.setupElementInteractions();
+        }, 500);
+        
+    }, 100);
 });
+
+// Also try immediate initialization if DOM is already loaded
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(() => {
+        if (!window.kingsBuilder || !(window.kingsBuilder instanceof KingsBuilderAdvanced)) {
+            console.log('🚀 DOM already loaded, forcing advanced builder...');
+            window.kingsBuilder = new KingsBuilderAdvanced();
+        }
+    }, 50);
+}
