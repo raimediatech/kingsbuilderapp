@@ -366,6 +366,23 @@ class KingsBuilder {
         
         console.log('🎯 Setting up enhanced canvas drop zone');
         
+        // Remove existing event listeners by cloning the element (if this is a re-setup)
+        if (canvasFrame.hasAttribute('data-drop-zone-setup')) {
+            const newCanvasFrame = canvasFrame.cloneNode(true);
+            canvasFrame.parentNode.replaceChild(newCanvasFrame, canvasFrame);
+            // Update reference to the new element
+            const updatedCanvasFrame = document.querySelector('.canvas-frame');
+            updatedCanvasFrame.setAttribute('data-drop-zone-setup', 'true');
+            this.setupCanvasDropZoneEvents(updatedCanvasFrame);
+        } else {
+            canvasFrame.setAttribute('data-drop-zone-setup', 'true');
+            this.setupCanvasDropZoneEvents(canvasFrame);
+        }
+    }
+    
+    setupCanvasDropZoneEvents(canvasFrame) {
+        console.log('🎯 Setting up canvas drop zone event listeners');
+        
         canvasFrame.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -395,7 +412,7 @@ class KingsBuilder {
             e.preventDefault();
             e.stopPropagation();
             
-            console.log('🎯 Drop event triggered');
+            console.log('🎯 Drop event triggered on loaded page');
             canvasFrame.classList.remove('drag-over');
             
             const elementType = e.dataTransfer.getData('text/plain');
@@ -1973,7 +1990,44 @@ class KingsBuilder {
         // Re-setup interaction for all elements
         this.setupElementInteractions();
         
+        // Ensure canvas has proper structure for drag & drop
+        this.ensureCanvasStructure();
+        
+        // Re-initialize drag and drop functionality
+        this.setupCanvasDropZone();
+        
         console.log(`✅ Parsed ${this.elements.length} elements from loaded content`);
+    }
+    
+    // Ensure canvas has proper structure for drag & drop functionality
+    ensureCanvasStructure() {
+        const canvas = document.getElementById('kingsbuilder-canvas');
+        if (!canvas) return;
+        
+        // Check if canvas-frame exists
+        let canvasFrame = canvas.querySelector('.canvas-frame');
+        
+        if (!canvasFrame) {
+            console.log('🔧 Creating canvas-frame structure for drag & drop');
+            
+            // Create canvas-frame wrapper
+            canvasFrame = document.createElement('div');
+            canvasFrame.className = 'canvas-frame';
+            
+            // Move all existing content into the frame
+            const existingContent = Array.from(canvas.children);
+            existingContent.forEach(child => {
+                canvasFrame.appendChild(child);
+            });
+            
+            // Add the frame to the canvas
+            canvas.appendChild(canvasFrame);
+        }
+        
+        // Ensure the frame has proper attributes
+        canvasFrame.setAttribute('data-drop-zone', 'true');
+        
+        console.log('✅ Canvas structure verified for drag & drop');
     }
     
     // Reconstruct element object from HTML element
