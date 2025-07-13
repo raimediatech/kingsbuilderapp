@@ -1,5 +1,5 @@
 // KingsBuilder - Advanced Visual Page Builder JavaScript
-// Enhanced with Elementor-inspired features
+// Enhanced with professional page builder features
 // Created by Kingsmen Marketing Agency
 
 class KingsBuilderAdvanced extends KingsBuilder {
@@ -17,11 +17,17 @@ class KingsBuilderAdvanced extends KingsBuilder {
         this.globalColors = {};
         this.globalFonts = {};
         
-        this.initAdvancedFeatures();
+        // Wait for base builder to be ready
+        setTimeout(() => {
+            this.initAdvancedFeatures();
+        }, 100);
     }
     
     initAdvancedFeatures() {
         console.log('🚀 Initializing Advanced KingsBuilder Features...');
+        
+        // Ensure parent functionality is preserved
+        this.preserveParentFunctionality();
         
         // Initialize sortable elements
         this.initSortableElements();
@@ -39,6 +45,26 @@ class KingsBuilderAdvanced extends KingsBuilder {
         this.initAnimationSystem();
         
         console.log('✅ Advanced Features Initialized!');
+    }
+    
+    // Preserve parent functionality like context menu
+    preserveParentFunctionality() {
+        // Ensure context menu is still working
+        const canvas = document.querySelector('.canvas-frame');
+        if (canvas) {
+            // Make sure right-click events are preserved
+            canvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                const element = e.target.closest('.kb-element');
+                if (element && element.hasAttribute('data-element-id')) {
+                    const elementId = element.getAttribute('data-element-id');
+                    const elementData = this.elements.find(el => el.id === elementId);
+                    if (elementData) {
+                        this.showContextMenu(e, elementData);
+                    }
+                }
+            });
+        }
     }
     
     // Enhanced element creation with container support
@@ -657,12 +683,25 @@ class KingsBuilderAdvanced extends KingsBuilder {
     
     // Enhanced element selection with advanced properties
     selectElement(element) {
-        // Call parent method first
-        super.selectElement(element);
+        if (!element) return;
         
-        if (element && element.id && element.type) {
+        // Basic selection logic (from parent)
+        this.selectedElement = element;
+        
+        // Update visual selection
+        document.querySelectorAll('.kb-element.selected').forEach(el => {
+            el.classList.remove('selected');
+        });
+        
+        const elementDiv = document.querySelector(`[data-element-id="${element.id}"]`);
+        if (elementDiv) {
+            elementDiv.classList.add('selected');
+            
             // Show advanced properties instead of basic ones
             this.showAdvancedProperties(element);
+            this.updateNavigator();
+            
+            console.log(`✅ Selected element: ${element.type} (${element.id})`);
         }
     }
     
@@ -1691,25 +1730,35 @@ class KingsBuilderAdvanced extends KingsBuilder {
     // Initialize advanced property controls
     initAdvancedPropertyControls(element) {
         const propertiesContent = document.getElementById('propertiesContent');
-        if (!propertiesContent) return;
+        if (!propertiesContent) {
+            console.warn('Properties content not found');
+            return;
+        }
         
-        // Initialize property tabs
-        this.initPropertyTabs();
-        
-        // Initialize color pickers
-        this.initAdvancedColorPickers();
-        
-        // Initialize sliders
-        this.initAdvancedSliders();
-        
-        // Initialize linked controls
-        this.initLinkedControls();
-        
-        // Initialize section toggles
-        this.initSectionToggles();
-        
-        // Initialize input change handlers
-        this.initAdvancedInputHandlers(element);
+        // Wait a bit for the DOM to be ready
+        setTimeout(() => {
+            console.log('🎛️ Initializing advanced property controls...');
+            
+            // Initialize property tabs
+            this.initPropertyTabs();
+            
+            // Initialize color pickers
+            this.initAdvancedColorPickers();
+            
+            // Initialize sliders
+            this.initAdvancedSliders();
+            
+            // Initialize linked controls
+            this.initLinkedControls();
+            
+            // Initialize section toggles
+            this.initSectionToggles();
+            
+            // Initialize input change handlers
+            this.initAdvancedInputHandlers(element);
+            
+            console.log('✅ Advanced property controls initialized');
+        }, 50);
     }
     
     // Initialize property tabs
@@ -1743,31 +1792,40 @@ class KingsBuilderAdvanced extends KingsBuilder {
         const colorPickers = document.querySelectorAll('.color-picker');
         colorPickers.forEach(picker => {
             const wrapper = picker.closest('.color-picker-wrapper');
+            if (!wrapper) return;
+            
             const textInput = wrapper.querySelector('.color-input');
             const clearBtn = wrapper.querySelector('.color-clear');
             
             // Sync color picker with text input
-            picker.addEventListener('change', () => {
-                textInput.value = picker.value;
-                this.updateElementStyle(picker.name, picker.value);
+            picker.addEventListener('change', (e) => {
+                e.stopPropagation();
+                if (textInput) textInput.value = picker.value;
+                this.updateElementStyleLive(picker.name, picker.value);
             });
             
-            textInput.addEventListener('input', () => {
-                if (this.isValidColor(textInput.value)) {
-                    picker.value = textInput.value;
-                    this.updateElementStyle(picker.name, textInput.value);
-                }
-            });
+            if (textInput) {
+                textInput.addEventListener('input', (e) => {
+                    e.stopPropagation();
+                    if (this.isValidColor(textInput.value)) {
+                        picker.value = textInput.value;
+                        this.updateElementStyleLive(picker.name, textInput.value);
+                    }
+                });
+            }
             
             // Clear color
             if (clearBtn) {
-                clearBtn.addEventListener('click', () => {
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     picker.value = '#ffffff';
-                    textInput.value = '';
-                    this.updateElementStyle(picker.name, '');
+                    if (textInput) textInput.value = '';
+                    this.updateElementStyleLive(picker.name, '');
                 });
             }
         });
+        
+        console.log(`🎨 Initialized ${colorPickers.length} color pickers`);
     }
     
     // Check if color value is valid
@@ -1869,13 +1927,50 @@ class KingsBuilderAdvanced extends KingsBuilder {
     
     // Initialize advanced input handlers
     initAdvancedInputHandlers(element) {
-        const inputs = document.querySelectorAll('#propertiesContent input, #propertiesContent select, #propertiesContent textarea');
+        const propertiesContent = document.getElementById('propertiesContent');
+        if (!propertiesContent) return;
+        
+        const inputs = propertiesContent.querySelectorAll('input, select, textarea');
         
         inputs.forEach(input => {
-            input.addEventListener('input', () => {
-                this.updateAdvancedElementProperty(element.id, input.name, input.value, input.type);
-            });
+            // Remove existing listeners to prevent duplicates
+            input.removeEventListener('input', this.handleInputChange);
+            input.removeEventListener('change', this.handleInputChange);
+            
+            // Add new listeners
+            const handler = (e) => {
+                e.stopPropagation();
+                let value = input.value;
+                
+                // Handle different input types
+                if (input.type === 'checkbox') {
+                    value = input.checked;
+                } else if (input.type === 'range') {
+                    // Update slider display
+                    const display = input.nextElementSibling;
+                    if (display && display.classList.contains('slider-value')) {
+                        let unit = '';
+                        if (input.name.includes('opacity')) {
+                            display.textContent = Math.round(value * 100) + '%';
+                        } else if (input.name.includes('angle') || input.name.includes('rotate') || input.name.includes('skew')) {
+                            display.textContent = value + '°';
+                        } else if (!input.name.includes('scale')) {
+                            display.textContent = value + 'px';
+                        } else {
+                            display.textContent = value;
+                        }
+                    }
+                }
+                
+                // Update element
+                this.updateElementProperty(element.id, input.name, value);
+            };
+            
+            input.addEventListener('input', handler);
+            input.addEventListener('change', handler);
         });
+        
+        console.log(`🎛️ Initialized ${inputs.length} property controls`);
     }
     
     // Update advanced element property
@@ -2010,16 +2105,102 @@ class KingsBuilderAdvanced extends KingsBuilder {
         });
     }
     
-    // Update element style (used by various controls)
+    // Update element style (used by various controls) with live preview
     updateElementStyle(property, value) {
         if (!this.selectedElement) return;
         
         this.updateAdvancedElementProperty(this.selectedElement.id, property, value);
     }
+    
+    // Live update element style
+    updateElementStyleLive(property, value) {
+        if (!this.selectedElement) return;
+        
+        const elementDiv = document.querySelector(`[data-element-id="${this.selectedElement.id}"]`);
+        if (!elementDiv) return;
+        
+        // Apply style immediately for live preview
+        this.applyStyleProperty(elementDiv, property, value);
+        
+        // Update element data
+        this.updateAdvancedElementProperty(this.selectedElement.id, property, value);
+    }
+    
+    // Apply style property to element
+    applyStyleProperty(elementDiv, property, value) {
+        switch (property) {
+            case 'textColor':
+                elementDiv.style.color = value;
+                break;
+            case 'backgroundColor':
+                elementDiv.style.backgroundColor = value;
+                break;
+            case 'fontSize':
+                elementDiv.style.fontSize = value + 'px';
+                break;
+            case 'fontWeight':
+                elementDiv.style.fontWeight = value;
+                break;
+            case 'fontFamily':
+                elementDiv.style.fontFamily = value;
+                break;
+            case 'lineHeight':
+                elementDiv.style.lineHeight = value;
+                break;
+            case 'letterSpacing':
+                elementDiv.style.letterSpacing = value + 'px';
+                break;
+            case 'borderRadius':
+                elementDiv.style.borderRadius = value + 'px';
+                break;
+            case 'padding':
+                elementDiv.style.padding = value;
+                break;
+            case 'margin':
+                elementDiv.style.margin = value;
+                break;
+            default:
+                // Try to apply the property directly
+                if (value !== '') {
+                    elementDiv.style[property] = value;
+                }
+        }
+    }
+    
+    // Override parent updateElementProperty to use our advanced system
+    updateElementProperty(elementId, property, value) {
+        const element = this.elements.find(e => e.id === elementId);
+        if (!element) return;
+        
+        // Handle different property types
+        if (property === 'content') {
+            element.content = value;
+        } else {
+            // Store in settings
+            if (!element.settings) element.settings = {};
+            if (!element.settings.style) element.settings.style = {};
+            
+            element.settings.style[property] = value;
+        }
+        
+        // Apply live update
+        const elementDiv = document.querySelector(`[data-element-id="${elementId}"]`);
+        if (elementDiv) {
+            if (property === 'content') {
+                // Update content
+                if (element.type === 'heading' || element.type === 'text' || element.type === 'button') {
+                    const contentEl = elementDiv.querySelector('.element-content') || elementDiv;
+                    contentEl.textContent = value;
+                }
+            } else {
+                // Apply style
+                this.applyStyleProperty(elementDiv, property, value);
+            }
+        }
+        
+        // Save state
+        this.saveState();
+    }
 }
 
-// Initialize the enhanced builder
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initializing Enhanced KingsBuilder...');
-    window.kingsBuilder = new KingsBuilderAdvanced();
-});
+// Advanced KingsBuilder class - initialization handled by advanced-init.js
