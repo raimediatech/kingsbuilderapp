@@ -547,7 +547,18 @@ class KingsBuilder {
     }
     
     renderElement(element) {
+        // Safety check for element properties
+        if (!element || !element.id || !element.type) {
+            console.warn('⚠️ Cannot render element: invalid element object', element);
+            return;
+        }
+        
         const canvasFrame = document.querySelector('.canvas-frame');
+        if (!canvasFrame) {
+            console.warn('⚠️ Canvas frame not found');
+            return;
+        }
+        
         const elementDiv = document.createElement('div');
         elementDiv.className = 'kb-element';
         elementDiv.setAttribute('data-element-id', element.id);
@@ -575,6 +586,12 @@ class KingsBuilder {
     }
     
     getElementHTML(element) {
+        // Safety check for element properties
+        if (!element || !element.id || !element.type) {
+            console.warn('⚠️ Cannot generate HTML: invalid element', element);
+            return '<div class="kb-error">Invalid element</div>';
+        }
+        
         const controlsHTML = `
             <div class="kb-element-controls">
                 <button class="kb-element-control" onclick="kingsBuilder.editElement('${element.id}')" title="Edit">
@@ -616,6 +633,12 @@ class KingsBuilder {
     }
     
     selectElement(element) {
+        // Safety check - ensure element exists and has required properties
+        if (!element || !element.id || !element.type) {
+            console.warn('⚠️ Cannot select element: invalid element object', element);
+            return;
+        }
+        
         // Deselect previous element
         this.deselectElement();
         
@@ -626,6 +649,9 @@ class KingsBuilder {
             this.selectedElement = element;
             this.showProperties(element);
             this.updateNavigator();
+            console.log(`✅ Selected element: ${element.type} (${element.id})`);
+        } else {
+            console.warn('⚠️ Element div not found for ID:', element.id);
         }
     }
     
@@ -656,6 +682,12 @@ class KingsBuilder {
     }
     
     createPropertiesForm(element) {
+        // Safety check for element properties
+        if (!element || !element.type) {
+            console.warn('⚠️ Cannot create properties form: invalid element', element);
+            return '<div class="properties-error">Unable to load element properties</div>';
+        }
+        
         let form = `
             <div class="properties-header">
                 <h3>Edit ${element.type.charAt(0).toUpperCase() + element.type.slice(1)}</h3>
@@ -1865,6 +1897,9 @@ class KingsBuilder {
                         } else {
                             console.log('⚠️ No content found for page');
                         }
+                        
+                        // Parse the loaded HTML back into elements array for editing
+                        this.parseLoadedContent();
                     }
                     
                     // Set page handle
@@ -1901,6 +1936,259 @@ class KingsBuilder {
         
         // Save initial state
         this.saveState();
+    }
+    
+    // Parse loaded HTML content back into elements array for editing
+    parseLoadedContent() {
+        console.log('🔍 Parsing loaded content into elements array...');
+        
+        const canvas = document.getElementById('kingsbuilder-canvas');
+        if (!canvas) return;
+        
+        // Clear existing elements array
+        this.elements = [];
+        
+        // Find all KingsBuilder elements in the loaded content
+        const elementDivs = canvas.querySelectorAll('.kb-element');
+        
+        elementDivs.forEach((elementDiv, index) => {
+            const elementId = elementDiv.getAttribute('data-element-id');
+            const elementType = elementDiv.getAttribute('data-element-type');
+            
+            if (elementId && elementType) {
+                // Extract content and styles from the HTML
+                const element = this.reconstructElementFromHTML(elementDiv, elementId, elementType, index);
+                if (element) {
+                    this.elements.push(element);
+                    console.log(`🔄 Reconstructed element: ${elementType} (${elementId})`);
+                }
+            }
+        });
+        
+        // If no kb-elements found, try to parse raw HTML content
+        if (this.elements.length === 0) {
+            this.parseRawHTMLContent(canvas);
+        }
+        
+        // Re-setup interaction for all elements
+        this.setupElementInteractions();
+        
+        console.log(`✅ Parsed ${this.elements.length} elements from loaded content`);
+    }
+    
+    // Reconstruct element object from HTML element
+    reconstructElementFromHTML(elementDiv, elementId, elementType, position) {
+        const element = {
+            id: elementId,
+            type: elementType,
+            position: position,
+            styles: {}
+        };
+        
+        // Extract content based on element type
+        switch (elementType) {
+            case 'heading':
+                const headingEl = elementDiv.querySelector('h1, h2, h3, h4, h5, h6');
+                if (headingEl) {
+                    element.content = headingEl.innerText;
+                    element.tag = headingEl.tagName.toLowerCase();
+                }
+                break;
+                
+            case 'text':
+                const textEl = elementDiv.querySelector('p');
+                if (textEl) {
+                    element.content = textEl.innerText;
+                }
+                break;
+                
+            case 'image':
+                const imgEl = elementDiv.querySelector('img');
+                if (imgEl) {
+                    element.content = imgEl.src;
+                    element.alt = imgEl.alt;
+                }
+                break;
+                
+            case 'button':
+                const btnEl = elementDiv.querySelector('a.kb-button, button');
+                if (btnEl) {
+                    element.content = btnEl.innerText;
+                    element.href = btnEl.href || '#';
+                }
+                break;
+                
+            case 'section':
+                element.content = '';
+                break;
+                
+            case 'divider':
+                element.content = '';
+                break;
+                
+            case 'spacer':
+                element.content = '';
+                break;
+        }
+        
+        // Extract styles from computed styles
+        const computedStyles = window.getComputedStyle(elementDiv);
+        element.styles = this.extractRelevantStyles(computedStyles, elementType);
+        
+        return element;
+    }
+    
+    // Parse raw HTML content that doesn't have kb-element structure
+    parseRawHTMLContent(canvas) {
+        console.log('🔍 Parsing raw HTML content...');
+        
+        const children = Array.from(canvas.children);
+        children.forEach((child, index) => {
+            if (child.classList.contains('kb-element')) return; // Skip already processed elements
+            
+            const element = this.convertHTMLToElement(child, index);
+            if (element) {
+                this.elements.push(element);
+                console.log(`🔄 Converted HTML to element: ${element.type}`);
+                
+                // Replace the raw HTML with kb-element structure
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'kb-element';
+                elementDiv.setAttribute('data-element-id', element.id);
+                elementDiv.setAttribute('data-element-type', element.type);
+                elementDiv.innerHTML = this.getElementHTML(element);
+                
+                child.parentNode.replaceChild(elementDiv, child);
+            }
+        });
+    }
+    
+    // Convert raw HTML element to KingsBuilder element
+    convertHTMLToElement(htmlElement, position) {
+        const elementId = `kb_element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const tagName = htmlElement.tagName.toLowerCase();
+        
+        let element = {
+            id: elementId,
+            position: position,
+            styles: {}
+        };
+        
+        // Determine element type based on HTML tag
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+            element.type = 'heading';
+            element.content = htmlElement.innerText;
+            element.tag = tagName;
+        } else if (tagName === 'p') {
+            element.type = 'text';
+            element.content = htmlElement.innerText;
+        } else if (tagName === 'img') {
+            element.type = 'image';
+            element.content = htmlElement.src;
+            element.alt = htmlElement.alt;
+        } else if (tagName === 'a' || tagName === 'button') {
+            element.type = 'button';
+            element.content = htmlElement.innerText;
+            element.href = htmlElement.href || '#';
+        } else if (tagName === 'hr') {
+            element.type = 'divider';
+            element.content = '';
+        } else if (tagName === 'div') {
+            // Try to determine if it's a section or spacer
+            if (htmlElement.classList.contains('kb-spacer') || htmlElement.style.height) {
+                element.type = 'spacer';
+            } else {
+                element.type = 'section';
+            }
+            element.content = '';
+        } else {
+            // Default to text for unknown elements
+            element.type = 'text';
+            element.content = htmlElement.innerText || 'Content';
+        }
+        
+        // Extract styles
+        const computedStyles = window.getComputedStyle(htmlElement);
+        element.styles = this.extractRelevantStyles(computedStyles, element.type);
+        
+        return element;
+    }
+    
+    // Extract relevant styles from computed styles
+    extractRelevantStyles(computedStyles, elementType) {
+        const styles = {};
+        
+        // Common styles for all elements
+        if (computedStyles.fontSize && computedStyles.fontSize !== '16px') {
+            styles.fontSize = computedStyles.fontSize;
+        }
+        if (computedStyles.color && computedStyles.color !== 'rgb(0, 0, 0)') {
+            styles.color = computedStyles.color;
+        }
+        if (computedStyles.backgroundColor && computedStyles.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+            styles.backgroundColor = computedStyles.backgroundColor;
+        }
+        if (computedStyles.textAlign && computedStyles.textAlign !== 'start') {
+            styles.textAlign = computedStyles.textAlign;
+        }
+        if (computedStyles.fontWeight && computedStyles.fontWeight !== '400') {
+            styles.fontWeight = computedStyles.fontWeight;
+        }
+        if (computedStyles.marginBottom && computedStyles.marginBottom !== '0px') {
+            styles.marginBottom = computedStyles.marginBottom;
+        }
+        if (computedStyles.padding && computedStyles.padding !== '0px') {
+            styles.padding = computedStyles.padding;
+        }
+        
+        // Element-specific styles
+        if (elementType === 'image') {
+            if (computedStyles.width) styles.width = computedStyles.width;
+            if (computedStyles.height) styles.height = computedStyles.height;
+            if (computedStyles.borderRadius) styles.borderRadius = computedStyles.borderRadius;
+        }
+        
+        if (elementType === 'button') {
+            if (computedStyles.borderRadius) styles.borderRadius = computedStyles.borderRadius;
+            if (computedStyles.border) styles.border = computedStyles.border;
+        }
+        
+        return styles;
+    }
+    
+    // Setup interactions for all elements after parsing
+    setupElementInteractions() {
+        const canvas = document.getElementById('kingsbuilder-canvas');
+        if (!canvas) return;
+        
+        // Remove existing event listeners and re-add them
+        const elementDivs = canvas.querySelectorAll('.kb-element');
+        
+        elementDivs.forEach(elementDiv => {
+            // Remove old event listeners by cloning the element
+            const newElementDiv = elementDiv.cloneNode(true);
+            elementDiv.parentNode.replaceChild(newElementDiv, elementDiv);
+            
+            const elementId = newElementDiv.getAttribute('data-element-id');
+            const element = this.elements.find(e => e.id === elementId);
+            
+            if (element) {
+                // Add click event for selection
+                newElementDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.selectElement(element);
+                });
+                
+                // Add context menu
+                newElementDiv.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.showContextMenu(e, element);
+                });
+            }
+        });
+        
+        console.log('✅ Element interactions setup complete');
     }
     
     exit() {
