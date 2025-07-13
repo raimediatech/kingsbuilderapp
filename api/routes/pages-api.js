@@ -453,7 +453,7 @@ router.post('/:pageId/publish', async (req, res) => {
     const pageData = pages[pageIndex];
     
     // Get access token from session or environment
-    const accessToken = req.session?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
+    const accessToken = req.headers['x-shopify-access-token'] || req.session?.accessToken || req.cookies?.shopifyAccessToken || req.cookies?.accessToken || process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
     
     if (!accessToken) {
       return res.status(401).json({ error: 'Access token is required' });
@@ -491,7 +491,7 @@ router.post('/:pageId/publish', async (req, res) => {
     let baseHandle = (pageData.title || 'new-page').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     if (baseHandle.length === 0) baseHandle = 'new-page';
     const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
-    const uniqueHandle = `${baseHandle}-${timestamp}`;
+    const randomSuffix = Math.random().toString(36).substring(2, 8); const uniqueHandle = `${baseHandle}-${timestamp}-${randomSuffix}`;
     
     // Prepare data for Shopify API
     const shopifyPageData = {
@@ -566,3 +566,4 @@ router.delete('/:pageId', async (req, res) => {
 router.getPages = () => pages;
 
 module.exports = router;
+
