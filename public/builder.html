@@ -16,6 +16,7 @@
     
     <!-- KingsBuilder CSS -->
     <link rel="stylesheet" href="builder.css">
+    <link rel="stylesheet" href="advanced-builder.css">
 </head>
 <body>
     <div id="kingsbuilder-editor-wrapper">
@@ -79,7 +80,13 @@
                                 <i class="fas fa-chevron-down toggle-icon"></i>
                             </div>
                             <div class="category-content">
-                                <div class="elements-grid">
+                                <div class="elements-grid" id="basicElements">
+                                    <div class="element-item" data-element="container" draggable="true">
+                                        <div class="element-icon">
+                                            <i class="fas fa-square"></i>
+                                        </div>
+                                        <span class="element-title">Container</span>
+                                    </div>
                                     <div class="element-item" data-element="heading" draggable="true">
                                         <div class="element-icon">
                                             <i class="fas fa-heading"></i>
@@ -473,5 +480,6 @@
     <script src="integrations-system.js"></script>
     <script src="backup-system.js"></script>
     <script src="builder.js"></script>
+    <script src="advanced-builder.js"></script>
 </body>
 </html>
