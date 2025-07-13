@@ -49,10 +49,29 @@ class KingsBuilderAdvanced extends KingsBuilder {
     
     // Preserve parent functionality like context menu
     preserveParentFunctionality() {
-        // Ensure context menu is still working
+        // Ensure context menu and element selection is working
         const canvas = document.querySelector('.canvas-frame');
         if (canvas) {
-            // Make sure right-click events are preserved
+            // Remove existing listeners to prevent conflicts
+            canvas.removeEventListener('click', this.handleCanvasClick);
+            canvas.removeEventListener('contextmenu', this.handleCanvasRightClick);
+            
+            // Add new unified event handlers
+            canvas.addEventListener('click', (e) => {
+                const element = e.target.closest('.kb-element');
+                if (element && element.hasAttribute('data-element-id')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const elementId = element.getAttribute('data-element-id');
+                    const elementData = this.elements.find(el => el.id === elementId);
+                    if (elementData) {
+                        console.log('🖱️ Element clicked:', elementData.type, elementId);
+                        this.selectElement(elementData);
+                    }
+                }
+            });
+            
             canvas.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 const element = e.target.closest('.kb-element');
@@ -60,11 +79,17 @@ class KingsBuilderAdvanced extends KingsBuilder {
                     const elementId = element.getAttribute('data-element-id');
                     const elementData = this.elements.find(el => el.id === elementId);
                     if (elementData) {
+                        console.log('🖱️ Right-click on element:', elementData.type, elementId);
+                        this.selectElement(elementData); // Select the element first
                         this.showContextMenu(e, elementData);
                     }
                 }
             });
+            
+            console.log('✅ Element click and right-click handlers initialized');
         }
+        
+        console.log('✅ Parent functionality preserved');
     }
     
     // Enhanced element creation with container support
@@ -412,30 +437,53 @@ class KingsBuilderAdvanced extends KingsBuilder {
                 return;
             }
             
-            // Check if Sortable library exists (we'll need to include it)
+            // Check if Sortable library exists
             if (typeof Sortable !== 'undefined') {
                 this.sortable = Sortable.create(canvas, {
-                    group: 'elements',
-                    animation: 150,
+                    group: 'canvas-elements',
+                    animation: 200,
                     ghostClass: 'kb-element-ghost',
                     chosenClass: 'kb-element-chosen',
                     dragClass: 'kb-element-drag',
+                    forceFallback: true,
+                    fallbackClass: 'kb-element-fallback',
+                    handle: '.kb-element', // Only allow dragging by element
+                    filter: '.kb-element-locked', // Skip locked elements
+                    
                     onStart: (evt) => {
                         console.log('🎯 Started dragging element');
                         evt.item.classList.add('dragging');
+                        document.body.classList.add('kb-dragging');
                     },
+                    
                     onEnd: (evt) => {
                         console.log('🎯 Finished dragging element');
                         evt.item.classList.remove('dragging');
-                        this.handleElementReorder(evt.oldIndex, evt.newIndex);
+                        document.body.classList.remove('kb-dragging');
+                        
+                        if (evt.oldIndex !== evt.newIndex) {
+                            this.handleElementReorder(evt.oldIndex, evt.newIndex);
+                        }
+                    },
+                    
+                    onMove: (evt) => {
+                        // Allow dropping into containers
+                        const related = evt.related;
+                        if (related && related.classList.contains('kb-container')) {
+                            return true;
+                        }
+                        return true; // Allow all moves for now
                     }
                 });
                 
                 this.sortableEnabled = true;
-                console.log('✅ Sortable elements initialized');
+                console.log('✅ Sortable elements initialized with enhanced features');
             } else {
-                console.warn('⚠️ Sortable library not found, loading...');
-                this.loadSortableLibrary();
+                console.warn('⚠️ Sortable library not found');
+                // Try again after a delay
+                setTimeout(() => {
+                    this.initSortableElements();
+                }, 1000);
             }
         };
         
@@ -1165,36 +1213,44 @@ class KingsBuilderAdvanced extends KingsBuilder {
                     ${element.type !== 'spacer' && element.type !== 'divider' ? `
                         <div class="control-group">
                             <label>Text Color</label>
-                            <div class="color-picker-wrapper">
-                                <input type="color" class="color-picker" name="textColor" value="${settings.textColor || '#000000'}">
-                                <input type="text" class="color-input" name="textColorHex" value="${settings.textColor || '#000000'}">
-                                <button class="color-clear" type="button">Clear</button>
+                            <div class="color-picker-container">
+                                <div class="color-preview" data-property="textColor" style="background-color: ${settings.textColor || '#000000'}"></div>
+                                <input type="text" class="color-input" name="textColor" value="${settings.textColor || '#000000'}" placeholder="#000000">
+                                <button class="color-clear" type="button" data-property="textColor">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                         </div>
                     ` : ''}
                     <div class="control-group">
                         <label>Background Color</label>
-                        <div class="color-picker-wrapper">
-                            <input type="color" class="color-picker" name="backgroundColor" value="${settings.backgroundColor || '#ffffff'}">
-                            <input type="text" class="color-input" name="backgroundColorHex" value="${settings.backgroundColor || '#ffffff'}">
-                            <button class="color-clear" type="button">Clear</button>
+                        <div class="color-picker-container">
+                            <div class="color-preview" data-property="backgroundColor" style="background-color: ${settings.backgroundColor || '#ffffff'}"></div>
+                            <input type="text" class="color-input" name="backgroundColor" value="${settings.backgroundColor || '#ffffff'}" placeholder="#ffffff">
+                            <button class="color-clear" type="button" data-property="backgroundColor">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
                     ${element.type === 'button' ? `
                         <div class="control-group">
                             <label>Hover Background</label>
-                            <div class="color-picker-wrapper">
-                                <input type="color" class="color-picker" name="hoverBackgroundColor" value="${settings.hover?.backgroundColor || '#333333'}">
-                                <input type="text" class="color-input" name="hoverBackgroundColorHex" value="${settings.hover?.backgroundColor || '#333333'}">
-                                <button class="color-clear" type="button">Clear</button>
+                            <div class="color-picker-container">
+                                <div class="color-preview" data-property="hoverBackgroundColor" style="background-color: ${settings.hover?.backgroundColor || '#333333'}"></div>
+                                <input type="text" class="color-input" name="hoverBackgroundColor" value="${settings.hover?.backgroundColor || '#333333'}" placeholder="#333333">
+                                <button class="color-clear" type="button" data-property="hoverBackgroundColor">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="control-group">
                             <label>Hover Text Color</label>
-                            <div class="color-picker-wrapper">
-                                <input type="color" class="color-picker" name="hoverTextColor" value="${settings.hover?.textColor || '#ffffff'}">
-                                <input type="text" class="color-input" name="hoverTextColorHex" value="${settings.hover?.textColor || '#ffffff'}">
-                                <button class="color-clear" type="button">Clear</button>
+                            <div class="color-picker-container">
+                                <div class="color-preview" data-property="hoverTextColor" style="background-color: ${settings.hover?.textColor || '#ffffff'}"></div>
+                                <input type="text" class="color-input" name="hoverTextColor" value="${settings.hover?.textColor || '#ffffff'}" placeholder="#ffffff">
+                                <button class="color-clear" type="button" data-property="hoverTextColor">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                         </div>
                     ` : ''}
@@ -1789,43 +1845,101 @@ class KingsBuilderAdvanced extends KingsBuilder {
     
     // Initialize advanced color pickers
     initAdvancedColorPickers() {
-        const colorPickers = document.querySelectorAll('.color-picker');
-        colorPickers.forEach(picker => {
-            const wrapper = picker.closest('.color-picker-wrapper');
-            if (!wrapper) return;
+        const colorPreviews = document.querySelectorAll('.color-preview');
+        const colorInputs = document.querySelectorAll('.color-input');
+        const clearButtons = document.querySelectorAll('.color-clear');
+        
+        // Initialize Pickr color pickers
+        colorPreviews.forEach(preview => {
+            const property = preview.getAttribute('data-property');
+            const input = preview.parentElement.querySelector('.color-input');
+            const currentColor = input.value || '#000000';
             
-            const textInput = wrapper.querySelector('.color-input');
-            const clearBtn = wrapper.querySelector('.color-clear');
-            
-            // Sync color picker with text input
-            picker.addEventListener('change', (e) => {
-                e.stopPropagation();
-                if (textInput) textInput.value = picker.value;
-                this.updateElementStyleLive(picker.name, picker.value);
+            // Create Pickr instance
+            const pickr = Pickr.create({
+                el: preview,
+                theme: 'nano', // 'classic', 'monolith' or 'nano'
+                default: currentColor,
+                
+                components: {
+                    // Main components
+                    preview: true,
+                    opacity: true,
+                    hue: true,
+                    
+                    // Input / output Options
+                    interaction: {
+                        hex: true,
+                        rgba: true,
+                        hsla: true,
+                        hsva: true,
+                        cmyk: true,
+                        input: true,
+                        clear: false,
+                        save: true
+                    }
+                }
             });
             
-            if (textInput) {
-                textInput.addEventListener('input', (e) => {
-                    e.stopPropagation();
-                    if (this.isValidColor(textInput.value)) {
-                        picker.value = textInput.value;
-                        this.updateElementStyleLive(picker.name, textInput.value);
-                    }
-                });
-            }
+            // Handle color change
+            pickr.on('change', (color, source, instance) => {
+                const hexColor = color.toHEXA().toString();
+                input.value = hexColor;
+                preview.style.backgroundColor = hexColor;
+                this.updateElementStyleLive(property, hexColor);
+            });
             
-            // Clear color
-            if (clearBtn) {
-                clearBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    picker.value = '#ffffff';
-                    if (textInput) textInput.value = '';
-                    this.updateElementStyleLive(picker.name, '');
-                });
-            }
+            // Handle save
+            pickr.on('save', (color, instance) => {
+                if (color) {
+                    const hexColor = color.toHEXA().toString();
+                    input.value = hexColor;
+                    preview.style.backgroundColor = hexColor;
+                    this.updateElementStyleLive(property, hexColor);
+                }
+                pickr.hide();
+            });
+            
+            // Store pickr instance
+            preview.pickr = pickr;
         });
         
-        console.log(`🎨 Initialized ${colorPickers.length} color pickers`);
+        // Handle text input changes
+        colorInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const value = e.target.value;
+                const property = e.target.name;
+                const preview = e.target.parentElement.querySelector('.color-preview');
+                
+                if (this.isValidColor(value)) {
+                    preview.style.backgroundColor = value;
+                    if (preview.pickr) {
+                        preview.pickr.setColor(value);
+                    }
+                    this.updateElementStyleLive(property, value);
+                }
+            });
+        });
+        
+        // Handle clear buttons
+        clearButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const property = button.getAttribute('data-property');
+                const container = button.parentElement;
+                const input = container.querySelector('.color-input');
+                const preview = container.querySelector('.color-preview');
+                
+                input.value = '';
+                preview.style.backgroundColor = 'transparent';
+                if (preview.pickr) {
+                    preview.pickr.setColor('#ffffff');
+                }
+                this.updateElementStyleLive(property, '');
+            });
+        });
+        
+        console.log(`🎨 Initialized ${colorPreviews.length} advanced color pickers`);
     }
     
     // Check if color value is valid
