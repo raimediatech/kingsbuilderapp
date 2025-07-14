@@ -96,55 +96,131 @@ class KingsBuilderAdvanced extends KingsBuilder {
     setupElementInteractions() {
         console.log('🔧 Setting up element interactions...');
         
-        // Remove ALL existing click listeners from canvas
-        const canvas = document.querySelector('.canvas-frame');
-        if (canvas) {
-            // Clone the node to remove all event listeners
-            const newCanvas = canvas.cloneNode(true);
-            canvas.parentNode.replaceChild(newCanvas, canvas);
-            
-            // Add our event listeners to the new canvas
-            newCanvas.addEventListener('click', (e) => {
-                const element = e.target.closest('.kb-element');
-                if (element && element.hasAttribute('data-element-id')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const elementId = element.getAttribute('data-element-id');
-                    const elementData = this.elements.find(el => el.id === elementId);
-                    if (elementData) {
-                        console.log('🖱️ ELEMENT CLICKED:', elementData.type, elementId);
-                        this.selectElement(elementData);
-                    }
-                }
-            });
-            
-            newCanvas.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                const element = e.target.closest('.kb-element');
-                if (element && element.hasAttribute('data-element-id')) {
-                    const elementId = element.getAttribute('data-element-id');
-                    const elementData = this.elements.find(el => el.id === elementId);
-                    if (elementData) {
-                        console.log('🖱️ RIGHT-CLICK:', elementData.type, elementId);
-                        this.selectElement(elementData);
-                        this.showContextMenu(e, elementData);
-                    }
-                }
-            });
-            
-            console.log('✅ Element interactions set up on canvas');
+        // Setup interactions for canvas content
+        this.setupCanvasInteractions();
+        
+        // Setup drag and drop from element panel
+        this.setupElementPanelDragDrop();
+        
+        console.log('✅ All element interactions ready');
+    }
+    
+    // Setup canvas click interactions
+    setupCanvasInteractions() {
+        const canvas = document.querySelector('.canvas-content');
+        if (!canvas) {
+            console.warn('Canvas content not found');
+            return;
         }
         
-        // Also setup for any existing elements
-        document.querySelectorAll('.kb-element').forEach(element => {
-            element.style.cursor = 'pointer';
-            element.title = 'Click to edit, right-click for options';
+        // Use event delegation for all element interactions
+        canvas.addEventListener('click', (e) => {
+            const widget = e.target.closest('.elementor-widget');
+            const column = e.target.closest('.elementor-column');
+            const section = e.target.closest('.elementor-section');
+            
+            let targetElement = null;
+            
+            if (widget) {
+                targetElement = widget;
+            } else if (column) {
+                targetElement = column;
+            } else if (section) {
+                targetElement = section;
+            }
+            
+            if (targetElement && targetElement.hasAttribute('data-element-id')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const elementId = targetElement.getAttribute('data-element-id');
+                const elementData = this.elements.find(el => el.id === elementId);
+                
+                if (elementData) {
+                    console.log('🖱️ ELEMENT CLICKED:', elementData.type, elementId);
+                    this.selectElement(elementData);
+                }
+            }
+        });
+        
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            
+            const widget = e.target.closest('.elementor-widget');
+            const column = e.target.closest('.elementor-column');
+            const section = e.target.closest('.elementor-section');
+            
+            let targetElement = widget || column || section;
+            
+            if (targetElement && targetElement.hasAttribute('data-element-id')) {
+                const elementId = targetElement.getAttribute('data-element-id');
+                const elementData = this.elements.find(el => el.id === elementId);
+                
+                if (elementData) {
+                    console.log('🖱️ RIGHT-CLICK:', elementData.type, elementId);
+                    this.selectElement(elementData);
+                    this.showContextMenu(e, elementData);
+                }
+            }
         });
     }
     
-    // Enhanced element creation with container support
+    // Setup drag and drop from element panel
+    setupElementPanelDragDrop() {
+        const elementItems = document.querySelectorAll('.element-item[draggable="true"]');
+        
+        elementItems.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                const elementType = item.getAttribute('data-element');
+                e.dataTransfer.setData('text/plain', elementType);
+                console.log('🎯 Dragging element:', elementType);
+            });
+        });
+        
+        // Setup drop zones
+        const canvas = document.querySelector('.canvas-content');
+        if (canvas) {
+            canvas.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                canvas.classList.add('drag-over');
+            });
+            
+            canvas.addEventListener('dragleave', (e) => {
+                canvas.classList.remove('drag-over');
+            });
+            
+            canvas.addEventListener('drop', (e) => {
+                e.preventDefault();
+                canvas.classList.remove('drag-over');
+                
+                const elementType = e.dataTransfer.getData('text/plain');
+                if (elementType) {
+                    console.log('🎯 Dropping element:', elementType);
+                    
+                    // Create element with auto-container
+                    const newElement = this.createElement(elementType, {
+                        x: e.offsetX,
+                        y: e.offsetY
+                    });
+                    
+                    // Select the new element
+                    if (newElement) {
+                        setTimeout(() => {
+                            this.selectElement(newElement);
+                        }, 100);
+                    }
+                }
+            });
+        }
+    }
+    
+    // Enhanced element creation with auto-container like Elementor
     createElement(type, position = {}, parentContainer = null) {
+        // For widgets (not containers), auto-create section > column > widget structure
+        if (type !== 'container' && type !== 'section' && type !== 'column') {
+            return this.createElementWithAutoContainer(type, position);
+        }
+        
         const elementId = `kb_element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
         const advancedElements = {
@@ -474,6 +550,303 @@ class KingsBuilderAdvanced extends KingsBuilder {
         };
         
         return advancedElements[type] || super.createElement(type, position);
+    }
+    
+    // Create element with auto-container structure like Elementor
+    createElementWithAutoContainer(widgetType, position = {}) {
+        console.log(`🏗️ Creating ${widgetType} with auto-container structure...`);
+        
+        // Create section first
+        const sectionId = `section_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        const section = {
+            id: sectionId,
+            type: 'section',
+            content: '',
+            children: [],
+            settings: {
+                content: {
+                    structure: '100',
+                    contentWidth: 'boxed',
+                    gap: 'default',
+                    height: 'default'
+                },
+                style: {
+                    backgroundColor: '',
+                    backgroundImage: '',
+                    padding: '20px 0',
+                    margin: '0'
+                },
+                advanced: {
+                    cssId: '',
+                    cssClasses: '',
+                    customCSS: ''
+                }
+            },
+            position: position
+        };
+        
+        // Create column inside section
+        const columnId = `column_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        const column = {
+            id: columnId,
+            type: 'column',
+            content: '',
+            children: [],
+            settings: {
+                content: {
+                    width: '100',
+                    verticalAlign: 'top'
+                },
+                style: {
+                    backgroundColor: '',
+                    padding: '10px',
+                    margin: '0'
+                },
+                advanced: {
+                    cssId: '',
+                    cssClasses: '',
+                    customCSS: ''
+                }
+            },
+            parentId: sectionId
+        };
+        
+        // Create the actual widget
+        const widget = this.createWidget(widgetType, columnId);
+        
+        // Nest them properly
+        column.children.push(widget.id);
+        section.children.push(columnId);
+        
+        // Add to elements array
+        this.elements.push(section);
+        this.elements.push(column);
+        this.elements.push(widget);
+        
+        // Render the structure
+        this.renderElementorStructure(section, column, widget);
+        
+        // Save state
+        this.saveState();
+        
+        return widget; // Return the widget for selection
+    }
+    
+    // Create a widget element
+    createWidget(type, parentColumnId) {
+        const widgetId = `widget_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        
+        const widgets = {
+            heading: {
+                id: widgetId,
+                type: 'heading',
+                content: 'Your Heading',
+                settings: {
+                    content: {
+                        title: 'Your Heading',
+                        size: 'h2',
+                        link: ''
+                    },
+                    style: {
+                        textColor: '#333333',
+                        typography: {
+                            fontFamily: '',
+                            fontSize: '36px',
+                            fontWeight: '600',
+                            lineHeight: '1.2',
+                            letterSpacing: '0px',
+                            textTransform: 'none'
+                        },
+                        textAlign: 'left'
+                    },
+                    advanced: {
+                        margin: '0 0 20px 0',
+                        padding: '0',
+                        cssId: '',
+                        cssClasses: '',
+                        customCSS: ''
+                    }
+                },
+                parentId: parentColumnId
+            },
+            text: {
+                id: widgetId,
+                type: 'text',
+                content: 'Your text content here...',
+                settings: {
+                    content: {
+                        editor: 'Your text content here...'
+                    },
+                    style: {
+                        textColor: '#666666',
+                        typography: {
+                            fontFamily: '',
+                            fontSize: '16px',
+                            fontWeight: '400',
+                            lineHeight: '1.6',
+                            letterSpacing: '0px'
+                        },
+                        textAlign: 'left'
+                    },
+                    advanced: {
+                        margin: '0 0 20px 0',
+                        padding: '0',
+                        cssId: '',
+                        cssClasses: '',
+                        customCSS: ''
+                    }
+                },
+                parentId: parentColumnId
+            },
+            image: {
+                id: widgetId,
+                type: 'image',
+                content: 'https://via.placeholder.com/600x400',
+                settings: {
+                    content: {
+                        image: 'https://via.placeholder.com/600x400',
+                        imageSize: 'large',
+                        alignment: 'center',
+                        caption: '',
+                        link: ''
+                    },
+                    style: {
+                        width: '100%',
+                        height: 'auto',
+                        borderRadius: '0px',
+                        opacity: '1'
+                    },
+                    advanced: {
+                        margin: '0 0 20px 0',
+                        padding: '0',
+                        cssId: '',
+                        cssClasses: '',
+                        customCSS: ''
+                    }
+                },
+                parentId: parentColumnId
+            },
+            button: {
+                id: widgetId,
+                type: 'button',
+                content: 'Click Here',
+                settings: {
+                    content: {
+                        text: 'Click Here',
+                        link: '#',
+                        size: 'md',
+                        icon: ''
+                    },
+                    style: {
+                        backgroundColor: '#007cba',
+                        textColor: '#ffffff',
+                        borderRadius: '5px',
+                        padding: '12px 24px',
+                        typography: {
+                            fontSize: '16px',
+                            fontWeight: '500'
+                        },
+                        hover: {
+                            backgroundColor: '#005a87',
+                            textColor: '#ffffff'
+                        }
+                    },
+                    advanced: {
+                        margin: '0 0 20px 0',
+                        padding: '0',
+                        cssId: '',
+                        cssClasses: '',
+                        customCSS: ''
+                    }
+                },
+                parentId: parentColumnId
+            }
+        };
+        
+        return widgets[type] || widgets.text;
+    }
+    
+    // Render the Elementor-style structure
+    renderElementorStructure(section, column, widget) {
+        const canvas = document.querySelector('.canvas-content');
+        if (!canvas) return;
+        
+        // Create section element
+        const sectionEl = document.createElement('div');
+        sectionEl.className = 'elementor-section';
+        sectionEl.setAttribute('data-element-id', section.id);
+        sectionEl.setAttribute('data-element-type', 'section');
+        
+        // Create column element
+        const columnEl = document.createElement('div');
+        columnEl.className = 'elementor-column elementor-col-100';
+        columnEl.setAttribute('data-element-id', column.id);
+        columnEl.setAttribute('data-element-type', 'column');
+        
+        // Create widget element
+        const widgetEl = document.createElement('div');
+        widgetEl.className = `elementor-widget elementor-widget-${widget.type} kb-element`;
+        widgetEl.setAttribute('data-element-id', widget.id);
+        widgetEl.setAttribute('data-element-type', widget.type);
+        
+        // Add widget content
+        this.renderWidgetContent(widgetEl, widget);
+        
+        // Nest the structure
+        columnEl.appendChild(widgetEl);
+        sectionEl.appendChild(columnEl);
+        canvas.appendChild(sectionEl);
+        
+        console.log('✅ Elementor structure rendered');
+    }
+    
+    // Render widget content
+    renderWidgetContent(element, widget) {
+        const widgetInner = document.createElement('div');
+        widgetInner.className = 'elementor-widget-container';
+        
+        switch (widget.type) {
+            case 'heading':
+                const heading = document.createElement('h2');
+                heading.textContent = widget.content || 'Your Heading';
+                heading.style.color = widget.settings?.style?.textColor || '#333333';
+                heading.style.fontSize = widget.settings?.style?.typography?.fontSize || '36px';
+                heading.style.fontWeight = widget.settings?.style?.typography?.fontWeight || '600';
+                widgetInner.appendChild(heading);
+                break;
+                
+            case 'text':
+                const text = document.createElement('div');
+                text.innerHTML = widget.content || 'Your text content here...';
+                text.style.color = widget.settings?.style?.textColor || '#666666';
+                text.style.fontSize = widget.settings?.style?.typography?.fontSize || '16px';
+                widgetInner.appendChild(text);
+                break;
+                
+            case 'image':
+                const img = document.createElement('img');
+                img.src = widget.content || 'https://via.placeholder.com/600x400';
+                img.style.width = widget.settings?.style?.width || '100%';
+                img.style.height = 'auto';
+                widgetInner.appendChild(img);
+                break;
+                
+            case 'button':
+                const button = document.createElement('a');
+                button.href = widget.settings?.content?.link || '#';
+                button.textContent = widget.content || 'Click Here';
+                button.className = 'elementor-button';
+                button.style.backgroundColor = widget.settings?.style?.backgroundColor || '#007cba';
+                button.style.color = widget.settings?.style?.textColor || '#ffffff';
+                button.style.padding = widget.settings?.style?.padding || '12px 24px';
+                button.style.borderRadius = widget.settings?.style?.borderRadius || '5px';
+                button.style.textDecoration = 'none';
+                button.style.display = 'inline-block';
+                widgetInner.appendChild(button);
+                break;
+        }
+        
+        element.appendChild(widgetInner);
     }
     
     // Initialize sortable elements for drag & drop reordering
