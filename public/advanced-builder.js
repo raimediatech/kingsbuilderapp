@@ -2897,6 +2897,382 @@ class KingsBuilderAdvanced extends KingsBuilder {
         return defaults[type] || {};
     }
     
+    // ================== ELEMENT HIERARCHY MANAGEMENT ==================
+    
+    // Smart nesting validation - prevents invalid element placement
+    validateElementPlacement(elementType, targetType, targetElement) {
+        console.log('🔍 Validating placement:', elementType, 'into', targetType);
+        
+        // Define valid nesting rules like Elementor
+        const nestingRules = {
+            'section': {
+                canContain: ['column'],
+                cannotContain: ['widget', 'section', 'container'],
+                needsWrapper: false
+            },
+            'column': {
+                canContain: ['widget', 'container'],
+                cannotContain: ['section', 'column'],
+                needsWrapper: false
+            },
+            'container': {
+                canContain: ['widget', 'container'],
+                cannotContain: ['section', 'column'],
+                needsWrapper: false
+            },
+            'flexbox-container': {
+                canContain: ['widget', 'container'],
+                cannotContain: ['section', 'column'],
+                needsWrapper: false
+            },
+            'grid-container': {
+                canContain: ['widget', 'container'],
+                cannotContain: ['section', 'column'],
+                needsWrapper: false
+            },
+            'widget': {
+                canContain: [],
+                cannotContain: ['*'],
+                needsWrapper: true  // Widgets need Section > Column wrapper
+            }
+        };
+        
+        // Get element category
+        const elementCategory = this.getElementCategory(elementType);
+        const targetCategory = this.getElementCategory(targetType);
+        
+        // Check if target can contain this element type
+        const targetRules = nestingRules[targetCategory] || nestingRules[targetType];
+        if (!targetRules) {
+            console.warn('⚠️ No nesting rules for target:', targetType);
+            return { valid: true, needsWrapper: false };
+        }
+        
+        // Check if explicitly forbidden
+        if (targetRules.cannotContain.includes(elementCategory) || 
+            targetRules.cannotContain.includes('*')) {
+            return { 
+                valid: false, 
+                reason: `${elementType} cannot be placed inside ${targetType}`,
+                needsWrapper: targetRules.needsWrapper
+            };
+        }
+        
+        // Check if allowed
+        if (targetRules.canContain.includes(elementCategory)) {
+            return { valid: true, needsWrapper: false };
+        }
+        
+        // Default: need wrapper for widgets
+        if (elementCategory === 'widget') {
+            return { 
+                valid: true, 
+                needsWrapper: true,
+                suggestedWrapper: 'section'
+            };
+        }
+        
+        return { valid: true, needsWrapper: false };
+    }
+    
+    // Get element category (widget, container, section, etc.)
+    getElementCategory(elementType) {
+        const categories = {
+            // Layout containers
+            'section': 'section',
+            'enhanced-section': 'section',
+            'column': 'column',
+            'container': 'container',
+            'flexbox-container': 'container',
+            'grid-container': 'container',
+            
+            // Widgets
+            'heading': 'widget',
+            'text': 'widget',
+            'image': 'widget',
+            'button': 'widget',
+            'video': 'widget',
+            'spacer': 'widget',
+            'divider': 'widget'
+        };
+        
+        return categories[elementType] || 'widget';
+    }
+    
+    // Auto-fix invalid structure
+    fixInvalidStructure(elementData, targetElement) {
+        console.log('🔧 Auto-fixing invalid structure for:', elementData.type);
+        
+        const validation = this.validateElementPlacement(
+            elementData.type, 
+            targetElement.getAttribute('data-element_type'),
+            targetElement
+        );
+        
+        if (!validation.valid && validation.needsWrapper) {
+            console.log('🏗️ Creating wrapper structure...');
+            return this.createWrapperStructure(elementData, validation.suggestedWrapper);
+        }
+        
+        return elementData;
+    }
+    
+    // Create wrapper structure for elements that need it
+    createWrapperStructure(elementData, wrapperType = 'section') {
+        console.log('🎁 Creating wrapper structure:', wrapperType, 'for', elementData.type);
+        
+        if (wrapperType === 'section') {
+            // Create Section > Column > Widget structure
+            const sectionId = `section_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const columnId = `column_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            return {
+                id: sectionId,
+                type: 'enhanced-section',
+                children: [{
+                    id: columnId,
+                    type: 'column',
+                    settings: {
+                        _column_size: 100,
+                        _inline_size: null
+                    },
+                    children: [elementData]
+                }],
+                settings: {
+                    stretch_section: 'section-stretched',
+                    gap: 'default',
+                    structure: '100'
+                }
+            };
+        }
+        
+        return elementData;
+    }
+    
+    // Validate and repair entire page structure
+    validatePageStructure() {
+        console.log('🔍 Validating entire page structure...');
+        
+        const canvas = document.querySelector('.canvas-content');
+        if (!canvas) return;
+        
+        const issues = [];
+        const elements = canvas.querySelectorAll('.elementor-element');
+        
+        elements.forEach(element => {
+            const elementType = element.getAttribute('data-element_type');
+            const parentElement = element.parentElement.closest('.elementor-element');
+            
+            if (parentElement) {
+                const parentType = parentElement.getAttribute('data-element_type');
+                const validation = this.validateElementPlacement(elementType, parentType, parentElement);
+                
+                if (!validation.valid) {
+                    issues.push({
+                        element: element,
+                        elementType: elementType,
+                        parentType: parentType,
+                        issue: validation.reason,
+                        fixable: validation.needsWrapper
+                    });
+                }
+            }
+        });
+        
+        if (issues.length > 0) {
+            console.warn('⚠️ Structure issues found:', issues);
+            this.showStructureIssues(issues);
+        } else {
+            console.log('✅ Page structure is valid');
+        }
+        
+        return issues;
+    }
+    
+    // Show structure issues to user
+    showStructureIssues(issues) {
+        const notification = document.createElement('div');
+        notification.className = 'elementor-notification elementor-notification-warning structure-issues';
+        notification.style.cssText = `
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background: var(--e-a-bg-default);
+            border: var(--e-a-border);
+            border-left: 4px solid var(--e-a-color-warning);
+            border-radius: var(--e-a-border-radius);
+            padding: 16px;
+            box-shadow: var(--e-a-popover-shadow);
+            z-index: 10002;
+            max-width: 300px;
+            animation: slideInRight 0.3s ease;
+        `;
+        
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <i class="fas fa-exclamation-triangle" style="color: var(--e-a-color-warning);"></i>
+                <strong>Structure Issues Found</strong>
+            </div>
+            <div style="font-size: 13px; margin-bottom: 12px;">
+                Found ${issues.length} structure issue${issues.length > 1 ? 's' : ''} that may affect layout.
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="auto-fix-btn" style="
+                    background: var(--e-a-color-warning);
+                    color: white;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                ">Auto Fix</button>
+                <button class="dismiss-btn" style="
+                    background: transparent;
+                    color: var(--e-a-color-txt);
+                    border: 1px solid var(--e-a-border-color);
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                ">Dismiss</button>
+            </div>
+        `;
+        
+        // Handle buttons
+        notification.querySelector('.auto-fix-btn').addEventListener('click', () => {
+            this.autoFixStructureIssues(issues);
+            notification.remove();
+        });
+        
+        notification.querySelector('.dismiss-btn').addEventListener('click', () => {
+            notification.remove();
+        });
+        
+        document.body.appendChild(notification);
+        
+        // Auto-dismiss after 10 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 10000);
+    }
+    
+    // Auto-fix structure issues
+    autoFixStructureIssues(issues) {
+        console.log('🔧 Auto-fixing structure issues...');
+        
+        let fixedCount = 0;
+        
+        issues.forEach(issue => {
+            if (issue.fixable) {
+                try {
+                    // Create proper wrapper structure
+                    const element = issue.element;
+                    const elementData = this.getElementDataFromDOM(element);
+                    
+                    if (elementData) {
+                        const fixedStructure = this.createWrapperStructure(elementData);
+                        
+                        // Replace element with fixed structure
+                        const newElement = this.renderElementorStructure(fixedStructure);
+                        element.parentElement.replaceChild(newElement, element);
+                        
+                        fixedCount++;
+                        console.log('✅ Fixed structure for:', issue.elementType);
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to fix structure for:', issue.elementType, error);
+                }
+            }
+        });
+        
+        // Show success notification
+        this.showNotification(`Fixed ${fixedCount} structure issue${fixedCount > 1 ? 's' : ''}`, 'success');
+        
+        // Re-validate after fixes
+        setTimeout(() => {
+            this.validatePageStructure();
+        }, 1000);
+    }
+    
+    // Get element data from DOM element
+    getElementDataFromDOM(domElement) {
+        const elementId = domElement.getAttribute('data-id');
+        const elementType = domElement.getAttribute('data-element_type');
+        
+        if (!elementId || !elementType) return null;
+        
+        // Find in elements array
+        const findElement = (elements) => {
+            for (const element of elements) {
+                if (element.id === elementId) {
+                    return element;
+                }
+                if (element.children) {
+                    const found = findElement(element.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+        
+        return findElement(this.elements || []);
+    }
+    
+    // Smart element insertion with hierarchy validation
+    smartInsertElement(elementType, targetElement, position = 'append') {
+        console.log('🎯 Smart insert:', elementType, 'into', targetElement.getAttribute('data-element_type'));
+        
+        const targetType = targetElement.getAttribute('data-element_type');
+        const validation = this.validateElementPlacement(elementType, targetType, targetElement);
+        
+        if (!validation.valid) {
+            console.warn('⚠️ Invalid placement, creating auto-structure');
+            
+            if (validation.needsWrapper) {
+                // Create with auto-structure
+                return this.createElementWithAutoStructure(elementType, { x: 0, y: 0 });
+            } else {
+                this.showNotification(validation.reason, 'warning');
+                return null;
+            }
+        }
+        
+        // Valid placement - create element directly
+        const elementData = this.createElement(elementType);
+        if (elementData) {
+            // Insert into target
+            this.insertElementIntoTarget(elementData, targetElement, position);
+            return elementData;
+        }
+        
+        return null;
+    }
+    
+    // Insert element into target container
+    insertElementIntoTarget(elementData, targetElement, position) {
+        const targetId = targetElement.getAttribute('data-id');
+        const targetElementData = this.getElementDataFromDOM(targetElement);
+        
+        if (targetElementData) {
+            if (!targetElementData.children) {
+                targetElementData.children = [];
+            }
+            
+            if (position === 'append') {
+                targetElementData.children.push(elementData);
+            } else if (position === 'prepend') {
+                targetElementData.children.unshift(elementData);
+            }
+            
+            // Re-render target element
+            this.renderElement(targetElementData);
+            
+            console.log('✅ Element inserted successfully');
+        }
+    }
+    
     // Show REAL Elementor context menu on right-click
     showElementorContextMenu(event, elementData) {
         // Remove any existing context menu
