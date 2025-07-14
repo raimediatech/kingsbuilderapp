@@ -1100,6 +1100,170 @@
     border-left-color: var(--e-a-color-danger);
 }
 
+/* ================== SMART DRAG & DROP VISUAL ZONES ================== */
+
+/* Dragging state */
+.elementor-dragging {
+    cursor: grabbing !important;
+}
+
+.elementor-dragging * {
+    cursor: grabbing !important;
+}
+
+/* Drop area active state */
+.elementor-drop-area-active {
+    position: relative;
+}
+
+.elementor-drop-area-active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(113, 215, 247, 0.1);
+    border: 2px dashed #71d7f7;
+    border-radius: 8px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Drop zone indicators */
+.elementor-drop-zone-indicator {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    height: 10px;
+    background: linear-gradient(90deg, #71d7f7, #93003c);
+    border-radius: 5px;
+    z-index: 1000;
+    opacity: 0.9;
+    pointer-events: none;
+    animation: pulseDropZone 1.5s ease-in-out infinite;
+    box-shadow: 0 2px 8px rgba(113, 215, 247, 0.3);
+}
+
+.elementor-drop-zone-indicator::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: #71d7f7;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(113, 215, 247, 0.3);
+}
+
+.elementor-drop-zone-indicator::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: #93003c;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(147, 0, 60, 0.3);
+}
+
+@keyframes pulseDropZone {
+    0%, 100% {
+        opacity: 0.7;
+        transform: scaleY(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scaleY(1.2);
+    }
+}
+
+/* Canvas drag over state */
+.canvas-content.elementor-drop-area-active {
+    background: linear-gradient(45deg, 
+        rgba(113, 215, 247, 0.1) 25%, 
+        transparent 25%, 
+        transparent 75%, 
+        rgba(113, 215, 247, 0.1) 75%
+    );
+    background-size: 20px 20px;
+}
+
+/* Widget being dragged preview */
+.element-item.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+/* Smart insertion indicators */
+.elementor-insert-indicator {
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    background: #71d7f7;
+    z-index: 1001;
+    border-radius: 2px;
+    animation: insertIndicatorPulse 1s ease-in-out infinite;
+}
+
+.elementor-insert-indicator::before {
+    content: '+ Drop Here';
+    position: absolute;
+    left: 50%;
+    top: -15px;
+    transform: translateX(-50%);
+    background: #71d7f7;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+@keyframes insertIndicatorPulse {
+    0%, 100% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 10px rgba(113, 215, 247, 0.6);
+    }
+}
+
+/* Empty canvas drop hint */
+.canvas-content:empty.elementor-drop-area-active::before {
+    content: 'Drop your first element here to start building';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #71d7f7;
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Section hover states during drag */
+.elementor-section.drop-target-active {
+    outline: 2px solid #71d7f7;
+    outline-offset: 2px;
+    background: rgba(113, 215, 247, 0.05);
+}
+
+/* Column hover states during drag */
+.elementor-column.drop-target-active {
+    outline: 2px solid #93003c;
+    outline-offset: 2px;
+    background: rgba(147, 0, 60, 0.05);
+}
+
 /* Elementor-style Structure */
 .elementor-section {
     width: 100%;

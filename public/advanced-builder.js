@@ -172,7 +172,7 @@ class KingsBuilderAdvanced extends KingsBuilder {
         });
     }
     
-    // Setup drag and drop from element panel
+    // Setup SMART drag and drop with auto-structure creation
     setupElementPanelDragDrop() {
         const elementItems = document.querySelectorAll('.element-item[draggable="true"]');
         
@@ -181,42 +181,30 @@ class KingsBuilderAdvanced extends KingsBuilder {
                 const elementType = item.getAttribute('data-element');
                 e.dataTransfer.setData('text/plain', elementType);
                 console.log('🎯 Dragging element:', elementType);
+                
+                // Add dragging class for visual feedback
+                document.body.classList.add('elementor-dragging');
+                
+                // Store element being dragged
+                this.draggedElementType = elementType;
             });
         });
         
-        // Setup drop zones
+        // Setup SMART drop zones with auto-structure creation
         const canvas = document.querySelector('.canvas-content');
         if (canvas) {
             canvas.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                canvas.classList.add('drag-over');
+                this.handleSmartDragOver(e);
             });
             
             canvas.addEventListener('dragleave', (e) => {
-                canvas.classList.remove('drag-over');
+                this.handleSmartDragLeave(e);
             });
             
             canvas.addEventListener('drop', (e) => {
                 e.preventDefault();
-                canvas.classList.remove('drag-over');
-                
-                const elementType = e.dataTransfer.getData('text/plain');
-                if (elementType) {
-                    console.log('🎯 Dropping element:', elementType);
-                    
-                    // Create element with auto-container
-                    const newElement = this.createElement(elementType, {
-                        x: e.offsetX,
-                        y: e.offsetY
-                    });
-                    
-                    // Select the new element
-                    if (newElement) {
-                        setTimeout(() => {
-                            this.selectElement(newElement);
-                        }, 100);
-                    }
-                }
+                this.handleSmartDrop(e);
             });
         }
     }
@@ -2610,6 +2598,303 @@ class KingsBuilderAdvanced extends KingsBuilder {
         });
         
         console.log(`🎨 Fallback Elementor color pickers initialized for ${colorPickers.length} elements`);
+    }
+    
+    // ================== SMART DRAG & DROP SYSTEM ==================
+    
+    // Handle smart drag over with visual drop zones
+    handleSmartDragOver(e) {
+        e.preventDefault();
+        
+        const canvas = document.querySelector('.canvas-content');
+        const dropTarget = this.findSmartDropTarget(e.target);
+        
+        // Show visual drop zones
+        this.showVisualDropZones(e, dropTarget);
+        
+        // Add drag over class
+        canvas.classList.add('elementor-drop-area-active');
+    }
+    
+    // Handle smart drag leave
+    handleSmartDragLeave(e) {
+        const canvas = document.querySelector('.canvas-content');
+        
+        // Only remove if leaving canvas completely
+        if (!canvas.contains(e.relatedTarget)) {
+            this.hideVisualDropZones();
+            canvas.classList.remove('elementor-drop-area-active');
+            document.body.classList.remove('elementor-dragging');
+        }
+    }
+    
+    // Handle smart drop with auto-structure creation
+    handleSmartDrop(e) {
+        e.preventDefault();
+        
+        const canvas = document.querySelector('.canvas-content');
+        const elementType = e.dataTransfer.getData('text/plain');
+        
+        if (!elementType) return;
+        
+        console.log('🎯 SMART DROP: Creating', elementType, 'with auto-structure');
+        
+        // Clean up drag state
+        this.hideVisualDropZones();
+        canvas.classList.remove('elementor-drop-area-active');
+        document.body.classList.remove('elementor-dragging');
+        
+        // Find exact drop position
+        const dropPosition = this.calculateDropPosition(e);
+        
+        // Create element with auto-structure (Section → Column → Widget)
+        const newElement = this.createElementWithAutoStructure(elementType, dropPosition);
+        
+        // Select the new element
+        if (newElement) {
+            setTimeout(() => {
+                this.selectElement(newElement);
+                console.log('✅ Element created and selected:', newElement);
+            }, 100);
+        }
+    }
+    
+    // Create element with automatic Section → Column → Widget structure
+    createElementWithAutoStructure(elementType, position) {
+        console.log('🏗️ Creating auto-structure for widget:', elementType);
+        
+        const canvas = document.querySelector('.canvas-content');
+        if (!canvas) return null;
+        
+        // Check if canvas is empty or if we need to insert
+        const existingSections = canvas.querySelectorAll('.elementor-section');
+        const insertPoint = this.findBestInsertionPoint(position, existingSections);
+        
+        // Generate unique IDs
+        const sectionId = `section_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const columnId = `column_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const widgetId = `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Create the full structure data
+        const sectionData = {
+            id: sectionId,
+            type: 'section',
+            children: [{
+                id: columnId,
+                type: 'column',
+                settings: {
+                    _column_size: 100,
+                    _inline_size: null
+                },
+                children: [{
+                    id: widgetId,
+                    type: elementType,
+                    content: this.getDefaultWidgetContent(elementType),
+                    settings: this.getDefaultWidgetSettings(elementType)
+                }]
+            }],
+            settings: {
+                stretch_section: 'section-stretched',
+                gap: 'default',
+                structure: '100'
+            }
+        };
+        
+        // Add to elements array
+        this.elements.push(sectionData);
+        
+        // Render the complete structure
+        const sectionElement = this.renderElementorStructure(sectionData);
+        
+        // Insert at the correct position
+        if (insertPoint.nextSibling) {
+            canvas.insertBefore(sectionElement, insertPoint.nextSibling);
+        } else {
+            canvas.appendChild(sectionElement);
+        }
+        
+        console.log('✅ Auto-structure created:', {
+            section: sectionId,
+            column: columnId,
+            widget: widgetId,
+            type: elementType
+        });
+        
+        // Return the widget element (the actual element user wanted to create)
+        return sectionData.children[0].children[0];
+    }
+    
+    // Find the best insertion point for new elements
+    findBestInsertionPoint(position, existingSections) {
+        if (existingSections.length === 0) {
+            // Empty canvas - insert at beginning
+            return { nextSibling: null };
+        }
+        
+        // Find closest section based on Y position
+        let closestSection = null;
+        let minDistance = Infinity;
+        
+        existingSections.forEach(section => {
+            const rect = section.getBoundingClientRect();
+            const sectionY = rect.top + rect.height / 2;
+            const distance = Math.abs(position.y - sectionY);
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestSection = section;
+            }
+        });
+        
+        if (closestSection) {
+            const rect = closestSection.getBoundingClientRect();
+            const canvasRect = document.querySelector('.canvas-content').getBoundingClientRect();
+            const relativeY = position.y - canvasRect.top;
+            const sectionY = rect.top - canvasRect.top + rect.height / 2;
+            
+            // Insert before if drop point is above section center
+            if (relativeY < sectionY) {
+                return { nextSibling: closestSection };
+            } else {
+                return { nextSibling: closestSection.nextSibling };
+            }
+        }
+        
+        return { nextSibling: null };
+    }
+    
+    // Show visual drop zones like Elementor
+    showVisualDropZones(e, dropTarget) {
+        // Remove existing drop zones
+        this.hideVisualDropZones();
+        
+        const canvas = document.querySelector('.canvas-content');
+        const canvasRect = canvas.getBoundingClientRect();
+        
+        // Calculate drop zone positions
+        const mouseY = e.clientY - canvasRect.top;
+        const sections = canvas.querySelectorAll('.elementor-section');
+        
+        sections.forEach((section, index) => {
+            const rect = section.getBoundingClientRect();
+            const sectionTop = rect.top - canvasRect.top;
+            const sectionBottom = rect.bottom - canvasRect.top;
+            
+            // Create drop zone above section
+            this.createDropZone(sectionTop - 5, index);
+            
+            // Create drop zone after last section
+            if (index === sections.length - 1) {
+                this.createDropZone(sectionBottom + 5, index + 1);
+            }
+        });
+        
+        // If no sections, create drop zone at mouse position
+        if (sections.length === 0) {
+            this.createDropZone(mouseY, 0);
+        }
+    }
+    
+    // Create a visual drop zone indicator
+    createDropZone(y, index) {
+        const canvas = document.querySelector('.canvas-content');
+        const dropZone = document.createElement('div');
+        
+        dropZone.className = 'elementor-drop-zone-indicator';
+        dropZone.style.cssText = `
+            position: absolute;
+            top: ${y}px;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: #71d7f7;
+            border-radius: 3px;
+            z-index: 1000;
+            margin: 0 20px;
+            opacity: 0.8;
+            pointer-events: none;
+        `;
+        
+        dropZone.setAttribute('data-insert-index', index);
+        canvas.appendChild(dropZone);
+    }
+    
+    // Hide all visual drop zones
+    hideVisualDropZones() {
+        const dropZones = document.querySelectorAll('.elementor-drop-zone-indicator');
+        dropZones.forEach(zone => zone.remove());
+    }
+    
+    // Calculate exact drop position
+    calculateDropPosition(e) {
+        const canvas = document.querySelector('.canvas-content');
+        const canvasRect = canvas.getBoundingClientRect();
+        
+        return {
+            x: e.clientX - canvasRect.left,
+            y: e.clientY - canvasRect.top
+        };
+    }
+    
+    // Find smart drop target
+    findSmartDropTarget(target) {
+        // Walk up the DOM to find valid drop targets
+        let current = target;
+        
+        while (current && current !== document.body) {
+            if (current.classList.contains('elementor-section') ||
+                current.classList.contains('elementor-column') ||
+                current.classList.contains('canvas-content')) {
+                return current;
+            }
+            current = current.parentElement;
+        }
+        
+        return document.querySelector('.canvas-content');
+    }
+    
+    // Get default widget content
+    getDefaultWidgetContent(type) {
+        const defaults = {
+            heading: 'Add Your Heading Text Here',
+            text: 'Add Your Text Here',
+            button: 'Click Here',
+            image: 'https://via.placeholder.com/400x300',
+            spacer: '',
+            divider: ''
+        };
+        
+        return defaults[type] || `Default ${type} content`;
+    }
+    
+    // Get default widget settings
+    getDefaultWidgetSettings(type) {
+        const defaults = {
+            heading: {
+                title: 'Add Your Heading Text Here',
+                size: 'default',
+                header_size: 'h2',
+                align: 'left'
+            },
+            text: {
+                editor: 'Add Your Text Here',
+                drop_cap: 'none'
+            },
+            button: {
+                text: 'Click Here',
+                link: { url: '#', is_external: false, nofollow: false },
+                align: 'left',
+                size: 'sm',
+                type: 'default'
+            },
+            image: {
+                image: { url: 'https://via.placeholder.com/400x300' },
+                image_size: 'full',
+                align: 'center'
+            }
+        };
+        
+        return defaults[type] || {};
     }
     
     // Show REAL Elementor context menu on right-click
