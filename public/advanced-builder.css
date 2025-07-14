@@ -1264,6 +1264,330 @@
     background: rgba(147, 0, 60, 0.05);
 }
 
+/* ================== MODERN CONTAINER SYSTEMS ================== */
+
+/* Flexbox Container Styles */
+.elementor-container-flexbox {
+    border: 2px dashed transparent;
+    transition: border-color 0.3s ease;
+    position: relative;
+    background: #f8f9fa;
+    border-radius: 8px;
+    min-height: 100px;
+}
+
+.elementor-container-flexbox:hover {
+    border-color: #71d7f7;
+}
+
+.elementor-container-flexbox.flexbox-drop-active {
+    border-color: #71d7f7;
+    background: rgba(113, 215, 247, 0.1);
+    box-shadow: 0 0 20px rgba(113, 215, 247, 0.3);
+}
+
+/* Grid Container Styles */
+.elementor-container-grid {
+    border: 2px dashed transparent;
+    transition: border-color 0.3s ease;
+    position: relative;
+    background: #f1f3f4;
+    border-radius: 8px;
+    min-height: 100px;
+}
+
+.elementor-container-grid:hover {
+    border-color: #93003c;
+}
+
+.elementor-container-grid.grid-drop-active {
+    border-color: #93003c;
+    background: rgba(147, 0, 60, 0.1);
+    box-shadow: 0 0 20px rgba(147, 0, 60, 0.3);
+}
+
+/* Enhanced Section Styles */
+.elementor-section {
+    position: relative;
+    background: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.elementor-section:hover > .elementor-element-overlay {
+    opacity: 1;
+}
+
+.elementor-column {
+    position: relative;
+    min-height: 50px;
+}
+
+.elementor-column-wrap {
+    height: 100%;
+}
+
+.elementor-widget-wrap {
+    min-height: 50px;
+    position: relative;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.elementor-widget-wrap.column-drop-active {
+    background: rgba(113, 215, 247, 0.1);
+    border: 2px dashed #71d7f7;
+}
+
+/* Empty View Styles */
+.elementor-empty-view {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.elementor-empty-view:hover {
+    border-color: #71d7f7;
+    background: rgba(113, 215, 247, 0.05);
+}
+
+.elementor-empty-view-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.elementor-empty-view-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.elementor-empty-view-description {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* Control Sections */
+.elementor-control-section {
+    margin-bottom: 20px;
+    border: 1px solid var(--e-a-border-color);
+    border-radius: var(--e-a-border-radius);
+    overflow: hidden;
+}
+
+.elementor-control-section-title {
+    padding: 12px 16px;
+    background: var(--e-a-bg-hover);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.elementor-control-section-title:hover {
+    background: var(--e-a-bg-active);
+}
+
+.elementor-control-section-title i {
+    font-size: 16px;
+    color: var(--e-a-color-primary);
+}
+
+/* Choice Controls */
+.elementor-choices {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.elementor-choices input[type="radio"] {
+    display: none;
+}
+
+.elementor-choices label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--e-a-border-color);
+    border-radius: var(--e-a-border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--e-a-bg-default);
+}
+
+.elementor-choices label:hover {
+    border-color: var(--e-a-color-primary);
+    background: var(--e-a-bg-hover);
+}
+
+.elementor-choices input[type="radio"]:checked + label {
+    border-color: var(--e-a-color-primary);
+    background: var(--e-a-color-primary);
+    color: white;
+}
+
+/* Structure Presets */
+.elementor-structure-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.elementor-structure-presets button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 40px;
+    border: 2px solid var(--e-a-border-color);
+    border-radius: var(--e-a-border-radius);
+    background: var(--e-a-bg-default);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.elementor-structure-presets button:hover {
+    border-color: var(--e-a-color-primary);
+    background: var(--e-a-bg-hover);
+}
+
+.elementor-structure-presets button.active {
+    border-color: var(--e-a-color-primary);
+    background: var(--e-a-color-primary);
+    color: white;
+}
+
+/* Grid Presets */
+.grid-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.grid-presets button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 40px;
+    border: 2px solid var(--e-a-border-color);
+    border-radius: var(--e-a-border-radius);
+    background: var(--e-a-bg-default);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.grid-presets button:hover {
+    border-color: var(--e-a-color-primary);
+    background: var(--e-a-bg-hover);
+}
+
+.grid-presets button::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.grid-presets button:hover::after {
+    opacity: 1;
+}
+
+/* Slider Controls */
+.elementor-slider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.elementor-slider-input {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--e-a-bg-hover);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.elementor-slider-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--e-a-color-primary);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.elementor-slider-input::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--e-a-color-primary);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.elementor-slider-value {
+    min-width: 50px;
+    text-align: right;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--e-a-color-txt-muted);
+}
+
+/* Media Upload Control */
+.elementor-control-media-area {
+    border: 2px dashed var(--e-a-border-color);
+    border-radius: var(--e-a-border-radius);
+    padding: 20px;
+    text-align: center;
+    background: var(--e-a-bg-hover);
+    transition: all 0.3s ease;
+}
+
+.elementor-control-media-area:hover {
+    border-color: var(--e-a-color-primary);
+    background: var(--e-a-bg-active);
+}
+
+.elementor-control-media-upload-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--e-a-color-txt-muted);
+}
+
+.elementor-control-media-upload-button i {
+    font-size: 24px;
+}
+
+/* Conditional Controls */
+.elementor-control[data-condition] {
+    display: none;
+}
+
+.elementor-control[data-condition].condition-met {
+    display: block;
+}
+
 /* Elementor-style Structure */
 .elementor-section {
     width: 100%;

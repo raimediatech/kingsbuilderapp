@@ -143,17 +143,29 @@
                             </div>
                             <div class="category-content">
                                 <div class="elements-grid">
-                                    <div class="element-item" data-element="section" draggable="true">
+                                    <div class="element-item" data-element="enhanced-section" draggable="true">
                                         <div class="element-icon">
-                                            <i class="fas fa-layer-group"></i>
+                                            <i class="eicon-columns"></i>
                                         </div>
                                         <span class="element-title">Section</span>
+                                    </div>
+                                    <div class="element-item" data-element="flexbox-container" draggable="true">
+                                        <div class="element-icon">
+                                            <i class="eicon-flex-container"></i>
+                                        </div>
+                                        <span class="element-title">Flexbox Container</span>
+                                    </div>
+                                    <div class="element-item" data-element="grid-container" draggable="true">
+                                        <div class="element-icon">
+                                            <i class="eicon-container-grid"></i>
+                                        </div>
+                                        <span class="element-title">Grid Container</span>
                                     </div>
                                     <div class="element-item" data-element="container" draggable="true">
                                         <div class="element-icon">
                                             <i class="fas fa-square"></i>
                                         </div>
-                                        <span class="element-title">Container</span>
+                                        <span class="element-title">Basic Container</span>
                                     </div>
                                     <div class="element-item" data-element="columns" draggable="true">
                                         <div class="element-icon">
@@ -493,6 +505,11 @@
     
     <!-- Sortable JS for drag and drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    
+    <!-- Modern Container Systems -->
+    <script src="containers/flexbox-container.js"></script>
+    <script src="containers/grid-container.js"></script>
+    <script src="containers/enhanced-section.js"></script>
     
     <script src="builder.js"></script>
     <script src="advanced-builder.js"></script>
