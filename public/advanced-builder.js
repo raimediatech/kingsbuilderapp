@@ -8,6 +8,13 @@ class KingsBuilderAdvanced extends KingsBuilder {
         
         // Advanced features
         this.containers = [];
+        
+        // Initialize clipboard for copy/paste functionality
+        this.clipboardData = null;
+        this.clipboardStyle = null;
+        
+        // Setup keyboard shortcuts
+        this.setupKeyboardShortcuts();
         this.activeTab = 'content';
         this.sortableEnabled = false;
         this.deviceModes = ['desktop', 'tablet', 'mobile'];
@@ -975,8 +982,9 @@ class KingsBuilderAdvanced extends KingsBuilder {
         // Right-click context menu
         element.addEventListener('contextmenu', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             this.selectElement(elementData);
-            this.showContextMenu(e, elementData);
+            this.showElementorContextMenu(e, elementData);
         });
     }
     
@@ -2602,6 +2610,386 @@ class KingsBuilderAdvanced extends KingsBuilder {
         });
         
         console.log(`🎨 Fallback Elementor color pickers initialized for ${colorPickers.length} elements`);
+    }
+    
+    // Show REAL Elementor context menu on right-click
+    showElementorContextMenu(event, elementData) {
+        // Remove any existing context menu
+        const existingMenu = document.querySelector('.elementor-context-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+        
+        // Create context menu
+        const contextMenu = document.createElement('div');
+        contextMenu.className = 'elementor-context-menu';
+        
+        // Determine menu items based on element type
+        const menuItems = this.getContextMenuItems(elementData);
+        
+        contextMenu.innerHTML = menuItems.map(item => {
+            if (item.separator) {
+                return '<div class="elementor-context-menu-separator"></div>';
+            }
+            
+            const disabled = item.disabled ? 'disabled' : '';
+            const shortcut = item.shortcut ? `<span class="shortcut">${item.shortcut}</span>` : '';
+            
+            return `
+                <button class="elementor-context-menu-item ${disabled}" data-action="${item.action}">
+                    <i class="${item.icon}"></i>
+                    ${item.label}
+                    ${shortcut}
+                </button>
+            `;
+        }).join('');
+        
+        // Position context menu
+        const x = event.clientX;
+        const y = event.clientY;
+        
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+        
+        // Add to document
+        document.body.appendChild(contextMenu);
+        
+        // Show with animation
+        setTimeout(() => {
+            contextMenu.classList.add('show');
+        }, 10);
+        
+        // Handle menu item clicks
+        contextMenu.addEventListener('click', (e) => {
+            const button = e.target.closest('.elementor-context-menu-item');
+            if (button && !button.classList.contains('disabled')) {
+                const action = button.getAttribute('data-action');
+                this.executeContextMenuAction(action, elementData);
+                contextMenu.remove();
+            }
+        });
+        
+        // Close menu on outside click
+        const closeMenu = (e) => {
+            if (!contextMenu.contains(e.target)) {
+                contextMenu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        };
+        
+        setTimeout(() => {
+            document.addEventListener('click', closeMenu);
+        }, 100);
+        
+        console.log('🖱️ Elementor context menu shown for:', elementData.type);
+    }
+    
+    // Get context menu items based on element type
+    getContextMenuItems(elementData) {
+        const baseItems = [
+            {
+                action: 'edit',
+                icon: 'eicon-edit',
+                label: 'Edit ' + elementData.type.charAt(0).toUpperCase() + elementData.type.slice(1),
+                shortcut: ''
+            },
+            {
+                action: 'duplicate',
+                icon: 'eicon-clone',
+                label: 'Duplicate',
+                shortcut: 'Ctrl+D'
+            },
+            { separator: true },
+            {
+                action: 'copy',
+                icon: 'eicon-copy',
+                label: 'Copy',
+                shortcut: 'Ctrl+C'
+            },
+            {
+                action: 'paste',
+                icon: 'eicon-paste',
+                label: 'Paste',
+                shortcut: 'Ctrl+V',
+                disabled: !this.clipboardData
+            },
+            {
+                action: 'paste-style',
+                icon: 'eicon-paint-brush',
+                label: 'Paste Style',
+                shortcut: 'Ctrl+Shift+V',
+                disabled: !this.clipboardStyle
+            },
+            { separator: true },
+            {
+                action: 'save-template',
+                icon: 'eicon-save',
+                label: 'Save as Template',
+                shortcut: ''
+            },
+            { separator: true },
+            {
+                action: 'delete',
+                icon: 'eicon-trash',
+                label: 'Delete',
+                shortcut: 'Delete'
+            }
+        ];
+        
+        // Add specific items based on element type
+        if (elementData.type === 'section') {
+            baseItems.splice(1, 0, {
+                action: 'add-column',
+                icon: 'eicon-columns',
+                label: 'Add Column',
+                shortcut: ''
+            });
+        }
+        
+        if (elementData.type === 'column') {
+            baseItems.splice(1, 0, {
+                action: 'add-widget',
+                icon: 'eicon-plus',
+                label: 'Add Widget',
+                shortcut: ''
+            });
+        }
+        
+        return baseItems;
+    }
+    
+    // Execute context menu actions
+    executeContextMenuAction(action, elementData) {
+        console.log(`🖱️ Context menu action: ${action} for element:`, elementData);
+        
+        switch (action) {
+            case 'edit':
+                this.selectElement(elementData);
+                break;
+                
+            case 'duplicate':
+                this.duplicateElement(elementData);
+                break;
+                
+            case 'copy':
+                this.copyElement(elementData);
+                break;
+                
+            case 'paste':
+                this.pasteElement(elementData);
+                break;
+                
+            case 'paste-style':
+                this.pasteElementStyle(elementData);
+                break;
+                
+            case 'save-template':
+                this.saveAsTemplate(elementData);
+                break;
+                
+            case 'add-column':
+                this.addColumnToSection(elementData);
+                break;
+                
+            case 'add-widget':
+                this.showWidgetPanelForColumn(elementData);
+                break;
+                
+            case 'delete':
+                this.deleteElement(elementData);
+                break;
+                
+            default:
+                console.warn('Unknown context menu action:', action);
+        }
+    }
+    
+    // Copy element to clipboard
+    copyElement(elementData) {
+        this.clipboardData = JSON.parse(JSON.stringify(elementData));
+        this.clipboardStyle = JSON.parse(JSON.stringify(elementData.settings || {}));
+        console.log('📋 Element copied to clipboard:', elementData.type);
+        
+        // Show feedback
+        this.showNotification('Element copied to clipboard', 'success');
+    }
+    
+    // Paste element from clipboard
+    pasteElement(elementData) {
+        if (!this.clipboardData) {
+            console.warn('No element in clipboard');
+            return;
+        }
+        
+        // Create new element from clipboard
+        const newElement = {
+            ...this.clipboardData,
+            id: this.generateId(),
+            settings: JSON.parse(JSON.stringify(this.clipboardData.settings || {}))
+        };
+        
+        console.log('📋 Element pasted from clipboard:', newElement.type);
+        this.showNotification('Element pasted', 'success');
+        
+        // Add to page and render
+        // Implementation depends on your page structure
+    }
+    
+    // Paste only element style
+    pasteElementStyle(elementData) {
+        if (!this.clipboardStyle) {
+            console.warn('No style in clipboard');
+            return;
+        }
+        
+        // Apply style to current element
+        if (!elementData.settings) {
+            elementData.settings = {};
+        }
+        
+        elementData.settings = {
+            ...elementData.settings,
+            style: JSON.parse(JSON.stringify(this.clipboardStyle.style || {}))
+        };
+        
+        console.log('🎨 Style pasted to element:', elementData.type);
+        this.showNotification('Style pasted', 'success');
+        
+        // Re-render element with new style
+        this.renderElementStyles(elementData);
+    }
+    
+    // Save element as template
+    saveAsTemplate(elementData) {
+        const templateName = prompt('Enter template name:');
+        if (!templateName) return;
+        
+        // Save to localStorage or send to server
+        const templates = JSON.parse(localStorage.getItem('kb_templates') || '{}');
+        templates[templateName] = {
+            type: elementData.type,
+            data: JSON.parse(JSON.stringify(elementData)),
+            created: new Date().toISOString()
+        };
+        
+        localStorage.setItem('kb_templates', JSON.stringify(templates));
+        
+        console.log('💾 Template saved:', templateName);
+        this.showNotification(`Template "${templateName}" saved`, 'success');
+    }
+    
+    // Show notification
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `elementor-notification elementor-notification-${type}`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--e-a-bg-default);
+            border: var(--e-a-border);
+            border-radius: var(--e-a-border-radius);
+            padding: 12px 16px;
+            box-shadow: var(--e-a-popover-shadow);
+            z-index: 10002;
+            color: var(--e-a-color-txt);
+            font-size: 13px;
+            max-width: 300px;
+            animation: slideInRight 0.3s ease;
+        `;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 2000);
+    }
+    
+    // Setup keyboard shortcuts for Elementor-like functionality
+    setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Only in builder mode
+            if (!document.body.classList.contains('elementor-edit-area-active')) return;
+            
+            // Get selected element
+            const selectedElement = document.querySelector('.elementor-element-editable');
+            if (!selectedElement) return;
+            
+            const elementId = selectedElement.getAttribute('data-id');
+            const elementData = this.findElementById(elementId);
+            if (!elementData) return;
+            
+            // Handle shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key) {
+                    case 'c':
+                        e.preventDefault();
+                        this.copyElement(elementData);
+                        break;
+                        
+                    case 'v':
+                        e.preventDefault();
+                        if (e.shiftKey) {
+                            this.pasteElementStyle(elementData);
+                        } else {
+                            this.pasteElement(elementData);
+                        }
+                        break;
+                        
+                    case 'd':
+                        e.preventDefault();
+                        this.duplicateElement(elementData);
+                        break;
+                }
+            }
+            
+            // Delete key
+            if (e.key === 'Delete') {
+                e.preventDefault();
+                this.deleteElement(elementData);
+            }
+            
+            // Escape key - deselect
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.elementor-element-editable').forEach(el => {
+                    el.classList.remove('elementor-element-editable');
+                });
+                
+                // Close any open context menus
+                const contextMenu = document.querySelector('.elementor-context-menu');
+                if (contextMenu) {
+                    contextMenu.remove();
+                }
+            }
+        });
+        
+        console.log('⌨️ Keyboard shortcuts setup complete');
+    }
+    
+    // Find element by ID in page structure
+    findElementById(elementId) {
+        // Search in current page elements
+        const searchInElements = (elements) => {
+            for (const element of elements) {
+                if (element.id === elementId) {
+                    return element;
+                }
+                if (element.children) {
+                    const found = searchInElements(element.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+        
+        // Search in page data (you'll need to implement based on your data structure)
+        if (this.currentPage && this.currentPage.elements) {
+            return searchInElements(this.currentPage.elements);
+        }
+        
+        return null;
     }
     
     // Check if color value is valid

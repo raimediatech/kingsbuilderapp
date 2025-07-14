@@ -977,6 +977,129 @@
     /* This class is added to body when editor is active */
 }
 
+/* ELEMENTOR RIGHT-CLICK CONTEXT MENU */
+.elementor-context-menu {
+    position: fixed;
+    background: var(--e-a-bg-default);
+    border: var(--e-a-border);
+    border-radius: var(--e-a-border-radius);
+    box-shadow: var(--e-a-popover-shadow);
+    z-index: 10001;
+    min-width: 180px;
+    padding: 8px 0;
+    font-size: 13px;
+    display: none;
+}
+
+.elementor-context-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: var(--e-a-transition-hover);
+    color: var(--e-a-color-txt);
+    text-decoration: none;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.elementor-context-menu-item:hover {
+    background: var(--e-a-bg-hover);
+    color: var(--e-a-color-txt-hover);
+}
+
+.elementor-context-menu-item.disabled {
+    color: var(--e-a-color-txt-disabled);
+    cursor: not-allowed;
+}
+
+.elementor-context-menu-item.disabled:hover {
+    background: transparent;
+    color: var(--e-a-color-txt-disabled);
+}
+
+.elementor-context-menu-item i {
+    width: 16px;
+    margin-right: 12px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.elementor-context-menu-separator {
+    height: 1px;
+    background: var(--e-a-border-color);
+    margin: 8px 0;
+}
+
+/* Keyboard shortcuts in context menu */
+.elementor-context-menu-item .shortcut {
+    margin-left: auto;
+    color: var(--e-a-color-txt-muted);
+    font-size: 11px;
+    font-family: monospace;
+}
+
+/* Context menu animations */
+.elementor-context-menu.show {
+    display: block;
+    animation: contextMenuShow 0.15s ease-out;
+}
+
+@keyframes contextMenuShow {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* NOTIFICATION ANIMATIONS */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* ELEMENTOR NOTIFICATIONS */
+.elementor-notification {
+    border-left: 4px solid var(--e-a-color-info);
+}
+
+.elementor-notification.elementor-notification-success {
+    border-left-color: var(--e-a-color-success);
+}
+
+.elementor-notification.elementor-notification-warning {
+    border-left-color: var(--e-a-color-warning);
+}
+
+.elementor-notification.elementor-notification-danger {
+    border-left-color: var(--e-a-color-danger);
+}
+
 /* Elementor-style Structure */
 .elementor-section {
     width: 100%;
