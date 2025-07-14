@@ -766,28 +766,95 @@ class KingsBuilderAdvanced extends KingsBuilder {
         return widgets[type] || widgets.text;
     }
     
-    // Render the Elementor-style structure
+    // Render the REAL Elementor structure with overlays
     renderElementorStructure(section, column, widget) {
         const canvas = document.querySelector('.canvas-content');
         if (!canvas) return;
         
-        // Create section element
+        // Add edit area active class to body
+        document.body.classList.add('elementor-edit-area-active');
+        
+        // Create section element with overlay
         const sectionEl = document.createElement('div');
-        sectionEl.className = 'elementor-section';
+        sectionEl.className = 'elementor-element elementor-section elementor-element-edit-mode';
+        sectionEl.setAttribute('data-element_type', 'section');
+        sectionEl.setAttribute('data-id', section.id);
         sectionEl.setAttribute('data-element-id', section.id);
-        sectionEl.setAttribute('data-element-type', 'section');
         
-        // Create column element
+        // Section overlay
+        const sectionOverlay = document.createElement('div');
+        sectionOverlay.className = 'elementor-element-overlay';
+        const sectionSettings = document.createElement('div');
+        sectionSettings.className = 'elementor-editor-element-settings';
+        sectionSettings.innerHTML = `
+            <div class="elementor-editor-element-edit" title="Edit Section">
+                <i class="eicon-edit"></i>
+            </div>
+            Section
+            <div class="elementor-editor-element-duplicate" title="Duplicate">
+                <i class="eicon-clone"></i>
+            </div>
+            <div class="elementor-editor-element-remove" title="Delete">
+                <i class="eicon-close"></i>
+            </div>
+        `;
+        sectionOverlay.appendChild(sectionSettings);
+        sectionEl.appendChild(sectionOverlay);
+        
+        // Create column element with overlay
         const columnEl = document.createElement('div');
-        columnEl.className = 'elementor-column elementor-col-100';
+        columnEl.className = 'elementor-element elementor-column elementor-col-100 elementor-element-edit-mode';
+        columnEl.setAttribute('data-element_type', 'column');
+        columnEl.setAttribute('data-id', column.id);
         columnEl.setAttribute('data-element-id', column.id);
-        columnEl.setAttribute('data-element-type', 'column');
         
-        // Create widget element
+        // Column overlay
+        const columnOverlay = document.createElement('div');
+        columnOverlay.className = 'elementor-element-overlay';
+        const columnSettings = document.createElement('div');
+        columnSettings.className = 'elementor-editor-element-settings';
+        columnSettings.innerHTML = `
+            <div class="elementor-editor-element-edit" title="Edit Column">
+                <i class="eicon-edit"></i>
+            </div>
+            Column
+            <div class="elementor-editor-element-duplicate" title="Duplicate">
+                <i class="eicon-clone"></i>
+            </div>
+            <div class="elementor-editor-element-remove" title="Delete">
+                <i class="eicon-close"></i>
+            </div>
+        `;
+        columnOverlay.appendChild(columnSettings);
+        columnEl.appendChild(columnOverlay);
+        
+        // Create widget element with overlay
         const widgetEl = document.createElement('div');
-        widgetEl.className = `elementor-widget elementor-widget-${widget.type} kb-element`;
+        widgetEl.className = `elementor-element elementor-widget elementor-widget-${widget.type} elementor-element-edit-mode`;
+        widgetEl.setAttribute('data-element_type', widget.type);
+        widgetEl.setAttribute('data-widget_type', widget.type);
+        widgetEl.setAttribute('data-id', widget.id);
         widgetEl.setAttribute('data-element-id', widget.id);
-        widgetEl.setAttribute('data-element-type', widget.type);
+        
+        // Widget overlay
+        const widgetOverlay = document.createElement('div');
+        widgetOverlay.className = 'elementor-element-overlay';
+        const widgetSettings = document.createElement('div');
+        widgetSettings.className = 'elementor-editor-element-settings';
+        widgetSettings.innerHTML = `
+            <div class="elementor-editor-element-edit" title="Edit ${widget.type}">
+                <i class="eicon-edit"></i>
+            </div>
+            ${widget.type.charAt(0).toUpperCase() + widget.type.slice(1)}
+            <div class="elementor-editor-element-duplicate" title="Duplicate">
+                <i class="eicon-clone"></i>
+            </div>
+            <div class="elementor-editor-element-remove" title="Delete">
+                <i class="eicon-close"></i>
+            </div>
+        `;
+        widgetOverlay.appendChild(widgetSettings);
+        widgetEl.appendChild(widgetOverlay);
         
         // Add widget content
         this.renderWidgetContent(widgetEl, widget);
@@ -797,7 +864,12 @@ class KingsBuilderAdvanced extends KingsBuilder {
         sectionEl.appendChild(columnEl);
         canvas.appendChild(sectionEl);
         
-        console.log('✅ Elementor structure rendered');
+        // Setup element interactions for the new elements
+        this.setupElementInteractionsForElement(sectionEl, section);
+        this.setupElementInteractionsForElement(columnEl, column);
+        this.setupElementInteractionsForElement(widgetEl, widget);
+        
+        console.log('✅ Real Elementor structure rendered with overlays');
     }
     
     // Render widget content
@@ -847,6 +919,65 @@ class KingsBuilderAdvanced extends KingsBuilder {
         }
         
         element.appendChild(widgetInner);
+    }
+    
+    // Setup element interactions for a specific element (like Elementor)
+    setupElementInteractionsForElement(element, elementData) {
+        // Click on element or its settings to select
+        element.addEventListener('click', (e) => {
+            // Only if clicking on the element itself, not children
+            if (e.target === element || e.target.closest('.elementor-editor-element-settings')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Remove edit mode from other elements
+                document.querySelectorAll('.elementor-element-editable').forEach(el => {
+                    el.classList.remove('elementor-element-editable');
+                });
+                
+                // Add edit mode to this element
+                element.classList.add('elementor-element-editable');
+                
+                console.log('🖱️ ELEMENTOR ELEMENT SELECTED:', elementData.type, elementData.id);
+                this.selectElement(elementData);
+            }
+        });
+        
+        // Handle overlay button clicks
+        const editBtn = element.querySelector('.elementor-editor-element-edit');
+        const duplicateBtn = element.querySelector('.elementor-editor-element-duplicate');
+        const removeBtn = element.querySelector('.elementor-editor-element-remove');
+        
+        if (editBtn) {
+            editBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.selectElement(elementData);
+            });
+        }
+        
+        if (duplicateBtn) {
+            duplicateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.duplicateElement(elementData);
+            });
+        }
+        
+        if (removeBtn) {
+            removeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.deleteElement(elementData);
+            });
+        }
+        
+        // Right-click context menu
+        element.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            this.selectElement(elementData);
+            this.showContextMenu(e, elementData);
+        });
     }
     
     // Initialize sortable elements for drag & drop reordering
@@ -1631,60 +1762,69 @@ class KingsBuilderAdvanced extends KingsBuilder {
         `;
     }
     
-    // Create color controls
+    // Create REAL Elementor color controls
     createColorControls(element) {
         const settings = element.settings?.style || {};
         
         return `
-            <div class="control-section">
-                <h4 class="section-title">
-                    <i class="fas fa-palette"></i> Colors
-                    <button class="section-toggle" data-target="color-controls">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                </h4>
-                <div class="section-content" id="color-controls">
+            <div class="elementor-control elementor-control-type-section">
+                <div class="elementor-panel-heading">
+                    <i class="fas fa-palette"></i>
+                    <span class="elementor-panel-heading-title">Style</span>
+                    <div class="elementor-panel-heading-toggle">
+                        <i class="eicon-chevron-down"></i>
+                    </div>
+                </div>
+                <div class="elementor-panel-scheme-items">
                     ${element.type !== 'spacer' && element.type !== 'divider' ? `
-                        <div class="control-group">
-                            <label>Text Color</label>
-                            <div class="color-picker-container">
-                                <div class="color-preview" data-property="textColor" style="background-color: ${settings.textColor || '#000000'}"></div>
-                                <input type="text" class="color-input" name="textColor" value="${settings.textColor || '#000000'}" placeholder="#000000">
-                                <button class="color-clear" type="button" data-property="textColor">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                        <div class="elementor-control elementor-control-type-color elementor-label-block">
+                            <div class="elementor-control-content">
+                                <div class="elementor-control-field">
+                                    <label class="elementor-control-title">Text Color</label>
+                                    <div class="elementor-control-input-wrapper">
+                                        <div class="pickr-color-picker" data-property="textColor" data-default="${settings.textColor || '#000000'}">
+                                            <button type="button" class="pcr-button" style="color: ${settings.textColor || '#000000'};" aria-label="Toggle color picker dialog"></button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ` : ''}
-                    <div class="control-group">
-                        <label>Background Color</label>
-                        <div class="color-picker-container">
-                            <div class="color-preview" data-property="backgroundColor" style="background-color: ${settings.backgroundColor || '#ffffff'}"></div>
-                            <input type="text" class="color-input" name="backgroundColor" value="${settings.backgroundColor || '#ffffff'}" placeholder="#ffffff">
-                            <button class="color-clear" type="button" data-property="backgroundColor">
-                                <i class="fas fa-times"></i>
-                            </button>
+                    <div class="elementor-control elementor-control-type-color elementor-label-block">
+                        <div class="elementor-control-content">
+                            <div class="elementor-control-field">
+                                <label class="elementor-control-title">Background Color</label>
+                                <div class="elementor-control-input-wrapper">
+                                    <div class="pickr-color-picker" data-property="backgroundColor" data-default="${settings.backgroundColor || ''}">
+                                        <button type="button" class="pcr-button" style="color: ${settings.backgroundColor || 'transparent'};" aria-label="Toggle color picker dialog"></button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     ${element.type === 'button' ? `
-                        <div class="control-group">
-                            <label>Hover Background</label>
-                            <div class="color-picker-container">
-                                <div class="color-preview" data-property="hoverBackgroundColor" style="background-color: ${settings.hover?.backgroundColor || '#333333'}"></div>
-                                <input type="text" class="color-input" name="hoverBackgroundColor" value="${settings.hover?.backgroundColor || '#333333'}" placeholder="#333333">
-                                <button class="color-clear" type="button" data-property="hoverBackgroundColor">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                        <div class="elementor-control elementor-control-type-color elementor-label-block">
+                            <div class="elementor-control-content">
+                                <div class="elementor-control-field">
+                                    <label class="elementor-control-title">Hover Background Color</label>
+                                    <div class="elementor-control-input-wrapper">
+                                        <div class="pickr-color-picker" data-property="hoverBackgroundColor" data-default="${settings.hover?.backgroundColor || '#333333'}">
+                                            <button type="button" class="pcr-button" style="color: ${settings.hover?.backgroundColor || '#333333'};" aria-label="Toggle color picker dialog"></button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="control-group">
-                            <label>Hover Text Color</label>
-                            <div class="color-picker-container">
-                                <div class="color-preview" data-property="hoverTextColor" style="background-color: ${settings.hover?.textColor || '#ffffff'}"></div>
-                                <input type="text" class="color-input" name="hoverTextColor" value="${settings.hover?.textColor || '#ffffff'}" placeholder="#ffffff">
-                                <button class="color-clear" type="button" data-property="hoverTextColor">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                        <div class="elementor-control elementor-control-type-color elementor-label-block">
+                            <div class="elementor-control-content">
+                                <div class="elementor-control-field">
+                                    <label class="elementor-control-title">Hover Text Color</label>
+                                    <div class="elementor-control-input-wrapper">
+                                        <div class="pickr-color-picker" data-property="hoverTextColor" data-default="${settings.hover?.textColor || '#ffffff'}">
+                                            <button type="button" class="pcr-button" style="color: ${settings.hover?.textColor || '#ffffff'};" aria-label="Toggle color picker dialog"></button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     ` : ''}
@@ -2277,60 +2417,53 @@ class KingsBuilderAdvanced extends KingsBuilder {
         });
     }
     
-    // Initialize advanced color pickers
+    // Initialize REAL Elementor color pickers
     initAdvancedColorPickers() {
-        console.log('🎨 Initializing color pickers...');
+        console.log('🎨 Initializing REAL Elementor color pickers...');
         
-        const colorPreviews = document.querySelectorAll('.color-preview');
-        const colorInputs = document.querySelectorAll('.color-input');
-        const clearButtons = document.querySelectorAll('.color-clear');
-        
-        console.log(`Found ${colorPreviews.length} color previews, ${colorInputs.length} inputs, ${clearButtons.length} clear buttons`);
+        const colorPickers = document.querySelectorAll('.pickr-color-picker');
+        console.log(`Found ${colorPickers.length} color pickers`);
         
         // Check if Pickr is available
         if (typeof Pickr === 'undefined') {
-            console.warn('⚠️ Pickr library not loaded, using fallback color picker');
-            this.initFallbackColorPickers();
+            console.warn('⚠️ Pickr library not loaded, using fallback');
+            this.initElementorFallbackColorPickers();
             return;
         }
         
-        // Initialize Pickr color pickers
-        colorPreviews.forEach((preview, index) => {
-            const property = preview.getAttribute('data-property');
-            const input = preview.parentElement.querySelector('.color-input');
-            const currentColor = input.value || '#000000';
+        // Initialize each color picker
+        colorPickers.forEach((picker, index) => {
+            const property = picker.getAttribute('data-property');
+            const defaultColor = picker.getAttribute('data-default') || '#000000';
+            const button = picker.querySelector('.pcr-button');
             
             // Create Pickr instance
             const pickr = Pickr.create({
-                el: preview,
-                theme: 'nano', // 'classic', 'monolith' or 'nano'
-                default: currentColor,
+                el: button,
+                theme: 'nano',
+                default: defaultColor,
                 
                 components: {
-                    // Main components
                     preview: true,
                     opacity: true,
                     hue: true,
                     
-                    // Input / output Options
                     interaction: {
                         hex: true,
                         rgba: true,
                         hsla: true,
                         hsva: true,
-                        cmyk: true,
                         input: true,
-                        clear: false,
+                        clear: true,
                         save: true
                     }
                 }
             });
             
-            // Handle color change
+            // Handle color change (live preview)
             pickr.on('change', (color, source, instance) => {
                 const hexColor = color.toHEXA().toString();
-                input.value = hexColor;
-                preview.style.backgroundColor = hexColor;
+                button.style.color = hexColor;
                 this.updateElementStyleLive(property, hexColor);
             });
             
@@ -2338,53 +2471,28 @@ class KingsBuilderAdvanced extends KingsBuilder {
             pickr.on('save', (color, instance) => {
                 if (color) {
                     const hexColor = color.toHEXA().toString();
-                    input.value = hexColor;
-                    preview.style.backgroundColor = hexColor;
+                    button.style.color = hexColor;
                     this.updateElementStyleLive(property, hexColor);
+                    console.log(`🎨 Color saved: ${property} = ${hexColor}`);
                 }
                 pickr.hide();
             });
             
-            // Store pickr instance
-            preview.pickr = pickr;
-        });
-        
-        // Handle text input changes
-        colorInputs.forEach(input => {
-            input.addEventListener('input', (e) => {
-                const value = e.target.value;
-                const property = e.target.name;
-                const preview = e.target.parentElement.querySelector('.color-preview');
-                
-                if (this.isValidColor(value)) {
-                    preview.style.backgroundColor = value;
-                    if (preview.pickr) {
-                        preview.pickr.setColor(value);
-                    }
-                    this.updateElementStyleLive(property, value);
-                }
-            });
-        });
-        
-        // Handle clear buttons
-        clearButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const property = button.getAttribute('data-property');
-                const container = button.parentElement;
-                const input = container.querySelector('.color-input');
-                const preview = container.querySelector('.color-preview');
-                
-                input.value = '';
-                preview.style.backgroundColor = 'transparent';
-                if (preview.pickr) {
-                    preview.pickr.setColor('#ffffff');
-                }
+            // Handle clear
+            pickr.on('clear', (instance) => {
+                button.style.color = 'transparent';
                 this.updateElementStyleLive(property, '');
+                console.log(`🎨 Color cleared: ${property}`);
+                pickr.hide();
             });
+            
+            // Store pickr instance
+            picker.pickr = pickr;
+            
+            console.log(`✅ Color picker initialized for ${property}`);
         });
         
-        console.log(`🎨 Initialized ${colorPreviews.length} advanced color pickers`);
+        console.log(`🎨 Initialized ${colorPickers.length} REAL Elementor color pickers`);
     }
     
     // Fallback color picker if Pickr fails to load
@@ -2455,6 +2563,45 @@ class KingsBuilderAdvanced extends KingsBuilder {
         });
         
         console.log(`🎨 Fallback color pickers initialized for ${colorPreviews.length} elements`);
+    }
+    
+    // Fallback Elementor-style color picker if Pickr fails
+    initElementorFallbackColorPickers() {
+        console.log('🎨 Initializing Elementor fallback color pickers...');
+        
+        const colorPickers = document.querySelectorAll('.pickr-color-picker');
+        
+        colorPickers.forEach(picker => {
+            const property = picker.getAttribute('data-property');
+            const defaultColor = picker.getAttribute('data-default') || '#000000';
+            const button = picker.querySelector('.pcr-button');
+            
+            // Create hidden color input
+            const colorInput = document.createElement('input');
+            colorInput.type = 'color';
+            colorInput.style.opacity = '0';
+            colorInput.style.position = 'absolute';
+            colorInput.style.pointerEvents = 'none';
+            colorInput.value = defaultColor;
+            picker.appendChild(colorInput);
+            
+            // Click button to open color picker
+            button.addEventListener('click', () => {
+                colorInput.click();
+            });
+            
+            // Handle color change
+            colorInput.addEventListener('change', (e) => {
+                const color = e.target.value;
+                button.style.color = color;
+                this.updateElementStyleLive(property, color);
+                console.log(`🎨 Fallback color changed: ${property} = ${color}`);
+            });
+            
+            console.log(`✅ Fallback color picker initialized for ${property}`);
+        });
+        
+        console.log(`🎨 Fallback Elementor color pickers initialized for ${colorPickers.length} elements`);
     }
     
     // Check if color value is valid

@@ -263,73 +263,117 @@
     color: white;
 }
 
-/* Color Picker */
-.color-picker-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 4px;
-    background: #ffffff;
-}
-
-.color-preview {
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    cursor: pointer;
-    border: 2px solid #e5e7eb;
-    transition: all 0.2s ease;
+/* REAL ELEMENTOR COLOR PICKER */
+.pickr-color-picker {
     position: relative;
-    background-image: 
-        linear-gradient(45deg, #f3f4f6 25%, transparent 25%), 
-        linear-gradient(-45deg, #f3f4f6 25%, transparent 25%), 
-        linear-gradient(45deg, transparent 75%, #f3f4f6 75%), 
-        linear-gradient(-45deg, transparent 75%, #f3f4f6 75%);
-    background-size: 8px 8px;
-    background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+    display: inline-block;
 }
 
-.color-preview:hover {
-    border-color: #3b82f6;
-    transform: scale(1.05);
-}
-
-.color-input {
-    flex: 1;
-    padding: 8px 10px;
-    border: none;
-    background: transparent;
-    font-size: 12px;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    text-transform: uppercase;
-    outline: none;
-}
-
-.color-input:focus {
-    background: #f9fafb;
-    border-radius: 4px;
-}
-
-.color-clear {
-    width: 24px;
-    height: 24px;
-    border: none;
-    border-radius: 4px;
-    background: #f3f4f6;
-    color: #6b7280;
+.pcr-button {
+    position: relative;
+    width: 25px;
+    height: 25px;
+    border: 1px solid var(--e-a-border-color-bold);
+    border-radius: var(--e-a-border-radius);
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
+    background: 
+        linear-gradient(45deg, transparent 25%, rgba(0,0,0,.1) 25%),
+        linear-gradient(-45deg, transparent 25%, rgba(0,0,0,.1) 25%),
+        linear-gradient(45deg, rgba(0,0,0,.1) 75%, transparent 75%),
+        linear-gradient(-45deg, rgba(0,0,0,.1) 75%, transparent 75%);
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+    transition: all 0.15s ease;
 }
 
-.color-clear:hover {
-    background: #ef4444;
-    color: white;
+.pcr-button:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: currentColor;
+    border-radius: calc(var(--e-a-border-radius) - 1px);
+}
+
+.pcr-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Pickr Popup Styles */
+.pcr-app {
+    background: var(--e-a-bg-default);
+    border: var(--e-a-border-bold);
+    border-radius: var(--e-a-border-radius);
+    box-shadow: var(--e-a-popover-shadow);
+    z-index: 10000;
+}
+
+.pcr-app .pcr-interaction {
+    background: var(--e-a-bg-default);
+    border-top: var(--e-a-border);
+}
+
+.pcr-app .pcr-interaction input {
+    background: var(--e-a-bg-default);
+    border: var(--e-a-border);
+    color: var(--e-a-color-txt);
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 11px;
+}
+
+.pcr-app .pcr-interaction input:focus {
+    border-color: var(--e-a-border-color-focus);
+}
+
+.pcr-app .pcr-interaction .pcr-result {
+    background: var(--e-a-bg-default);
+    border: var(--e-a-border);
+    color: var(--e-a-color-txt);
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.pcr-app .pcr-interaction .pcr-type.active {
+    color: var(--e-a-color-primary-bold);
+}
+
+.pcr-app .pcr-interaction .pcr-save,
+.pcr-app .pcr-interaction .pcr-cancel,
+.pcr-app .pcr-interaction .pcr-clear {
+    background: var(--e-a-btn-bg);
+    border: var(--e-a-border);
+    color: var(--e-a-btn-color);
+    border-radius: var(--e-a-border-radius);
+    padding: 6px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: var(--e-a-transition-hover);
+}
+
+.pcr-app .pcr-interaction .pcr-save:hover,
+.pcr-app .pcr-interaction .pcr-cancel:hover,
+.pcr-app .pcr-interaction .pcr-clear:hover {
+    background: var(--e-a-btn-bg-hover);
+}
+
+.pcr-app .pcr-interaction .pcr-save {
+    background: var(--e-a-btn-bg-primary);
+    color: var(--e-a-color-txt-accent);
+}
+
+.pcr-app .pcr-interaction .pcr-save:hover {
+    background: var(--e-a-btn-bg-primary-hover);
+}
+
+.pcr-app .pcr-interaction .pcr-clear {
+    background: var(--e-a-btn-bg-danger);
+    color: var(--e-a-color-txt-invert);
+}
+
+.pcr-app .pcr-interaction .pcr-clear:hover {
+    background: var(--e-a-btn-bg-danger-hover);
 }
 
 /* Slider Controls */
@@ -809,64 +853,128 @@
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 
-/* Elementor-style Element Interaction */
-.kb-element {
+/* REAL ELEMENTOR CSS VARIABLES */
+:root {
+    --e-p-border-widget: #71d7f7;
+    --e-p-border-section: #93003c;
+    --e-p-border-column: #a4a4a4;
+    --e-a-color-txt: #495157;
+    --e-a-bg-hover: rgba(0,0,0,0.05);
+    --e-a-border-color-bold: #d5dadf;
+    --e-global-color-primary: #6ec1e4;
+}
+
+/* ELEMENTOR ELEMENT OVERLAY SYSTEM */
+.elementor-element {
     position: relative;
-    cursor: pointer;
-    transition: all 0.1s ease;
 }
 
-/* Hover state - subtle border like Elementor */
-.kb-element:hover {
-    box-shadow: inset 0 0 0 1px #71d7f7;
-}
-
-/* Selected state - blue border like Elementor */
-.kb-element.selected {
-    box-shadow: inset 0 0 0 2px #71d7f7;
-}
-
-/* Element controls overlay - appears on hover */
-.kb-element:hover::after {
-    content: '';
+.elementor-element > .elementor-element-overlay {
     position: absolute;
     top: 0;
-    left: 0;
     right: 0;
-    height: 25px;
-    background: #71d7f7;
-    color: white;
-    font-size: 11px;
-    line-height: 25px;
-    padding: 0 8px;
-    z-index: 999;
+    bottom: 0;
+    left: 0;
     pointer-events: none;
+    z-index: 10;
 }
 
-/* Element type label */
-.kb-element[data-element-type="heading"]:hover::after {
-    content: 'Heading';
+/* HOVER STATES - EXACTLY LIKE ELEMENTOR */
+.elementor-edit-area-active .elementor-widget.elementor-element-edit-mode:hover {
+    box-shadow: 0 0 0 1px var(--e-p-border-widget);
 }
 
-.kb-element[data-element-type="text"]:hover::after {
-    content: 'Text Editor';
+.elementor-edit-area-active .elementor-widget.elementor-element-editable,
+.elementor-edit-area-active .elementor-widget.elementor-element-editable:hover {
+    box-shadow: 0 0 0 2px var(--e-p-border-widget);
 }
 
-.kb-element[data-element-type="image"]:hover::after {
-    content: 'Image';
+.elementor-edit-area-active .elementor-section.elementor-element-edit-mode:hover {
+    box-shadow: 0 0 0 1px var(--e-p-border-section);
 }
 
-.kb-element[data-element-type="button"]:hover::after {
-    content: 'Button';
+.elementor-edit-area-active .elementor-section.elementor-element-editable,
+.elementor-edit-area-active .elementor-section.elementor-element-editable:hover {
+    box-shadow: 0 0 0 2px var(--e-p-border-section);
 }
 
-.kb-element[data-element-type="container"]:hover::after {
-    content: 'Container';
+.elementor-edit-area-active .elementor-column.elementor-element-edit-mode:hover {
+    box-shadow: 0 0 0 1px var(--e-p-border-column);
 }
 
-/* Hide element controls when dragging */
-.kb-dragging .kb-element::after {
+.elementor-edit-area-active .elementor-column.elementor-element-editable,
+.elementor-edit-area-active .elementor-column.elementor-element-editable:hover {
+    box-shadow: 0 0 0 2px var(--e-p-border-column);
+}
+
+/* ELEMENT SETTINGS OVERLAY */
+.elementor-element-overlay .elementor-editor-element-settings {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--e-p-border-widget);
+    color: white;
+    padding: 5px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: auto;
+}
+
+.elementor-element:hover > .elementor-element-overlay .elementor-editor-element-settings {
+    opacity: 1;
+}
+
+.elementor-element.elementor-element-editable > .elementor-element-overlay .elementor-editor-element-settings {
+    opacity: 1;
+}
+
+/* ELEMENT CONTROLS */
+.elementor-editor-element-settings .elementor-editor-element-edit {
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.elementor-editor-element-settings .elementor-editor-element-duplicate,
+.elementor-editor-element-settings .elementor-editor-element-remove {
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+/* SECTION SPECIFIC STYLES */
+.elementor-section > .elementor-element-overlay .elementor-editor-element-settings {
+    background: var(--e-p-border-section);
+}
+
+.elementor-column > .elementor-element-overlay .elementor-editor-element-settings {
+    background: var(--e-p-border-column);
+}
+
+/* HIDE CONTROLS WHEN NOT HOVERED */
+.elementor-element:not(:hover):not(.elementor-element-editable) > .elementor-element-overlay .elementor-editor-element-settings {
     display: none;
+}
+
+/* EMPTY WIDGET PLACEHOLDER */
+.elementor-element.elementor-widget-empty {
+    background-color: rgba(213, 216, 220, 0.8);
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.elementor-element.elementor-widget-empty .elementor-widget-empty-icon {
+    color: #BABFC5;
+    font-size: 22px;
+}
+
+/* EDIT AREA ACTIVE STATE */
+.elementor-edit-area-active {
+    /* This class is added to body when editor is active */
 }
 
 /* Elementor-style Structure */
