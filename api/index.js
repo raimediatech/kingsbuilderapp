@@ -3,6 +3,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const fileUpload = require('express-fileupload');
 const path = require('path');
+const { sessionMiddleware, enhancedAuth, handleShopifyError } = require('./auth-fix');
 const app = express();
 
 // Load environment variables
@@ -34,6 +35,10 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser(process.env.SESSION_SECRET || 'kings-builder-session-secret'));
+
+// Enhanced session and authentication middleware
+app.use(sessionMiddleware);
+app.use(enhancedAuth);
 
 // Enable file uploads
 app.use(fileUpload({
