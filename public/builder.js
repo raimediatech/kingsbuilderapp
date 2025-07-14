@@ -369,11 +369,15 @@ class KingsBuilder {
         // Remove existing event listeners by cloning the element (if this is a re-setup)
         if (canvasFrame.hasAttribute('data-drop-zone-setup')) {
             const newCanvasFrame = canvasFrame.cloneNode(true);
-            canvasFrame.parentNode.replaceChild(newCanvasFrame, canvasFrame);
-            // Update reference to the new element
-            const updatedCanvasFrame = document.querySelector('.canvas-frame');
-            updatedCanvasFrame.setAttribute('data-drop-zone-setup', 'true');
-            this.setupCanvasDropZoneEvents(updatedCanvasFrame);
+            if (canvasFrame.parentNode) {
+                canvasFrame.parentNode.replaceChild(newCanvasFrame, canvasFrame);
+                // Update reference to the new element
+                const updatedCanvasFrame = document.querySelector('.canvas-frame');
+                if (updatedCanvasFrame) {
+                    updatedCanvasFrame.setAttribute('data-drop-zone-setup', 'true');
+                    this.setupCanvasDropZoneEvents(updatedCanvasFrame);
+                }
+            }
         } else {
             canvasFrame.setAttribute('data-drop-zone-setup', 'true');
             this.setupCanvasDropZoneEvents(canvasFrame);
@@ -1861,11 +1865,11 @@ class KingsBuilder {
     
     async loadPageData() {
         const urlParams = new URLSearchParams(window.location.search);
-        const pageId = urlParams.get('pageId');
-        const pageTitle = urlParams.get('title');
+        const pageId = urlParams.get('pageId') || 'new';
+        const pageTitle = urlParams.get('title') || 'New Page';
         const shop = urlParams.get('shop');
         
-        if (pageId && pageId !== 'new') {
+        if (pageId && pageId !== 'new' && pageId !== 'undefined') {
             console.log('📂 Loading page data for ID:', pageId);
             
             try {

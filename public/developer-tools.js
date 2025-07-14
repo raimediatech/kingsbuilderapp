@@ -18,7 +18,6 @@ class DeveloperTools {
         console.log('👨‍💻 Developer Tools initialized - REACHING 100%!');
         this.createDeveloperPanel();
         this.setupCustomCSS();
-        this.setupCodeExport();
         this.setupWidgetAPI();
         this.setupHookSystem();
         this.setupDevMode();

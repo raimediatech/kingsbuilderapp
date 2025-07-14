@@ -105,10 +105,10 @@ class FinalIntegrationTest {
         const tests = [
             () => typeof window.templateSystem !== 'undefined',
             () => document.querySelector('.kb-template-library-button') !== null,
-            () => window.templateSystem.pageTemplates.length >= 4,
-            () => window.templateSystem.sectionTemplates.length >= 4,
-            () => typeof window.templateSystem.saveAsTemplate === 'function',
-            () => typeof window.templateSystem.exportTemplate === 'function'
+            () => window.templateSystem && window.templateSystem.pageTemplates && window.templateSystem.pageTemplates.length >= 4,
+            () => window.templateSystem && window.templateSystem.sectionTemplates && window.templateSystem.sectionTemplates.length >= 4,
+            () => typeof window.templateSystem?.saveAsTemplate === 'function',
+            () => typeof window.templateSystem?.exportTemplate === 'function'
         ];
         
         const passed = tests.filter(test => test()).length;

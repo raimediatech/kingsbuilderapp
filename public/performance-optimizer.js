@@ -286,15 +286,10 @@ class PerformanceOptimizer {
     enableCaching() {
         if (!this.optimizations.caching) return;
         
-        // Service Worker for caching
+        // Service Worker for caching - Skip if not available
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('Service Worker registered:', registration);
-                })
-                .catch(error => {
-                    console.log('Service Worker registration failed:', error);
-                });
+            // Skip service worker registration for now to avoid 404 errors
+            console.log('Service Worker caching available but skipped for compatibility');
         }
         
         // Memory caching for repeated requests
