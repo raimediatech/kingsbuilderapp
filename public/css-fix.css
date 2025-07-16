@@ -1,0 +1,137 @@
+/* Canvas Fixes */
+#kingsbuilder-canvas {
+    min-height: 600px;
+    border: 2px dashed #e0e0e0;
+    background-color: #f9f9f9;
+    position: relative;
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+#kingsbuilder-canvas.drag-over {
+    background-color: #e8f0fe;
+    border-color: #1a73e8;
+}
+
+.canvas-content {
+    min-height: 500px;
+    padding: 20px;
+}
+
+/* Element Styling */
+.element {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 10px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.element:hover {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+
+/* Toolbar Fixes */
+.kb-toolbar {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.kb-toolbar button {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.kb-toolbar button:hover {
+    background: #f0f0f0;
+    border-color: #999;
+}
+
+/* Properties Panel */
+.kb-properties-panel {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 20px;
+}
+
+/* Responsive Fixes */
+@media (max-width: 1024px) {
+    .kb-container {
+        flex-direction: column;
+    }
+    
+    .kb-sidebar, 
+    .kb-main-content {
+        width: 100% !important;
+    }
+}
+
+/* Animation Fixes */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.kb-element {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Fix for drag preview */
+.kb-drag-preview {
+    opacity: 0.7;
+    position: fixed;
+    pointer-events: none;
+    z-index: 10000;
+    background: white;
+    border: 1px solid #1a73e8;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-width: 200px;
+    transform: translate(-50%, -50%);
+}
+
+/* Fix for element selection */
+.kb-element.selected {
+    outline: 2px solid #1a73e8;
+    box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.1);
+}
+
+/* Fix for loading states */
+.kb-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.kb-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 14px;
+}
