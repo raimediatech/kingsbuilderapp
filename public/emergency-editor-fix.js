@@ -1,6 +1,12 @@
 // EMERGENCY EDITOR FIX - Load this first to restore editor functionality
 console.log('🚨 EMERGENCY EDITOR FIX LOADING...');
 
+// Prevent multiple initializations
+if (window.editorFixApplied) {
+    console.log('🚨 Editor fix already applied, skipping...');
+} else {
+    window.editorFixApplied = true;
+
 // Fix 1: Create proper canvas structure immediately
 function createEmergencyCanvas() {
     console.log('🔧 Creating emergency canvas structure...');
@@ -392,5 +398,6 @@ window.addEventListener('load', function() {
 
 // Start emergency fixes
 initEmergencyFixes();
+}
 
 console.log('🚨 EMERGENCY EDITOR FIX LOADED!');

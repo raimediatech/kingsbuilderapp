@@ -1,6 +1,12 @@
 // CRITICAL FIX - Load immediately to prevent editor breaking
 console.log('?? CRITICAL FIX LOADING...');
 
+// Prevent multiple initializations
+if (window.kingsBuilderInitialized) {
+    console.log('?? KingsBuilder already initialized, skipping re-initialization');
+} else {
+    window.kingsBuilderInitialized = true;
+
 // Fix 1: Ensure global objects exist before any scripts run
 window.kingsBuilder = window.kingsBuilder || {};
 window.templateSystem = window.templateSystem || {
@@ -193,4 +199,5 @@ const ensureStyles = () => {
 // Run style fix immediately
 ensureStyles();
 
-console.log('?? CRITICAL FIX LOADED!');
+    console.log('?? CRITICAL FIX LOADED!');
+}
