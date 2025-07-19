@@ -2360,14 +2360,16 @@ class KingsBuilder {
 
 // Initialize KingsBuilder when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Prevent multiple instances
-    if (window.kingsBuilder) {
+    // Check if we have a real KingsBuilder instance or just a placeholder
+    if (window.kingsBuilder && typeof window.kingsBuilder.initializeBuilder === 'function') {
         console.log('⚠️ KingsBuilder already exists, skipping initialization');
         return;
     }
     
     console.log('🚀 Initializing KingsBuilder - Visual Page Builder...');
     console.log('🏢 Created by Kingsmen Marketing Agency');
+    
+    // Force create the real KingsBuilder instance
     window.kingsBuilder = new KingsBuilder();
     
     // Set up auto-save functionality

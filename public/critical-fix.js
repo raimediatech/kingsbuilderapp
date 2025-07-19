@@ -7,8 +7,8 @@ if (window.kingsBuilderInitialized) {
 } else {
     window.kingsBuilderInitialized = true;
 
-// Fix 1: Ensure global objects exist before any scripts run
-window.kingsBuilder = window.kingsBuilder || {};
+// Fix 1: Ensure global objects exist before any scripts run (but don't override main builder)
+// window.kingsBuilder will be set by the main builder.js
 window.templateSystem = window.templateSystem || {
     pageTemplates: [
         { id: 1, name: 'Business Homepage', category: 'business' },

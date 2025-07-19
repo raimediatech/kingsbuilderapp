@@ -265,9 +265,10 @@ class InitializationManager {
     }
     
     initializeGlobalSystems() {
-        // Ensure global systems are available
-        if (!window.kingsBuilder) {
-            window.kingsBuilder = {
+        // Ensure global systems are available but DON'T override the main builder
+        if (!window.kingsBuilder || typeof window.kingsBuilder !== 'object') {
+            // Only create a placeholder if nothing exists
+            window.kingsBuilderGlobals = {
                 version: '1.0.0',
                 initialized: true
             };

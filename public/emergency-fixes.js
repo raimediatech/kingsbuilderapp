@@ -2,8 +2,8 @@
 
 console.log('🚨 Emergency fixes loading...');
 
-// Fix 1: Ensure global variables are defined
-window.kingsBuilder = window.kingsBuilder || {};
+// Fix 1: Ensure global variables are defined (but don't override main builder)
+// window.kingsBuilder will be set by the main builder.js
 window.templateSystem = window.templateSystem || {
     pageTemplates: [
         { id: 1, name: 'Business Homepage', category: 'business' },
