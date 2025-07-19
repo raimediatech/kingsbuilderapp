@@ -1797,13 +1797,17 @@ class KingsBuilder {
                 console.log('📊 Total elements in canvas:', allElements.length);
                 console.log('📊 Content elements found:', contentElements.length);
                 
-                // If we have any meaningful content (not just empty canvas), save it
-                if (fullContent.trim() && !fullContent.includes('empty-canvas-message')) {
+                // Check if content is meaningful (not just empty canvas structure)
+                if (fullContent.trim() && 
+                    !fullContent.includes('empty-canvas') && 
+                    !fullContent.includes('Start Building Your Page') &&
+                    !fullContent.includes('Drag elements from the left panel')) {
                     pageContent = fullContent;
                     console.log(`💾 Saving full canvas content (${fullContent.length} characters)`);
                 } else {
                     pageContent = '';
-                    console.log('⚠️ Canvas appears empty - saving empty content');
+                    console.log('⚠️ Canvas contains empty placeholder - NOT saving empty content');
+                    console.log('🔍 Empty canvas detected - skipping save to prevent overwriting real content');
                 }
                 
                 // Additional debugging
