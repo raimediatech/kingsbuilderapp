@@ -1,3 +1,4 @@
+const KB_API_BASE = window.KB_CONFIG?.apiBaseUrl || "";
 // KingsBuilder - Visual Page Builder JavaScript
 // Created by Kingsmen Marketing Agency
 
@@ -157,7 +158,7 @@ class KingsBuilder {
             
             console.log('📤 Uploading image to Shopify:', file.name);
             
-            const response = await fetch('/api/upload-image', {
+            const response = await fetch('${KB_API_BASE}/api/upload-image', {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'
@@ -1602,7 +1603,7 @@ class KingsBuilder {
             const pageStatus = document.getElementById('pageStatus')?.value || 'draft';
             
             // Send to server
-            const response = await fetch('/api/pages', {
+            const response = await fetch('${KB_API_BASE}/api/pages', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
