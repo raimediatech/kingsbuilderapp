@@ -6,25 +6,7 @@ const shopifyApi = require('../shopify');
 
 // Mock database for pages (replace with actual database in production)
 let pages = [
-  // Add your specific page with saved content
-  {
-    id: '120147771634',
-    title: 'Home Page',
-    slug: 'home',
-    status: 'published',
-    content: `<div class="kb-element kb-heading" data-element-type="heading" style="text-align: center; font-size: 32px; color: #333; margin: 20px 0;">
-      <h1>Welcome to KingsBuilder</h1>
-    </div>
-    <div class="kb-element kb-text" data-element-type="text" style="text-align: center; font-size: 16px; color: #666; margin: 20px 0;">
-      <p>This is your saved content from Shopify! The builder is working correctly.</p>
-    </div>
-    <div class="kb-element kb-button" data-element-type="button" style="text-align: center; margin: 20px 0;">
-      <button style="background: #007cba; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer;">Get Started</button>
-    </div>`,
-    shop: 'kingsbuilder.myshopify.com',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
+
   // Pages will be added dynamically when saved
   {
     id: '1',
@@ -242,18 +224,13 @@ router.get('/:pageId', async (req, res) => {
       });
     }
     
-    // First check if we have local KingsBuilder content for this page
+    console.log(`🔍 Loading page ${pageId} - PRIORITIZING SHOPIFY CONTENT`);
+    
+    // Check local content but don't return it immediately - we want fresh Shopify data
     let localPage = pages.find(p => p.id == pageId || p.id === parseInt(pageId, 10));
-    
-    console.log(`📄 Checking for page ${pageId} - Local content: ${localPage ? 'Found' : 'Not found'}`);
-    
-    // If we have local content, return it immediately
+    console.log(`📄 Local content exists: ${localPage ? 'Yes' : 'No'}`);
     if (localPage) {
-      console.log(`✅ Found local KingsBuilder page: ${localPage.title}`);
-      console.log(`📄 Content type: ${typeof localPage.content}`);
-      console.log(`📄 Content preview: ${typeof localPage.content === 'string' ? localPage.content.substring(0, 200) + '...' : JSON.stringify(localPage.content).substring(0, 200) + '...'}`);
-      res.json({ page: localPage });
-      return;
+      console.log(`📄 Local content type: ${typeof localPage.content}, length: ${typeof localPage.content === 'string' ? localPage.content.length : 'N/A'}`);
     }
     
     console.log(`📄 Fetching page ${pageId} from Shopify for shop: ${shop}`);
@@ -272,13 +249,14 @@ router.get('/:pageId', async (req, res) => {
         const shopifyData = await shopifyResponse.json();
         const shopifyPage = shopifyData.page;
         
-        // Create page object from Shopify data
+        // Create page object from Shopify data, prioritizing local KingsBuilder content
         const page = {
           id: shopifyPage.id,
           title: shopifyPage.title,
           slug: shopifyPage.handle,
-          content: null, // No KingsBuilder content yet
-          body_html: shopifyPage.body_html, // Shopify content
+          // PRIORITY: Use local KingsBuilder content if available, otherwise Shopify body_html
+          content: localPage && localPage.content ? localPage.content : shopifyPage.body_html,
+          body_html: shopifyPage.body_html, // Always keep original Shopify content
           template: 'default',
           shop: shop,
           status: shopifyPage.published_at ? 'published' : 'draft',
@@ -290,6 +268,12 @@ router.get('/:pageId', async (req, res) => {
         };
         
         console.log(`✅ Found Shopify page: ${shopifyPage.title}`);
+        console.log(`📄 Content source: ${localPage && localPage.content ? 'KingsBuilder (your saved content)' : 'Shopify body_html'}`);
+        console.log(`📄 Content length: ${page.content ? page.content.length : 0} characters`);
+        if (page.content) {
+          console.log(`📄 Content preview: ${page.content.substring(0, 200)}...`);
+        }
+        
         res.json({ page });
       } else {
         console.log(`❌ Shopify page ${pageId} not found - creating new page`);
