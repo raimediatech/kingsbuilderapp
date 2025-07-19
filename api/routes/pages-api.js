@@ -275,14 +275,14 @@ router.get('/:pageId', async (req, res) => {
         const shopifyData = await shopifyResponse.json();
         const shopifyPage = shopifyData.page;
         
-        // Create page object from Shopify data, prioritizing local KingsBuilder content
+        // Create page object from Shopify data - ALWAYS USE SHOPIFY CONTENT
         const page = {
           id: shopifyPage.id,
           title: shopifyPage.title,
           slug: shopifyPage.handle,
-          // PRIORITY: Use local KingsBuilder content if available, otherwise Shopify body_html
-          content: localPage && localPage.content ? localPage.content : shopifyPage.body_html,
-          body_html: shopifyPage.body_html, // Always keep original Shopify content
+          // FORCE USE SHOPIFY CONTENT - this is where your real saved content is
+          content: shopifyPage.body_html,
+          body_html: shopifyPage.body_html,
           template: 'default',
           shop: shop,
           status: shopifyPage.published_at ? 'published' : 'draft',

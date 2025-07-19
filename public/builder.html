@@ -663,32 +663,7 @@
     <!-- Emergency Fixes - Load first to prevent errors -->
     <script src="emergency-fixes.js"></script>
     
-    <!-- Icon Fallback CSS -->
-    <style>
-        /* Fix missing icons - show proper icons instead of thunderbolt everywhere */
-        .widget-icon {
-            font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
-            font-weight: 900;
-            display: inline-block;
-        }
-        
-        /* Specific widget icons */
-        .widget-item[data-widget="heading"] .widget-icon:before { content: "\f1dc"; } /* fa-heading */
-        .widget-item[data-widget="text"] .widget-icon:before { content: "\f031"; } /* fa-font */
-        .widget-item[data-widget="button"] .widget-icon:before { content: "\f0a4"; } /* fa-hand-pointer */
-        .widget-item[data-widget="image"] .widget-icon:before { content: "\f03e"; } /* fa-image */
-        .widget-item[data-widget="video"] .widget-icon:before { content: "\f03d"; } /* fa-video */
-        .widget-item[data-widget="divider"] .widget-icon:before { content: "\f068"; } /* fa-minus */
-        .widget-item[data-widget="spacer"] .widget-icon:before { content: "\f07e"; } /* fa-arrows-v */
-        .widget-item[data-widget="columns"] .widget-icon:before { content: "\f0db"; } /* fa-columns */
-        .widget-item[data-widget="container"] .widget-icon:before { content: "\f009"; } /* fa-th-large */
-        
-        /* Fallback for any missing icons */
-        .widget-icon:empty:before,
-        .widget-icon:not([class*="fa-"]):before {
-            content: "\f0e7"; /* fa-bolt as fallback */
-        }
-    </style>
+
     
 
     

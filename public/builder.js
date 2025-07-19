@@ -1778,45 +1778,9 @@ class KingsBuilder {
             const titleInput = document.getElementById('pageTitle');
             const pageTitle = titleInput ? titleInput.value.trim() : 'Untitled Page';
             
-            // Get page content - CAPTURE ALL CONTENT FROM CANVAS
+            // Get page content
             const canvas = document.getElementById('kingsbuilder-canvas');
-            let pageContent = '';
-            
-            if (canvas) {
-                // Get the full canvas content
-                const fullContent = canvas.innerHTML;
-                
-                console.log('🔍 DEBUGGING CONTENT EXTRACTION:');
-                console.log('📄 Canvas HTML length:', fullContent.length);
-                console.log('📄 Canvas HTML preview:', fullContent.substring(0, 500) + '...');
-                
-                // Check for various element types that might be in the canvas
-                const allElements = canvas.querySelectorAll('*');
-                const contentElements = canvas.querySelectorAll('.kb-element, [data-element-type], .element-item, .widget-element, div[class*="element"], div[class*="widget"]');
-                
-                console.log('📊 Total elements in canvas:', allElements.length);
-                console.log('📊 Content elements found:', contentElements.length);
-                
-                // Check if content is meaningful (not just empty canvas structure)
-                if (fullContent.trim() && 
-                    !fullContent.includes('empty-canvas') && 
-                    !fullContent.includes('Start Building Your Page') &&
-                    !fullContent.includes('Drag elements from the left panel')) {
-                    pageContent = fullContent;
-                    console.log(`💾 Saving full canvas content (${fullContent.length} characters)`);
-                } else {
-                    pageContent = '';
-                    console.log('⚠️ Canvas contains empty placeholder - NOT saving empty content');
-                    console.log('🔍 Empty canvas detected - skipping save to prevent overwriting real content');
-                }
-                
-                // Additional debugging
-                console.log('🔍 Canvas classes:', canvas.className);
-                console.log('🔍 Canvas children count:', canvas.children.length);
-                if (canvas.children.length > 0) {
-                    console.log('🔍 First child:', canvas.children[0].outerHTML.substring(0, 200) + '...');
-                }
-            }
+            const pageContent = canvas ? canvas.innerHTML : '';
             
             // Save page data
             const saveData = {
@@ -1826,12 +1790,6 @@ class KingsBuilder {
             };
             
             console.log('💾 Saving page:', { pageId, title: pageTitle, contentLength: pageContent.length });
-            console.log('📤 SAVE DATA BEING SENT:', {
-                title: saveData.title,
-                contentLength: saveData.content.length,
-                contentPreview: saveData.content.substring(0, 300) + '...',
-                hasContent: !!saveData.content
-            });
             
             // Get access token
             const accessToken = this.getAccessToken();
@@ -1844,13 +1802,6 @@ class KingsBuilder {
             if (accessToken) {
                 headers['X-Shopify-Access-Token'] = accessToken;
             }
-            
-            console.log('📤 REQUEST DETAILS:', {
-                url: `/api/pages/${pageId}?shop=${encodeURIComponent(shop)}`,
-                method: 'PUT',
-                bodySize: JSON.stringify(saveData).length,
-                hasAccessToken: !!accessToken
-            });
             
             const response = await fetch(`/api/pages/${pageId}?shop=${encodeURIComponent(shop)}`, {
                 method: 'PUT',
