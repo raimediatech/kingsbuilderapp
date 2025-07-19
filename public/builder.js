@@ -1778,29 +1778,39 @@ class KingsBuilder {
             const titleInput = document.getElementById('pageTitle');
             const pageTitle = titleInput ? titleInput.value.trim() : 'Untitled Page';
             
-            // Get page content - ONLY actual elements, not empty canvas wrapper
+            // Get page content - CAPTURE ALL CONTENT FROM CANVAS
             const canvas = document.getElementById('kingsbuilder-canvas');
             let pageContent = '';
             
             if (canvas) {
-                // Check if canvas has actual content elements (not just empty canvas)
-                const contentElements = canvas.querySelectorAll('.kb-element, [data-element-type]');
+                // Get the full canvas content
+                const fullContent = canvas.innerHTML;
                 
-                if (contentElements.length > 0) {
-                    // Save only the actual content elements
-                    pageContent = Array.from(contentElements).map(el => el.outerHTML).join('\n');
-                    console.log(`💾 Saving ${contentElements.length} content elements`);
+                console.log('🔍 DEBUGGING CONTENT EXTRACTION:');
+                console.log('📄 Canvas HTML length:', fullContent.length);
+                console.log('📄 Canvas HTML preview:', fullContent.substring(0, 500) + '...');
+                
+                // Check for various element types that might be in the canvas
+                const allElements = canvas.querySelectorAll('*');
+                const contentElements = canvas.querySelectorAll('.kb-element, [data-element-type], .element-item, .widget-element, div[class*="element"], div[class*="widget"]');
+                
+                console.log('📊 Total elements in canvas:', allElements.length);
+                console.log('📊 Content elements found:', contentElements.length);
+                
+                // If we have any meaningful content (not just empty canvas), save it
+                if (fullContent.trim() && !fullContent.includes('empty-canvas-message')) {
+                    pageContent = fullContent;
+                    console.log(`💾 Saving full canvas content (${fullContent.length} characters)`);
                 } else {
-                    // Check if there's any meaningful content (not just empty canvas structure)
-                    const canvasFrame = canvas.querySelector('.canvas-frame');
-                    const emptyCanvas = canvas.querySelector('.empty-canvas');
-                    
-                    if (canvasFrame && !emptyCanvas) {
-                        pageContent = canvasFrame.innerHTML;
-                    } else {
-                        pageContent = ''; // Don't save empty canvas structure
-                        console.log('⚠️ No content elements found - saving empty content');
-                    }
+                    pageContent = '';
+                    console.log('⚠️ Canvas appears empty - saving empty content');
+                }
+                
+                // Additional debugging
+                console.log('🔍 Canvas classes:', canvas.className);
+                console.log('🔍 Canvas children count:', canvas.children.length);
+                if (canvas.children.length > 0) {
+                    console.log('🔍 First child:', canvas.children[0].outerHTML.substring(0, 200) + '...');
                 }
             }
             
@@ -1812,6 +1822,12 @@ class KingsBuilder {
             };
             
             console.log('💾 Saving page:', { pageId, title: pageTitle, contentLength: pageContent.length });
+            console.log('📤 SAVE DATA BEING SENT:', {
+                title: saveData.title,
+                contentLength: saveData.content.length,
+                contentPreview: saveData.content.substring(0, 300) + '...',
+                hasContent: !!saveData.content
+            });
             
             // Get access token
             const accessToken = this.getAccessToken();
@@ -1824,6 +1840,13 @@ class KingsBuilder {
             if (accessToken) {
                 headers['X-Shopify-Access-Token'] = accessToken;
             }
+            
+            console.log('📤 REQUEST DETAILS:', {
+                url: `/api/pages/${pageId}?shop=${encodeURIComponent(shop)}`,
+                method: 'PUT',
+                bodySize: JSON.stringify(saveData).length,
+                hasAccessToken: !!accessToken
+            });
             
             const response = await fetch(`/api/pages/${pageId}?shop=${encodeURIComponent(shop)}`, {
                 method: 'PUT',
