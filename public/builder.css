@@ -679,7 +679,7 @@ html, body {
 
 .kingsbuilder-canvas.desktop {
     width: 100%;
-    max-width: 1200px;
+    max-width: none; /* Full width, no restrictions */
 }
 
 .kingsbuilder-canvas.tablet {

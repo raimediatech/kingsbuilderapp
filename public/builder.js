@@ -1778,9 +1778,31 @@ class KingsBuilder {
             const titleInput = document.getElementById('pageTitle');
             const pageTitle = titleInput ? titleInput.value.trim() : 'Untitled Page';
             
-            // Get page content
+            // Get page content - ONLY actual elements, not empty canvas wrapper
             const canvas = document.getElementById('kingsbuilder-canvas');
-            const pageContent = canvas ? canvas.innerHTML : '';
+            let pageContent = '';
+            
+            if (canvas) {
+                // Check if canvas has actual content elements (not just empty canvas)
+                const contentElements = canvas.querySelectorAll('.kb-element, [data-element-type]');
+                
+                if (contentElements.length > 0) {
+                    // Save only the actual content elements
+                    pageContent = Array.from(contentElements).map(el => el.outerHTML).join('\n');
+                    console.log(`💾 Saving ${contentElements.length} content elements`);
+                } else {
+                    // Check if there's any meaningful content (not just empty canvas structure)
+                    const canvasFrame = canvas.querySelector('.canvas-frame');
+                    const emptyCanvas = canvas.querySelector('.empty-canvas');
+                    
+                    if (canvasFrame && !emptyCanvas) {
+                        pageContent = canvasFrame.innerHTML;
+                    } else {
+                        pageContent = ''; // Don't save empty canvas structure
+                        console.log('⚠️ No content elements found - saving empty content');
+                    }
+                }
+            }
             
             // Save page data
             const saveData = {
