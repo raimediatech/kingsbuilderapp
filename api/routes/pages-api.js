@@ -278,12 +278,10 @@ router.get('/:pageId', async (req, res) => {
         // Create a new local page with default content
         const newPage = {
           id: pageId,
-          title: 'New Page',
-          slug: 'new-page',
+          title: 'Home Page',
+          slug: 'home',
           status: 'draft',
-          content: {
-            elements: []
-          },
+          content: '', // Start with empty string content for HTML saves
           shop: shop,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
@@ -292,7 +290,7 @@ router.get('/:pageId', async (req, res) => {
         // Add to local pages array
         pages.push(newPage);
         
-        console.log(`✅ Created new local page: ${newPage.title}`);
+        console.log(`✅ Created new local page: ${newPage.title} with ID: ${pageId}`);
         res.json({ page: newPage });
       }
     } catch (error) {

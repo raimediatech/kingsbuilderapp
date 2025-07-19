@@ -2028,6 +2028,7 @@ class KingsBuilder {
                     }
                 } else {
                     console.error('❌ Failed to load page data:', response.status);
+                    console.log('📝 Page not found, will be created on first save');
                 }
             } catch (error) {
                 console.error('❌ Error loading page data:', error);
