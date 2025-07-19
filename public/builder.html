@@ -18,13 +18,39 @@
     <link rel="shortcut icon" href="/favicon.ico">
     
     <!-- External CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Elementor Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/elementor-icons@5.21.0/assets/css/elementor-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/elementor-icons@5.21.0/assets/css/elementor-icons.min.css" crossorigin="anonymous">
+    
+    <!-- Backup Icon CSS in case CDN fails -->
+    <style>
+        /* Fallback icons if CDN fails */
+        .fas, .far, .fab, .eicon {
+            font-family: 'Font Awesome 6 Free', 'Font Awesome 6 Brands', 'elementor-icons', sans-serif !important;
+            font-weight: 900;
+            font-style: normal;
+            font-variant: normal;
+            text-rendering: auto;
+            line-height: 1;
+        }
+        
+        /* Ensure icons are visible */
+        .element-icon i, .nav-tab i, .header-button i {
+            display: inline-block !important;
+            font-size: 16px !important;
+            width: 16px !important;
+            height: 16px !important;
+            text-align: center !important;
+        }
+        
+        /* Fallback for missing icons */
+        .fas:before { content: "⚡"; }
+        .eicon:before { content: "🔧"; }
+    </style>
     
     <!-- Color Picker CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css">
@@ -619,14 +645,15 @@
     <!-- External Scripts -->
     <script src="sortable.min.js"></script>
     
-    <!-- KingsBuilder Scripts - MINIMAL LOAD TO FIX UI BREAKING -->
+    <!-- KingsBuilder Scripts - ESSENTIAL SCRIPTS ONLY -->
     <script src="components.js"></script>
-    <!-- <script src="rich-text-editor.js"></script> -->
+    <script src="rich-text-editor.js"></script>
+    <script src="ui-enhancements.js"></script>
+    <script src="shopify-integration.js"></script>
+    <!-- DISABLED TO PREVENT UI BREAKING -->
     <!-- <script src="template-system.js"></script> -->
     <!-- <script src="advanced-widgets.js"></script> -->
-    <!-- <script src="ui-enhancements.js"></script> -->
     <!-- <script src="export-publish.js"></script> -->
-    <!-- <script src="shopify-integration.js"></script> -->
     <!-- <script src="seo-analytics.js"></script> -->
     <!-- <script src="integrations-system.js"></script> -->
     <!-- <script src="backup-system.js"></script> -->

@@ -7,9 +7,41 @@ const shopifyApi = require('../shopify');
 // Mock database for pages (replace with actual database in production)
 let pages = [
   {
-    id: '1',
+    id: '120147771634',
     title: 'Home Page',
     slug: 'home',
+    status: 'published',
+    content: {
+      elements: [
+        {
+          id: 'header1',
+          type: 'header',
+          content: 'Welcome to KingsBuilder',
+          styles: {
+            fontSize: '32px',
+            color: '#333',
+            textAlign: 'center'
+          }
+        },
+        {
+          id: 'paragraph1',
+          type: 'paragraph',
+          content: 'This is your saved content! The builder is working correctly.',
+          styles: {
+            fontSize: '16px',
+            color: '#666',
+            textAlign: 'center'
+          }
+        }
+      ]
+    },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: '1',
+    title: 'Sample Page',
+    slug: 'sample',
     status: 'published',
     content: {
       elements: [
@@ -196,6 +228,20 @@ router.get('/:pageId', async (req, res) => {
       });
     }
     
+    // First check if we have local KingsBuilder content for this page
+    let localPage = pages.find(p => p.id == pageId || p.id === parseInt(pageId, 10));
+    
+    console.log(`📄 Checking for page ${pageId} - Local content: ${localPage ? 'Found' : 'Not found'}`);
+    
+    // If we have local content, return it immediately
+    if (localPage) {
+      console.log(`✅ Found local KingsBuilder page: ${localPage.title}`);
+      console.log(`📄 Content type: ${typeof localPage.content}`);
+      console.log(`📄 Content preview: ${typeof localPage.content === 'string' ? localPage.content.substring(0, 200) + '...' : JSON.stringify(localPage.content).substring(0, 200) + '...'}`);
+      res.json({ page: localPage });
+      return;
+    }
+    
     console.log(`📄 Fetching page ${pageId} from Shopify for shop: ${shop}`);
     
     try {
@@ -212,15 +258,12 @@ router.get('/:pageId', async (req, res) => {
         const shopifyData = await shopifyResponse.json();
         const shopifyPage = shopifyData.page;
         
-        // Find page in local array to get KingsBuilder content
-        let localPage = pages.find(p => p.id == pageId || p.id === parseInt(pageId, 10));
-        
-        // Merge Shopify page with local KingsBuilder content
+        // Create page object from Shopify data
         const page = {
           id: shopifyPage.id,
           title: shopifyPage.title,
           slug: shopifyPage.handle,
-          content: localPage ? localPage.content : null, // KingsBuilder content
+          content: null, // No KingsBuilder content yet
           body_html: shopifyPage.body_html, // Shopify content
           template: 'default',
           shop: shop,
@@ -233,12 +276,29 @@ router.get('/:pageId', async (req, res) => {
         };
         
         console.log(`✅ Found Shopify page: ${shopifyPage.title}`);
-        console.log(`📄 KingsBuilder content available: ${localPage ? 'Yes' : 'No'}`);
-        
         res.json({ page });
       } else {
-        console.log(`❌ Shopify page ${pageId} not found`);
-        res.status(404).json({ error: 'Page not found' });
+        console.log(`❌ Shopify page ${pageId} not found - creating new page`);
+        
+        // Create a new local page with default content
+        const newPage = {
+          id: pageId,
+          title: 'New Page',
+          slug: 'new-page',
+          status: 'draft',
+          content: {
+            elements: []
+          },
+          shop: shop,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Add to local pages array
+        pages.push(newPage);
+        
+        console.log(`✅ Created new local page: ${newPage.title}`);
+        res.json({ page: newPage });
       }
     } catch (error) {
       console.error('Error fetching page from Shopify:', error);
@@ -341,6 +401,11 @@ router.put('/:pageId', async (req, res) => {
     
     console.log(`🔄 Updating page ${pageId} for shop: ${shop}`);
     console.log('Update data:', { title, slug, content: content ? 'provided' : 'not provided', template });
+    if (content) {
+      console.log(`📄 Content type: ${typeof content}`);
+      console.log(`📄 Content length: ${typeof content === 'string' ? content.length : JSON.stringify(content).length}`);
+      console.log(`📄 Content preview: ${typeof content === 'string' ? content.substring(0, 200) + '...' : JSON.stringify(content).substring(0, 200) + '...'}`);
+    }
     
     // Find page index (handle both string and number comparison)
     const pageIndex = pages.findIndex(p => p.id == pageId || p.id === parseInt(pageId, 10));

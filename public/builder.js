@@ -1950,20 +1950,35 @@ class KingsBuilder {
                     // Set page content - check both content and body_html
                     const canvas = document.getElementById('kingsbuilder-canvas');
                     if (canvas) {
-                        if (page.content) {
-                            // Use KingsBuilder content if available
+                        let contentLoaded = false;
+                        
+                        // Priority 1: Direct HTML content (most recent saves)
+                        if (page.content && typeof page.content === 'string' && page.content.trim()) {
                             canvas.innerHTML = page.content;
-                            console.log('✅ Loaded KingsBuilder content');
-                        } else if (page.body_html) {
-                            // Fallback to Shopify body_html
+                            console.log('✅ Loaded saved HTML content:', page.content.length, 'characters');
+                            console.log('📄 Content preview:', page.content.substring(0, 200) + '...');
+                            contentLoaded = true;
+                        }
+                        // Priority 2: KingsBuilder structured content
+                        else if (page.content && typeof page.content === 'object' && page.content.elements) {
+                            this.loadElementsFromData(page.content.elements);
+                            console.log('✅ Loaded KingsBuilder structured content:', page.content.elements.length, 'elements');
+                            contentLoaded = true;
+                        }
+                        // Priority 3: Shopify body_html
+                        else if (page.body_html && page.body_html.trim()) {
                             canvas.innerHTML = page.body_html;
-                            console.log('✅ Loaded Shopify body_html');
-                        } else {
-                            console.log('⚠️ No content found for page');
+                            console.log('✅ Loaded Shopify body_html content');
+                            contentLoaded = true;
                         }
                         
-                        // Parse the loaded HTML back into elements array for editing
-                        this.parseLoadedContent();
+                        if (contentLoaded) {
+                            // Parse the loaded HTML back into elements array for editing
+                            this.parseLoadedContent();
+                            console.log('🔄 Content parsed and ready for editing');
+                        } else {
+                            console.log('⚠️ No content found for page - canvas will show default content');
+                        }
                     }
                     
                     // Set page handle
