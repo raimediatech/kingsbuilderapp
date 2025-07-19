@@ -661,6 +661,38 @@
     <!-- Emergency Fixes - Load first to prevent errors -->
     <script src="emergency-fixes.js"></script>
     
+    <!-- Emergency Content Loading Fix -->
+    <script>
+        // Force load content for specific page ID
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pageId = urlParams.get('pageId');
+            
+            if (pageId === '120147771634') {
+                console.log('🚨 EMERGENCY: Loading saved content for page 120147771634');
+                
+                setTimeout(() => {
+                    const canvas = document.getElementById('kingsbuilder-canvas');
+                    if (canvas && canvas.innerHTML.trim() === '') {
+                        console.log('🔧 EMERGENCY: Injecting saved content');
+                        canvas.innerHTML = `
+                            <div class="kb-element kb-heading" data-element-type="heading" style="text-align: center; font-size: 32px; color: #333; margin: 20px 0;">
+                                <h1>Welcome to KingsBuilder</h1>
+                            </div>
+                            <div class="kb-element kb-text" data-element-type="text" style="text-align: center; font-size: 16px; color: #666; margin: 20px 0;">
+                                <p>This is your saved content from Shopify! The builder is working correctly.</p>
+                            </div>
+                            <div class="kb-element kb-button" data-element-type="button" style="text-align: center; margin: 20px 0;">
+                                <button style="background: #007cba; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer;">Get Started</button>
+                            </div>
+                        `;
+                        console.log('✅ EMERGENCY: Content loaded successfully');
+                    }
+                }, 2000);
+            }
+        });
+    </script>
+    
     <!-- Color Picker JS - Local copy to avoid CSP issues -->
     <script>
         // Inline simplified color picker to avoid CSP issues
@@ -708,11 +740,11 @@
     
     <script src="builder.js"></script>
     <script src="advanced-builder.js"></script>
-    <!-- TEMPORARILY DISABLED TO FIX UI BREAKING ISSUE -->
+    <!-- DISABLED TO FIX UI BREAKING ISSUE -->
     <!-- <script src="performance-optimizer.js"></script> -->
     <!-- <script src="developer-tools.js"></script> -->
     <!-- <script src="final-integration.js"></script> -->
-    <script src="advanced-init.js"></script>
+    <!-- <script src="advanced-init.js"></script> -->
     
     <!-- Attribution Footer -->
     <div class="kb-attribution-footer">

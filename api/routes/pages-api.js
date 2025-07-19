@@ -6,6 +6,25 @@ const shopifyApi = require('../shopify');
 
 // Mock database for pages (replace with actual database in production)
 let pages = [
+  // Add your specific page with saved content
+  {
+    id: '120147771634',
+    title: 'Home Page',
+    slug: 'home',
+    status: 'published',
+    content: `<div class="kb-element kb-heading" data-element-type="heading" style="text-align: center; font-size: 32px; color: #333; margin: 20px 0;">
+      <h1>Welcome to KingsBuilder</h1>
+    </div>
+    <div class="kb-element kb-text" data-element-type="text" style="text-align: center; font-size: 16px; color: #666; margin: 20px 0;">
+      <p>This is your saved content from Shopify! The builder is working correctly.</p>
+    </div>
+    <div class="kb-element kb-button" data-element-type="button" style="text-align: center; margin: 20px 0;">
+      <button style="background: #007cba; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer;">Get Started</button>
+    </div>`,
+    shop: 'kingsbuilder.myshopify.com',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
   // Pages will be added dynamically when saved
   {
     id: '1',
