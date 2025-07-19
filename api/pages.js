@@ -127,4 +127,86 @@ router.post('/:handle/publish', async (req, res) => {
   }
 });
 
+
+// Get single page by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const shop = req.query.shop;
+    const id = req.params.id;
+    if (!shop) return res.status(400).json({ error: 'Shop is required' });
+    if (!id) return res.status(400).json({ error: 'Page ID is required' });
+
+    // No local DB lookup implemented
+
+    // Fallback: fetch directly from Shopify if not in our DB
+    const accessToken = await getAccessToken(shop);
+    if (!accessToken) {
+      return res.status(404).json({ error: 'Page not found locally and no token to fetch from Shopify' });
+    }
+
+    const shopifyRes = await fetch(`https://${shop}/admin/api/2023-10/pages/${id}.json`, {
+      method: 'GET',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!shopifyRes.ok) {
+      const resJson = await shopifyRes.json();
+      return res.status(shopifyRes.status).json({ error: 'Failed to fetch from Shopify', details: resJson });
+    }
+
+    const { page: shopifyPage } = await shopifyRes.json();
+
+    res.json({ success: true, page: { ...shopifyPage, content: shopifyPage.body_html } });
+  } catch (err) {
+    console.error('Error loading page:', err);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+
+// Update page by ID
+router.put('/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const shop = req.query.shop || req.body.shop;
+    const { title, content } = req.body;
+    if (!shop) return res.status(400).json({ error: 'Shop is required' });
+    if (!id) return res.status(400).json({ error: 'Page ID is required' });
+    if (!title && !content) return res.status(400).json({ error: 'Nothing to update' });
+
+    const accessToken = await getAccessToken(shop);
+    if (!accessToken) {
+      return res.status(400).json({ error: 'Missing accessToken' });
+    }
+
+    const shopifyRes = await fetch(`https://${shop}/admin/api/2023-10/pages/${id}.json`, {
+      method: 'PUT',
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        page: {
+          id,
+          title,
+          body_html: content,
+        }
+      })
+    });
+
+    const result = await shopifyRes.json();
+    if (!shopifyRes.ok) {
+      return res.status(shopifyRes.status).json({ error: 'Failed to update page in Shopify', details: result });
+    }
+
+    res.json({ success: true, page: result.page || result });
+  } catch (err) {
+    console.error('Error updating page:', err);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
 module.exports = router;
