@@ -6,38 +6,7 @@ const shopifyApi = require('../shopify');
 
 // Mock database for pages (replace with actual database in production)
 let pages = [
-  {
-    id: '120147771634',
-    title: 'Home Page',
-    slug: 'home',
-    status: 'published',
-    content: {
-      elements: [
-        {
-          id: 'header1',
-          type: 'header',
-          content: 'Welcome to KingsBuilder',
-          styles: {
-            fontSize: '32px',
-            color: '#333',
-            textAlign: 'center'
-          }
-        },
-        {
-          id: 'paragraph1',
-          type: 'paragraph',
-          content: 'This is your saved content! The builder is working correctly.',
-          styles: {
-            fontSize: '16px',
-            color: '#666',
-            textAlign: 'center'
-          }
-        }
-      ]
-    },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
+  // Pages will be added dynamically when saved
   {
     id: '1',
     title: 'Sample Page',
@@ -167,6 +136,32 @@ let pages = [
     updatedAt: new Date().toISOString()
   }
 ];
+
+// Debug endpoint to see all stored pages
+router.get('/debug', async (req, res) => {
+  console.log('🔍 DEBUG: Current pages in memory:', pages.length);
+  pages.forEach((page, index) => {
+    console.log(`📄 Page ${index + 1}:`, {
+      id: page.id,
+      title: page.title,
+      contentType: typeof page.content,
+      contentLength: typeof page.content === 'string' ? page.content.length : JSON.stringify(page.content || {}).length,
+      updatedAt: page.updatedAt
+    });
+  });
+  
+  res.json({ 
+    totalPages: pages.length,
+    pages: pages.map(p => ({
+      id: p.id,
+      title: p.title,
+      contentType: typeof p.content,
+      contentLength: typeof p.content === 'string' ? p.content.length : JSON.stringify(p.content || {}).length,
+      updatedAt: p.updatedAt,
+      contentPreview: typeof p.content === 'string' ? p.content.substring(0, 200) + '...' : JSON.stringify(p.content || {}).substring(0, 200) + '...'
+    }))
+  });
+});
 
 // Get all pages
 router.get('/', async (req, res) => {
@@ -452,6 +447,14 @@ router.put('/:pageId', async (req, res) => {
     
     // Replace page in array
     pages[pageIndex] = updatedPage;
+    
+    console.log(`✅ Page updated in memory:`, {
+      id: updatedPage.id,
+      title: updatedPage.title,
+      contentType: typeof updatedPage.content,
+      contentLength: typeof updatedPage.content === 'string' ? updatedPage.content.length : JSON.stringify(updatedPage.content || {}).length,
+      updatedAt: updatedPage.updatedAt
+    });
     
     // CRITICAL FIX: Also update the Shopify page if it's a Shopify page
     console.log(`🔍 Checking Shopify update: isShopifyPage=${updatedPage.isShopifyPage}, hasContent=${!!content}`);
