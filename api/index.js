@@ -180,8 +180,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, '../public')));
+// Static files middleware moved to end to avoid route conflicts
 
 // INSTALL ROUTE - IFRAME BREAKOUT OAUTH
 app.get('/install', (req, res) => {
@@ -2728,7 +2727,16 @@ try {
 
 // Import pages API routes FIRST (before general /api route to avoid conflicts)
 try {
-  const pagesApiRoutes = require('./routes/pages-api');
+  // Try to load the fixed pages API routes first
+  let pagesApiRoutes;
+  try {
+    pagesApiRoutes = require('./routes/pages-api-fixed');
+    console.log('Using fixed pages API routes');
+  } catch (fixedError) {
+    console.log('Fixed pages API routes not found, falling back to original');
+    pagesApiRoutes = require('./routes/pages-api');
+  }
+  
   app.use('/api/pages', pagesApiRoutes);
   console.log('Pages API routes registered successfully (priority)');
 } catch (error) {
@@ -2831,6 +2839,9 @@ try {
 } catch (error) {
   console.error('Error loading help routes:', error);
 }
+
+// Serve static files from the public directory (moved here to avoid route conflicts)
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Root route - redirect to dashboard or landing
 app.get('/', (req, res) => {
