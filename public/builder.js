@@ -4,11 +4,36 @@
 class KingsBuilder {
 
   getAccessToken() {
-    const token = localStorage.getItem('shopifyAccessToken');
-    if (token) return token;
-
+    // Method 1: From URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token') || urlParams.get('access_token');
+    if (urlToken) {
+        localStorage.setItem('shopifyAccessToken', urlToken);
+        return urlToken;
+    }
+    
+    // Method 2: From localStorage (multiple keys)
+    const localToken = localStorage.getItem('shopifyAccessToken') || 
+                      localStorage.getItem('accessToken') ||
+                      localStorage.getItem('shopify_access_token');
+    if (localToken) return localToken;
+    
+    // Method 3: From cookies
+    const cookieToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('accessToken=') || row.startsWith('shopifyAccessToken='))
+        ?.split('=')[1];
+    if (cookieToken) return cookieToken;
+    
+    // Method 4: From meta tag
     const meta = document.querySelector('meta[name="shopify-access-token"]');
-    return meta ? meta.getAttribute('content') : '';
+    if (meta) return meta.getAttribute('content');
+    
+    // Method 5: From global window object (set by auth-fix.js)
+    if (window.shopifyAccessToken) return window.shopifyAccessToken;
+    
+    console.warn('🔑 No access token found in any location');
+    return '';
   }
 
     constructor() {
@@ -1881,12 +1906,22 @@ class KingsBuilder {
                     }
                 }
                 
+                // Get access token for authentication
+                const accessToken = this.getAccessToken();
+                console.log('🔑 Access token available for loading:', !!accessToken);
+                
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+                
+                if (accessToken) {
+                    headers['X-Shopify-Access-Token'] = accessToken;
+                }
+                
                 // Load page content from KingsBuilder API
                 const response = await fetch(`/api/pages/${pageId}?shop=${encodeURIComponent(shop)}`, {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: headers,
                     credentials: 'include'
                 });
                 

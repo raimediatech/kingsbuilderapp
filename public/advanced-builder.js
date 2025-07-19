@@ -114,11 +114,13 @@ class KingsBuilderAdvanced extends KingsBuilder {
     
     // Setup canvas click interactions
     setupCanvasInteractions() {
-        const canvas = document.querySelector('.canvas-content');
+        const canvas = document.querySelector('#kingsbuilder-canvas') || document.querySelector('.canvas-content');
         if (!canvas) {
-            console.warn('Canvas content not found');
+            console.warn('Canvas content not found - looking for #kingsbuilder-canvas or .canvas-content');
             return;
         }
+        
+        console.log('✅ Canvas found:', canvas.id || canvas.className);
         
         // Use event delegation for all element interactions
         canvas.addEventListener('click', (e) => {
