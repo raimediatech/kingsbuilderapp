@@ -176,8 +176,24 @@ router.get('/:pageId', async (req, res) => {
                       req.cookies?.accessToken ||
                       process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN;
     
+    console.log('🔍 Authentication check:', {
+      hasAccessToken: !!accessToken,
+      tokenSource: accessToken ? 'found' : 'missing',
+      shop: shop
+    });
+    
     if (!accessToken) {
-      return res.status(401).json({ error: 'Access token not found' });
+      console.log('❌ No access token found - returning 401');
+      return res.status(401).json({ 
+        error: 'Access token not found',
+        debug: {
+          shop: shop,
+          hasHeaders: !!req.headers['x-shopify-access-token'],
+          hasSession: !!req.session?.accessToken,
+          hasCookies: !!req.cookies?.shopifyAccessToken,
+          hasEnvToken: !!process.env.SHOPIFY_ADMIN_API_ACCESS_TOKEN
+        }
+      });
     }
     
     console.log(`📄 Fetching page ${pageId} from Shopify for shop: ${shop}`);
@@ -228,8 +244,6 @@ router.get('/:pageId', async (req, res) => {
       console.error('Error fetching page from Shopify:', error);
       res.status(500).json({ error: 'Failed to fetch page from Shopify' });
     }
-    
-    res.json({ page });
   } catch (error) {
     console.error('Error getting page:', error);
     res.status(500).json({ error: 'Failed to get page', details: error.message });

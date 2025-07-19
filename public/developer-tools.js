@@ -20,7 +20,7 @@ class DeveloperTools {
         this.setupCustomCSS();
         this.setupWidgetAPI();
         this.setupHookSystem();
-        this.setupDevMode();
+        // this.setupDevMode(); // Commented out until method is implemented
     }
     
     createDeveloperPanel() {
@@ -239,18 +239,25 @@ class DeveloperTools {
     toggleDevMode() {
         this.isEnabled = !this.isEnabled;
         
+        // Save dev mode state
+        localStorage.setItem('kb-dev-mode', this.isEnabled.toString());
+        
         const button = document.querySelector('.kb-toggle-dev-mode');
-        button.innerHTML = `
-            <i class="eicon-developer"></i>
-            ${this.isEnabled ? 'Disable' : 'Enable'} Dev Mode
-        `;
+        if (button) {
+            button.innerHTML = `
+                <i class="eicon-developer"></i>
+                ${this.isEnabled ? 'Disable' : 'Enable'} Dev Mode
+            `;
+        }
         
         if (this.isEnabled) {
             document.body.classList.add('kb-dev-mode');
             this.enableDevFeatures();
+            console.log('🔧 Developer mode enabled');
         } else {
             document.body.classList.remove('kb-dev-mode');
             this.disableDevFeatures();
+            console.log('🔧 Developer mode disabled');
         }
     }
     
@@ -571,6 +578,60 @@ class DeveloperTools {
         });
     }
     
+    setupDevMode() {
+        // Initialize development mode features
+        console.log('🔧 Setting up development mode...');
+        
+        // Load saved dev mode state
+        this.isEnabled = localStorage.getItem('kb-dev-mode') === 'true';
+        
+        // Set up dev mode UI
+        if (this.isEnabled) {
+            document.body.classList.add('kb-dev-mode');
+        }
+        
+        // Add dev mode keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl + Shift + D to toggle dev mode
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                e.preventDefault();
+                this.toggleDevMode();
+            }
+            
+            // Ctrl + Shift + I for element inspection
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+                e.preventDefault();
+                this.toggleElementInspection();
+            }
+        });
+        
+        console.log('✅ Development mode setup complete');
+    }
+    
+    toggleElementInspection() {
+        const body = document.body;
+        
+        if (body.classList.contains('kb-inspection-mode')) {
+            body.classList.remove('kb-inspection-mode');
+            this.removeElementInspectionHandlers();
+            console.log('🔍 Element inspection disabled');
+        } else {
+            body.classList.add('kb-inspection-mode');
+            this.addElementInspection();
+            console.log('🔍 Element inspection enabled');
+        }
+    }
+    
+    removeElementInspectionHandlers() {
+        // Remove inspection event listeners
+        document.querySelectorAll('.kb-inspected').forEach(el => {
+            el.classList.remove('kb-inspected');
+        });
+        document.querySelectorAll('.kb-element-info').forEach(el => {
+            el.remove();
+        });
+    }
+
     setupHookSystem() {
         // Action hooks
         window.doAction = (hook, ...args) => {
