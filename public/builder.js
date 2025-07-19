@@ -66,6 +66,12 @@ class KingsBuilder {
     }
     
     initializeBuilder() {
+        // Prevent multiple initializations
+        if (this.initialized) {
+            console.log('⚠️ Builder already initialized, skipping...');
+            return;
+        }
+        
         // Get shop and page parameters from URL
         const urlParams = new URLSearchParams(window.location.search);
         this.shop = urlParams.get('shop');
@@ -109,6 +115,8 @@ class KingsBuilder {
         // Initialize Shopify image upload
         this.initShopifyImageUpload();
         
+        // Mark as initialized
+        this.initialized = true;
         console.log('✅ KingsBuilder Ready!');
     }
     
@@ -1975,6 +1983,34 @@ class KingsBuilder {
                     }
                     
                     console.log('📄 Page loaded successfully');
+                } else if (response.status === 404) {
+                    console.log('📝 Page not found, creating new page with default content');
+                    
+                    // Initialize with default content for new pages
+                    const canvas = document.getElementById('kingsbuilder-canvas');
+                    if (canvas && canvas.innerHTML.trim() === '') {
+                        canvas.innerHTML = `
+                            <div class="elementor-section">
+                                <div class="elementor-container">
+                                    <div class="elementor-column">
+                                        <div class="elementor-widget elementor-widget-heading">
+                                            <h2>Welcome to KingsBuilder</h2>
+                                            <p>Start building your page by dragging elements from the left panel.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        console.log('✅ Default content loaded for new page');
+                    }
+                    
+                    // Set default title
+                    if (pageTitle) {
+                        const titleInput = document.getElementById('pageTitle');
+                        if (titleInput) {
+                            titleInput.value = decodeURIComponent(pageTitle);
+                        }
+                    }
                 } else {
                     console.error('❌ Failed to load page data:', response.status);
                 }
@@ -2324,6 +2360,12 @@ class KingsBuilder {
 
 // Initialize KingsBuilder when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Prevent multiple instances
+    if (window.kingsBuilder) {
+        console.log('⚠️ KingsBuilder already exists, skipping initialization');
+        return;
+    }
+    
     console.log('🚀 Initializing KingsBuilder - Visual Page Builder...');
     console.log('🏢 Created by Kingsmen Marketing Agency');
     window.kingsBuilder = new KingsBuilder();
