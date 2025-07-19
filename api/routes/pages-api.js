@@ -6,33 +6,6 @@ const shopifyApi = require('../shopify');
 
 // Mock database for pages (replace with actual database in production)
 let pages = [
-  // Add your ACTUAL saved page with REAL content
-  {
-    id: '120003199218',
-    title: 'Contact',
-    slug: 'contact',
-    status: 'published',
-    content: `<div class="kb-element kb-heading" data-element-type="heading" style="text-align: center; font-size: 36px; color: #2c3e50; margin: 30px 0;">
-      <h1>Contact Us</h1>
-    </div>
-    <div class="kb-element kb-text" data-element-type="text" style="text-align: center; font-size: 18px; color: #7f8c8d; margin: 20px 0; line-height: 1.6;">
-      <p>Get in touch with our team. We're here to help you build amazing pages with KingsBuilder.</p>
-    </div>
-    <div class="kb-element kb-container" data-element-type="container" style="max-width: 800px; margin: 40px auto; padding: 40px; background: #f8f9fa; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-      <div class="kb-element kb-heading" data-element-type="heading" style="font-size: 24px; color: #34495e; margin-bottom: 20px;">
-        <h2>Send us a message</h2>
-      </div>
-      <div class="kb-element kb-text" data-element-type="text" style="font-size: 16px; color: #555; margin-bottom: 30px;">
-        <p>Fill out the form below and we'll get back to you as soon as possible.</p>
-      </div>
-      <div class="kb-element kb-button" data-element-type="button" style="text-align: center; margin: 30px 0;">
-        <button style="background: #3498db; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background 0.3s;">Get Started Today</button>
-      </div>
-    </div>`,
-    shop: 'kingsbuilder.myshopify.com',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
   // Pages will be added dynamically when saved
   {
     id: '1',
@@ -263,13 +236,19 @@ router.get('/:pageId', async (req, res) => {
     
     try {
       // Fetch page from Shopify API
-      const shopifyResponse = await fetch(`https://${shop}/admin/api/2023-10/pages/${pageId}.json`, {
+      const shopifyUrl = `https://${shop}/admin/api/2023-10/pages/${pageId}.json`;
+      console.log(`🔗 Attempting Shopify API call: ${shopifyUrl}`);
+      console.log(`🔑 Using access token: ${accessToken ? accessToken.substring(0, 10) + '...' : 'MISSING'}`);
+      
+      const shopifyResponse = await fetch(shopifyUrl, {
         method: 'GET',
         headers: {
           'X-Shopify-Access-Token': accessToken,
           'Content-Type': 'application/json'
         }
       });
+      
+      console.log(`📡 Shopify API Response Status: ${shopifyResponse.status}`);
       
       if (shopifyResponse.ok) {
         const shopifyData = await shopifyResponse.json();
@@ -302,25 +281,24 @@ router.get('/:pageId', async (req, res) => {
         
         res.json({ page });
       } else {
-        console.log(`❌ Shopify page ${pageId} not found - creating new page`);
+        const errorText = await shopifyResponse.text();
+        console.log(`❌ Shopify API Response Status: ${shopifyResponse.status}`);
+        console.log(`❌ Shopify API Response Text: ${errorText}`);
+        console.log(`❌ Shopify page ${pageId} not found for shop: ${shop}`);
+        console.log(`❌ Access token being used: ${accessToken ? 'Present' : 'Missing'}`);
+        console.log(`❌ Full URL attempted: https://${shop}/admin/api/2023-10/pages/${pageId}.json`);
         
-        // Create a new local page with default content
-        const newPage = {
-          id: pageId,
-          title: 'Home Page',
-          slug: 'home',
-          status: 'draft',
-          content: '', // Start with empty string content for HTML saves
-          shop: shop,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        
-        // Add to local pages array
-        pages.push(newPage);
-        
-        console.log(`✅ Created new local page: ${newPage.title} with ID: ${pageId}`);
-        res.json({ page: newPage });
+        // DON'T CREATE NEW PAGE - Return error so user knows what's wrong
+        return res.status(404).json({ 
+          error: 'Page not found in Shopify',
+          details: {
+            pageId: pageId,
+            shop: shop,
+            shopifyStatus: shopifyResponse.status,
+            shopifyError: errorText,
+            message: 'This page does not exist in your Shopify store. Please check the page ID or create the page in Shopify first.'
+          }
+        });
       }
     } catch (error) {
       console.error('Error fetching page from Shopify:', error);
