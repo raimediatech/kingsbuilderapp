@@ -7,42 +7,130 @@ class ProperFix {
         this.pageData = null;
     }
 
-    // Fix icons ONLY
+    // AGGRESSIVE ICON FIX - FORCE ALL ICONS TO WORK
     fixIcons() {
-        console.log('🎨 Fixing icons...');
+        console.log('🎨 AGGRESSIVE icon fixing...');
         
         // Remove existing icon styles
-        const existingStyles = document.querySelectorAll('#icon-fix-style, #simple-icon-fix-css, #final-icon-fix, #builder-icon-fix');
+        const existingStyles = document.querySelectorAll('#icon-fix-style, #simple-icon-fix-css, #final-icon-fix, #builder-icon-fix, #proper-icon-fix');
         existingStyles.forEach(style => style.remove());
         
-        // Add simple icon fix
+        // Add AGGRESSIVE icon fix
         const style = document.createElement('style');
-        style.id = 'proper-icon-fix';
+        style.id = 'aggressive-icon-fix';
         style.textContent = `
-            /* FORCE ALL ICONS TO BE BLACK AND VISIBLE */
+            /* FORCE ALL ICONS TO BE BLACK AND VISIBLE - AGGRESSIVE */
+            * i, * .fa, * .fas, * .far, * .fab, * .fal, * .fad, * .fass, * .fasr, * .fasl,
+            * [class*="fa-"], * [class^="fa-"], * .icon, * .material-icons,
             i, .fa, .fas, .far, .fab, .fal, .fad, .fass, .fasr, .fasl,
-            [class*="fa-"], [class^="fa-"], .icon, .material-icons {
+            [class*="fa-"], [class^="fa-"], .icon, .material-icons,
+            .sidebar i, .toolbar i, .menu i, .nav i, .btn i, .button i,
+            .tab-btn i, .control-btn i, .action-btn i, .toolbar-btn i,
+            .sidebar-icon, .menu-icon, .toolbar-icon, .nav-icon {
                 color: #000000 !important;
                 fill: #000000 !important;
                 display: inline-block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
-                font-family: "Font Awesome 6 Free" !important;
+                font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "FontAwesome", "Font Awesome 5 Free", "Font Awesome 5 Pro" !important;
                 font-weight: 900 !important;
                 font-style: normal !important;
+                text-rendering: auto !important;
+                -webkit-font-smoothing: antialiased !important;
+                -moz-osx-font-smoothing: grayscale !important;
+                width: auto !important;
+                height: auto !important;
+                line-height: 1 !important;
+                vertical-align: baseline !important;
+                font-size: inherit !important;
+                text-decoration: none !important;
+                text-transform: none !important;
+                letter-spacing: normal !important;
+                word-wrap: normal !important;
+                white-space: nowrap !important;
+                direction: ltr !important;
+                -webkit-font-feature-settings: normal !important;
+                font-feature-settings: normal !important;
+                font-variant: normal !important;
+                text-indent: 0 !important;
+                position: relative !important;
+                z-index: 1 !important;
             }
+            
+            /* Force specific icon content */
+            .fa-plus::before, .fas.fa-plus::before { content: "\\f067" !important; }
+            .fa-edit::before, .fas.fa-edit::before { content: "\\f044" !important; }
+            .fa-trash::before, .fas.fa-trash::before { content: "\\f1f8" !important; }
+            .fa-save::before, .fas.fa-save::before { content: "\\f0c7" !important; }
+            .fa-cog::before, .fas.fa-cog::before { content: "\\f013" !important; }
+            .fa-gear::before, .fas.fa-gear::before { content: "\\f013" !important; }
+            .fa-settings::before, .fas.fa-settings::before { content: "\\f013" !important; }
+            .fa-bars::before, .fas.fa-bars::before { content: "\\f0c9" !important; }
+            .fa-times::before, .fas.fa-times::before { content: "\\f00d" !important; }
+            .fa-close::before, .fas.fa-close::before { content: "\\f00d" !important; }
+            .fa-home::before, .fas.fa-home::before { content: "\\f015" !important; }
+            .fa-user::before, .fas.fa-user::before { content: "\\f007" !important; }
+            .fa-file::before, .fas.fa-file::before { content: "\\f15b" !important; }
+            .fa-folder::before, .fas.fa-folder::before { content: "\\f07b" !important; }
+            .fa-image::before, .fas.fa-image::before { content: "\\f03e" !important; }
+            .fa-desktop::before, .fas.fa-desktop::before { content: "\\f108" !important; }
+            .fa-tablet-alt::before, .fas.fa-tablet-alt::before { content: "\\f3fa" !important; }
+            .fa-mobile-alt::before, .fas.fa-mobile-alt::before { content: "\\f3cd" !important; }
+            .fa-search-minus::before, .fas.fa-search-minus::before { content: "\\f010" !important; }
+            .fa-search-plus::before, .fas.fa-search-plus::before { content: "\\f00e" !important; }
+            .fa-eye::before, .fas.fa-eye::before { content: "\\f06e" !important; }
+            .fa-rocket::before, .fas.fa-rocket::before { content: "\\f135" !important; }
+            .fa-magic::before, .fas.fa-magic::before { content: "\\f0d0" !important; }
+            .fa-expand-alt::before, .fas.fa-expand-alt::before { content: "\\f424" !important; }
+            .fa-anchor::before, .fas.fa-anchor::before { content: "\\f13d" !important; }
+            .fa-arrow-left::before, .fas.fa-arrow-left::before { content: "\\f060" !important; }
+            .fa-mouse-pointer::before, .fas.fa-mouse-pointer::before { content: "\\f245" !important; }
+            .fa-text::before, .fas.fa-text::before { content: "\\f031" !important; }
+            .fa-heading::before, .fas.fa-heading::before { content: "\\f1dc" !important; }
+            .fa-paragraph::before, .fas.fa-paragraph::before { content: "\\f1dd" !important; }
+            .fa-list::before, .fas.fa-list::before { content: "\\f03a" !important; }
+            .fa-table::before, .fas.fa-table::before { content: "\\f0ce" !important; }
+            .fa-video::before, .fas.fa-video::before { content: "\\f03d" !important; }
+            .fa-wpforms::before, .fas.fa-wpforms::before { content: "\\f298" !important; }
+            .fa-hand-pointer::before, .fas.fa-hand-pointer::before { content: "\\f25a" !important; }
             
             /* Keep white icons on colored backgrounds */
             .btn-primary i, .primary i, .toolbar-btn.primary i,
             [style*="background-color: #007cba"] i,
             [style*="background: #007cba"] i,
-            .active i, .selected i {
+            .active i, .selected i,
+            .toolbar-btn.primary i {
                 color: #ffffff !important;
                 fill: #ffffff !important;
             }
+            
+            /* Force Font Awesome to load */
+            @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
         `;
         document.head.appendChild(style);
-        console.log('✅ Icons fixed');
+        
+        // Also force reload Font Awesome
+        this.forceLoadFontAwesome();
+        
+        console.log('✅ AGGRESSIVE icon fix applied');
+    }
+    
+    // Force load Font Awesome
+    forceLoadFontAwesome() {
+        console.log('🔄 Force loading Font Awesome...');
+        
+        // Remove existing Font Awesome links
+        const existingFA = document.querySelectorAll('link[href*="font-awesome"]');
+        existingFA.forEach(link => link.remove());
+        
+        // Add Font Awesome 6
+        const faLink = document.createElement('link');
+        faLink.rel = 'stylesheet';
+        faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+        faLink.crossOrigin = 'anonymous';
+        document.head.appendChild(faLink);
+        
+        console.log('✅ Font Awesome force loaded');
     }
 
     // Load Shopify content into the CORRECT canvas area
