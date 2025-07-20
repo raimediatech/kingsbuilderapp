@@ -15,18 +15,19 @@ class ProperFix {
         const existingStyles = document.querySelectorAll('#icon-fix-style, #simple-icon-fix-css, #final-icon-fix, #builder-icon-fix, #proper-icon-fix');
         existingStyles.forEach(style => style.remove());
         
-        // Add AGGRESSIVE icon fix
+        // Add COMPREHENSIVE ICON AND UI FIX
         const style = document.createElement('style');
-        style.id = 'aggressive-icon-fix';
+        style.id = 'comprehensive-ui-fix';
         style.textContent = `
-            /* FORCE ALL ICONS TO BE BLACK AND VISIBLE - AGGRESSIVE */
+            /* FORCE ALL ICONS TO BE BLACK AND VISIBLE - COMPREHENSIVE */
             * i, * .fa, * .fas, * .far, * .fab, * .fal, * .fad, * .fass, * .fasr, * .fasl,
             * [class*="fa-"], * [class^="fa-"], * .icon, * .material-icons,
             i, .fa, .fas, .far, .fab, .fal, .fad, .fass, .fasr, .fasl,
             [class*="fa-"], [class^="fa-"], .icon, .material-icons,
             .sidebar i, .toolbar i, .menu i, .nav i, .btn i, .button i,
             .tab-btn i, .control-btn i, .action-btn i, .toolbar-btn i,
-            .sidebar-icon, .menu-icon, .toolbar-icon, .nav-icon {
+            .sidebar-icon, .menu-icon, .toolbar-icon, .nav-icon,
+            .element-item i, .tab-content i, .properties-content i {
                 color: #000000 !important;
                 fill: #000000 !important;
                 display: inline-block !important;
@@ -55,6 +56,70 @@ class ProperFix {
                 text-indent: 0 !important;
                 position: relative !important;
                 z-index: 1 !important;
+                margin-right: 8px !important;
+            }
+            
+            /* FIX SIDEBAR ELEMENT ITEMS - REMOVE EXCESSIVE MARGINS */
+            .element-item i {
+                margin-right: 8px !important;
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+            }
+            
+            /* SIDEBAR HOVER EFFECTS - BLACK BACKGROUND, WHITE TEXT/ICONS */
+            .element-item:hover,
+            .tab-btn:hover,
+            .toolbar-btn:hover {
+                background-color: #000000 !important;
+                color: #ffffff !important;
+            }
+            
+            .element-item:hover i,
+            .tab-btn:hover i,
+            .toolbar-btn:hover i {
+                color: #ffffff !important;
+                fill: #ffffff !important;
+            }
+            
+            /* ACTIVE STATES - BLACK BACKGROUND, WHITE TEXT/ICONS */
+            .element-item.active,
+            .tab-btn.active,
+            .toolbar-btn.active,
+            .element-item.selected,
+            .tab-btn.selected,
+            .toolbar-btn.selected {
+                background-color: #000000 !important;
+                color: #ffffff !important;
+            }
+            
+            .element-item.active i,
+            .tab-btn.active i,
+            .toolbar-btn.active i,
+            .element-item.selected i,
+            .tab-btn.selected i,
+            .toolbar-btn.selected i {
+                color: #ffffff !important;
+                fill: #ffffff !important;
+            }
+            
+            /* PRIMARY BUTTONS - KEEP WHITE ICONS */
+            .btn-primary i, .primary i, .toolbar-btn.primary i,
+            [style*="background-color: #007cba"] i,
+            [style*="background: #007cba"] i {
+                color: #ffffff !important;
+                fill: #ffffff !important;
+            }
+            
+            /* TOOLBAR BUTTON HOVER EFFECTS */
+            .toolbar-btn:hover {
+                background-color: #000000 !important;
+                color: #ffffff !important;
+            }
+            
+            .toolbar-btn:hover i {
+                color: #ffffff !important;
+                fill: #ffffff !important;
             }
             
             /* Force specific icon content */
@@ -93,16 +158,6 @@ class ProperFix {
             .fa-video::before, .fas.fa-video::before { content: "\\f03d" !important; }
             .fa-wpforms::before, .fas.fa-wpforms::before { content: "\\f298" !important; }
             .fa-hand-pointer::before, .fas.fa-hand-pointer::before { content: "\\f25a" !important; }
-            
-            /* Keep white icons on colored backgrounds */
-            .btn-primary i, .primary i, .toolbar-btn.primary i,
-            [style*="background-color: #007cba"] i,
-            [style*="background: #007cba"] i,
-            .active i, .selected i,
-            .toolbar-btn.primary i {
-                color: #ffffff !important;
-                fill: #ffffff !important;
-            }
             
             /* Force Font Awesome to load */
             @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
