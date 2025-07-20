@@ -1,0 +1,214 @@
+/* 🚨 EMERGENCY BUILDER UI FIX */
+/* This CSS fixes the broken builder UI */
+
+/* Ensure the panel is visible and working */
+.kingsbuilder-panel {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Fix navigation tabs */
+.kingsbuilder-panel-nav {
+    display: flex !important;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.nav-tab {
+    background: none !important;
+    border: none !important;
+    padding: 12px 16px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #666 !important;
+    transition: all 0.2s ease !important;
+}
+
+.nav-tab:hover {
+    background: #e9ecef !important;
+    color: #333 !important;
+}
+
+.nav-tab.active {
+    background: #007cba !important;
+    color: white !important;
+}
+
+/* Fix tab content */
+.tab-content {
+    display: none !important;
+    padding: 20px !important;
+}
+
+.tab-content.active {
+    display: block !important;
+}
+
+/* Fix elements grid */
+.elements-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+    gap: 10px !important;
+    padding: 10px 0 !important;
+}
+
+.element-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 10px !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 4px !important;
+    cursor: grab !important;
+    transition: all 0.2s ease !important;
+    background: white !important;
+}
+
+.element-item:hover {
+    border-color: #007cba !important;
+    box-shadow: 0 2px 8px rgba(0,124,186,0.2) !important;
+}
+
+.element-icon {
+    font-size: 24px !important;
+    margin-bottom: 8px !important;
+    color: #007cba !important;
+}
+
+.element-title {
+    font-size: 12px !important;
+    text-align: center !important;
+    color: #333 !important;
+    font-weight: 500 !important;
+}
+
+/* Fix canvas */
+.canvas-frame, .kingsbuilder-canvas {
+    min-height: 500px !important;
+    background: white !important;
+    border: 2px dashed #ddd !important;
+    padding: 20px !important;
+    border-radius: 8px !important;
+    position: relative !important;
+}
+
+.canvas-frame.drag-over {
+    border-color: #007cba !important;
+    background: #f0f8ff !important;
+}
+
+/* Fix empty canvas message */
+.empty-canvas {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 300px !important;
+    text-align: center !important;
+    color: #666 !important;
+}
+
+.empty-canvas-icon {
+    font-size: 48px !important;
+    color: #ccc !important;
+    margin-bottom: 20px !important;
+}
+
+/* Fix category headers */
+.category-header {
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px 0 !important;
+    cursor: pointer !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    margin-bottom: 10px !important;
+}
+
+.category-header i {
+    margin-right: 8px !important;
+}
+
+.toggle-icon {
+    margin-left: auto !important;
+}
+
+/* Fix search box */
+.search-box {
+    position: relative !important;
+    margin-bottom: 20px !important;
+}
+
+.search-box input {
+    width: 100% !important;
+    padding: 10px 40px 10px 16px !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+}
+
+.search-box i {
+    position: absolute !important;
+    right: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    color: #666 !important;
+}
+
+/* Fix header buttons */
+.header-button {
+    background: none !important;
+    border: none !important;
+    padding: 8px !important;
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    color: #666 !important;
+    margin-left: 4px !important;
+    transition: all 0.2s ease !important;
+}
+
+.header-button:hover {
+    background: #f0f0f0 !important;
+    color: #333 !important;
+}
+
+.header-button.btn-primary {
+    background: #007cba !important;
+    color: white !important;
+}
+
+.header-button.btn-success {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+/* Ensure proper layout */
+#kingsbuilder-editor-wrapper {
+    display: flex !important;
+    min-height: 100vh !important;
+}
+
+.kingsbuilder-preview {
+    flex: 1 !important;
+    margin-left: 300px !important;
+    padding: 20px !important;
+    background: #f5f7fa !important;
+}
+
+/* Make sure everything is visible */
+* {
+    visibility: visible !important;
+}
+
+/* Hide broken widgets */
+.elementor-widget:not(.kb-element) {
+    display: none !important;
+}
+
+/* Show our proper elements */
+.kb-element {
+    display: block !important;
+    margin: 10px 0 !important;
+}
