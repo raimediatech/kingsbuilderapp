@@ -234,7 +234,7 @@ container: {
         console.log(`🔧 Selecting widget: ${widgetId}`);
 
         // Remove previous selection
-        document.querySelectorAll('.kb-widget').forEach(el => {
+        document.querySelectorAll('.kb-element').forEach(el => {
             el.style.border = '2px solid transparent';
         });
 
@@ -444,8 +444,8 @@ container: {
         
         // Override broken property system
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.kb-widget')) {
-                const widget = e.target.closest('.kb-widget');
+            if (e.target.closest('.kb-element')) {
+                const widget = e.target.closest('.kb-element');
                 const widgetId = widget.getAttribute('data-widget-id');
                 if (widgetId) {
                     this.selectWidget(widgetId);
@@ -471,7 +471,7 @@ container: {
                 border-radius: 8px !important;
             }
 
-            .kb-widget {
+            .kb-element {
                 position: relative !important;
                 margin: 10px 0 !important;
                 cursor: pointer !important;
@@ -479,7 +479,7 @@ container: {
                 transition: border-color 0.2s !important;
             }
 
-            .kb-widget:hover {
+            .kb-element:hover {
                 border-color: #007cba !important;
             }
 
@@ -494,7 +494,7 @@ container: {
                 z-index: 10 !important;
             }
 
-            .kb-widget:hover .widget-controls {
+            .kb-element:hover .widget-controls {
                 display: block !important;
             }
         `;
