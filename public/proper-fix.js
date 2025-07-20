@@ -175,6 +175,22 @@ class ProperFix {
             return;
         }
         
+        // CHECK FOR NESTED CANVAS FRAMES (duplicate frames issue)
+        const nestedCanvasFrame = canvasFrame.querySelector('.canvas-frame');
+        if (nestedCanvasFrame) {
+            console.log('🔥 FOUND NESTED CANVAS FRAME - REMOVING DUPLICATE');
+            
+            // Move content from nested frame to parent frame
+            const nestedContent = nestedCanvasFrame.innerHTML;
+            canvasFrame.innerHTML = nestedContent;
+            
+            console.log('✅ Removed nested canvas frame, content preserved');
+            
+            // Make content editable
+            this.makeContentEditable(canvasFrame);
+            return;
+        }
+        
         // CHECK IF CANVAS ALREADY HAS CONTENT (not just empty canvas)
         const hasRealContent = canvasFrame.children.length > 0 && 
                               !canvasFrame.querySelector('.empty-canvas') &&
@@ -280,10 +296,11 @@ class ProperFix {
         };
     }
 
-    // Force remove empty canvas
+    // Force remove empty canvas AND fix nested frames
     forceRemoveEmptyCanvas() {
-        console.log('🗑️ Force removing empty canvas...');
+        console.log('🗑️ Force removing empty canvas and fixing nested frames...');
         
+        // Remove empty canvas elements
         const emptyCanvasElements = document.querySelectorAll('.empty-canvas');
         emptyCanvasElements.forEach(element => {
             console.log('🗑️ Removing empty canvas element');
@@ -299,7 +316,33 @@ class ProperFix {
             }
         });
         
-        console.log('✅ Empty canvas elements removed');
+        // FIX NESTED CANVAS FRAMES
+        this.fixNestedCanvasFrames();
+        
+        console.log('✅ Empty canvas elements removed and nested frames fixed');
+    }
+    
+    // Fix nested canvas frames
+    fixNestedCanvasFrames() {
+        console.log('🔧 Checking for nested canvas frames...');
+        
+        const allCanvasFrames = document.querySelectorAll('.canvas-frame');
+        
+        allCanvasFrames.forEach((canvasFrame, index) => {
+            const nestedCanvasFrame = canvasFrame.querySelector('.canvas-frame');
+            
+            if (nestedCanvasFrame) {
+                console.log(`🔥 Found nested canvas frame in frame ${index} - FIXING`);
+                
+                // Move content from nested frame to parent frame
+                const nestedContent = nestedCanvasFrame.innerHTML;
+                canvasFrame.innerHTML = nestedContent;
+                
+                console.log('✅ Nested canvas frame content moved to parent');
+            }
+        });
+        
+        console.log('✅ Nested canvas frames check complete');
     }
 
     // Initialize
@@ -341,7 +384,8 @@ window.ProperFix = {
     initialize: () => properFix.initialize(),
     fixIcons: () => properFix.fixIcons(),
     loadContent: () => properFix.loadShopifyContent(),
-    removeEmptyCanvas: () => properFix.forceRemoveEmptyCanvas()
+    removeEmptyCanvas: () => properFix.forceRemoveEmptyCanvas(),
+    fixNestedFrames: () => properFix.fixNestedCanvasFrames()
 };
 
 // Auto-initialize
