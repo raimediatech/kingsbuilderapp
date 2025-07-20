@@ -82,6 +82,24 @@ async function updateShopifyPage(shop, accessToken, pageId, pageData) {
       throw new Error('No access token available for this shop');
     }
     
+    console.log(`🔧 Updating page ${pageId} for shop: ${shop}`);
+    console.log('📄 Update data:', JSON.stringify(pageData, null, 2));
+    
+    // Handle both formats: direct pageData or pageData.page
+    const pageInfo = pageData.page || pageData;
+    
+    const requestData = {
+      page: {
+        id: parseInt(pageId),
+        body_html: pageInfo.body_html || pageInfo.content || '',
+        ...(pageInfo.title && { title: pageInfo.title }),
+        ...(pageInfo.handle && { handle: pageInfo.handle }),
+        ...(pageInfo.published !== undefined && { published: pageInfo.published })
+      }
+    };
+    
+    console.log('📡 Sending to Shopify:', JSON.stringify(requestData, null, 2));
+    
     const response = await axios({
       method: 'PUT',
       url: `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/pages/${pageId}.json`,
@@ -89,20 +107,16 @@ async function updateShopifyPage(shop, accessToken, pageId, pageData) {
         'Content-Type': 'application/json',
         'X-Shopify-Access-Token': accessToken
       },
-      data: {
-        page: {
-          id: pageId,
-          title: pageData.title,
-          body_html: pageData.content,
-          handle: pageData.handle,
-          published: pageData.published
-        }
-      }
+      data: requestData
     });
 
-    return response.data;
+    console.log('✅ Shopify response:', response.status, response.statusText);
+    return response.data.page;
   } catch (error) {
-    console.error('Error updating Shopify page:', error.message);
+    console.error('❌ Error updating Shopify page:', error.message);
+    if (error.response) {
+      console.error('❌ Shopify API error:', error.response.status, error.response.data);
+    }
     throw error;
   }
 }
