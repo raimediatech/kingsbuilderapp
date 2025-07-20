@@ -56,15 +56,36 @@ class ProperFix {
                 text-indent: 0 !important;
                 position: relative !important;
                 z-index: 1 !important;
-                margin-right: 8px !important;
             }
             
-            /* FIX SIDEBAR ELEMENT ITEMS - REMOVE EXCESSIVE MARGINS */
-            .element-item i {
-                margin-right: 8px !important;
+            /* FORCE REMOVE ALL MARGINS FROM ICONS - AGGRESSIVE */
+            .element-item i, .tab-btn i, .toolbar-btn i, .nav-tab i,
+            .header-button i, .control-btn i, .action-btn i,
+            i.fas, i.far, i.fab, i.fal, i.fad, i.fass, i.fasr, i.fasl,
+            [class*="fa-"], [class^="fa-"], .icon, .material-icons {
+                margin: 0 !important;
+                margin-right: 0 !important;
                 margin-left: 0 !important;
                 margin-top: 0 !important;
                 margin-bottom: 0 !important;
+                padding: 0 !important;
+                text-align: center !important;
+                display: inline-block !important;
+                vertical-align: middle !important;
+            }
+            
+            /* FORCE CENTER ALIGNMENT FOR ICON CONTAINERS */
+            .element-item, .tab-btn, .toolbar-btn, .nav-tab, .header-button {
+                text-align: center !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                flex-direction: column !important;
+            }
+            
+            /* OVERRIDE ANY EXISTING MARGIN RULES */
+            * i[class*="fa-"], * i[class^="fa-"], * .fas, * .far, * .fab {
+                margin: 0 !important;
             }
             
             /* SIDEBAR HOVER EFFECTS - BLACK BACKGROUND, WHITE TEXT/ICONS */
@@ -161,6 +182,23 @@ class ProperFix {
             
             /* Force Font Awesome to load */
             @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+            
+            /* NUCLEAR MARGIN RESET - REMOVE ALL ICON MARGINS */
+            i, .fa, .fas, .far, .fab, .fal, .fad, .fass, .fasr, .fasl,
+            [class*="fa-"], [class^="fa-"], .icon, .material-icons {
+                margin: 0 !important;
+                margin-right: 0 !important;
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+            }
+            
+            /* OVERRIDE ANY EXISTING MARGIN STYLES */
+            .element-item i[style*="margin"],
+            .tab-btn i[style*="margin"],
+            .toolbar-btn i[style*="margin"] {
+                margin: 0 !important;
+            }
         `;
         document.head.appendChild(style);
         
