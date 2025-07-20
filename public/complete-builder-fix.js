@@ -84,23 +84,43 @@ class CompleteBuilderSystem {
     setupSidebar() {
         console.log('🔧 Setting up sidebar...');
         
-        const widgets = [
-            { type: 'text', name: 'Text', icon: 'fas fa-font' },
-            { type: 'heading', name: 'Heading', icon: 'fas fa-heading' },
-            { type: 'button', name: 'Button', icon: 'fas fa-mouse-pointer' },
-            { type: 'image', name: 'Image', icon: 'fas fa-image' },
-            { type: 'video', name: 'Video', icon: 'fas fa-video' },
-            { type: 'list', name: 'List', icon: 'fas fa-list' },
-            { type: 'divider', name: 'Divider', icon: 'fas fa-minus' },
-            { type: 'spacer', name: 'Spacer', icon: 'fas fa-arrows-alt-v' }
-        ];
-
-        // Find sidebar container
-        const sidebar = document.querySelector('.sidebar') || document.querySelector('.elements-panel');
-        if (!sidebar) {
-            console.error('❌ Sidebar not found');
+        // Find existing element items and make them work
+        const elementItems = document.querySelectorAll('.element-item');
+        if (elementItems.length === 0) {
+            console.error('❌ No element items found');
             return;
         }
+
+        console.log(`✅ Found ${elementItems.length} element items`);
+
+        // Add click handlers to existing elements
+        elementItems.forEach(item => {
+            const elementType = item.getAttribute('data-element');
+            if (elementType) {
+                // Add click handler
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log(`🔧 Adding element: ${elementType}`);
+                    this.addElement(elementType);
+                });
+
+                // Add drag functionality
+                item.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', elementType);
+                });
+
+                // Add hover effect
+                item.addEventListener('mouseenter', () => {
+                    item.style.background = '#000';
+                    item.style.color = '#fff';
+                });
+
+                item.addEventListener('mouseleave', () => {
+                    item.style.background = '';
+                    item.style.color = '';
+                });
+            }
+        });
 
         // Create widgets section
         let widgetsHTML = '<div class="widgets-section"><h3>Elements</h3>';
@@ -185,62 +205,62 @@ class CompleteBuilderSystem {
     setupToolbar() {
         console.log('🔧 Setting up toolbar...');
         
-        const toolbar = document.querySelector('.toolbar') || document.querySelector('.header-actions');
-        if (!toolbar) {
-            console.error('❌ Toolbar not found');
+        // Find existing toolbar buttons and make them work
+        const saveBtn = document.getElementById('saveBtn');
+        const previewBtn = document.getElementById('previewBtn');
+        const publishBtn = document.getElementById('publishBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+
+        if (!saveBtn || !previewBtn || !publishBtn) {
+            console.error('❌ Toolbar buttons not found');
             return;
         }
 
-        // Create toolbar buttons
-        const toolbarHTML = `
-            <div class="toolbar-group">
-                <button class="toolbar-btn" id="save-btn" title="Save">
-                    <i class="fas fa-save"></i>
-                    <span>Save</span>
-                </button>
-                <button class="toolbar-btn" id="preview-btn" title="Preview">
-                    <i class="fas fa-eye"></i>
-                    <span>Preview</span>
-                </button>
-                <button class="toolbar-btn primary" id="publish-btn" title="Publish">
-                    <i class="fas fa-rocket"></i>
-                    <span>Publish</span>
-                </button>
-            </div>
-            <div class="toolbar-group">
-                <button class="toolbar-btn" id="undo-btn" title="Undo">
-                    <i class="fas fa-undo"></i>
-                </button>
-                <button class="toolbar-btn" id="redo-btn" title="Redo">
-                    <i class="fas fa-redo"></i>
-                </button>
-            </div>
-            <div class="toolbar-group">
-                <button class="toolbar-btn" id="desktop-view" title="Desktop View" class="active">
-                    <i class="fas fa-desktop"></i>
-                </button>
-                <button class="toolbar-btn" id="tablet-view" title="Tablet View">
-                    <i class="fas fa-tablet-alt"></i>
-                </button>
-                <button class="toolbar-btn" id="mobile-view" title="Mobile View">
-                    <i class="fas fa-mobile-alt"></i>
-                </button>
-            </div>
-        `;
+        console.log('✅ Found toolbar buttons');
 
-        toolbar.innerHTML = toolbarHTML;
+        // Add event listeners to existing buttons
+        saveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('💾 Save button clicked');
+            this.savePage();
+        });
 
-        // Add event listeners
-        document.getElementById('save-btn').addEventListener('click', () => this.savePage());
-        document.getElementById('preview-btn').addEventListener('click', () => this.previewPage());
-        document.getElementById('publish-btn').addEventListener('click', () => this.publishPage());
-        document.getElementById('undo-btn').addEventListener('click', () => this.undo());
-        document.getElementById('redo-btn').addEventListener('click', () => this.redo());
+        previewBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('👁️ Preview button clicked');
+            this.previewPage();
+        });
+
+        publishBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('🚀 Publish button clicked');
+            this.publishPage();
+        });
+
+        if (undoBtn) {
+            undoBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.undo();
+            });
+        }
+
+        if (redoBtn) {
+            redoBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.redo();
+            });
+        }
 
         // Device view buttons
-        document.getElementById('desktop-view').addEventListener('click', () => this.setDeviceView('desktop'));
-        document.getElementById('tablet-view').addEventListener('click', () => this.setDeviceView('tablet'));
-        document.getElementById('mobile-view').addEventListener('click', () => this.setDeviceView('mobile'));
+        const deviceButtons = document.querySelectorAll('.device-btn');
+        deviceButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const device = btn.getAttribute('data-device');
+                this.setDeviceView(device);
+            });
+        });
 
         // Style toolbar
         const toolbarStyle = document.createElement('style');
@@ -336,6 +356,18 @@ class CompleteBuilderSystem {
                     tag: 'h2'
                 }
             },
+            'enhanced-heading': {
+                name: 'Enhanced Heading',
+                html: '<h2 class="kb-heading enhanced">Enhanced Heading</h2>',
+                properties: {
+                    text: 'Enhanced Heading',
+                    fontSize: '32px',
+                    color: '#000000',
+                    fontWeight: 'bold',
+                    textAlign: 'left',
+                    tag: 'h2'
+                }
+            },
             button: {
                 name: 'Button',
                 html: '<button class="kb-button">Click Me</button>',
@@ -390,6 +422,33 @@ class CompleteBuilderSystem {
                 html: '<div class="kb-spacer"></div>',
                 properties: {
                     height: '40px'
+                }
+            },
+            // Add more templates for existing elements
+            'enhanced-text': {
+                name: 'Enhanced Text',
+                html: '<p class="kb-text enhanced">Enhanced text with more styling options.</p>',
+                properties: {
+                    text: 'Enhanced text with more styling options.',
+                    fontSize: '16px',
+                    color: '#333333'
+                }
+            },
+            'enhanced-button': {
+                name: 'Enhanced Button',
+                html: '<button class="kb-button enhanced">Enhanced Button</button>',
+                properties: {
+                    text: 'Enhanced Button',
+                    backgroundColor: '#007cba',
+                    color: '#ffffff'
+                }
+            },
+            'enhanced-image': {
+                name: 'Enhanced Image',
+                html: '<div class="kb-image-placeholder enhanced"><i class="fas fa-image"></i><p>Enhanced Image</p></div>',
+                properties: {
+                    src: '',
+                    alt: 'Enhanced Image'
                 }
             }
         };
