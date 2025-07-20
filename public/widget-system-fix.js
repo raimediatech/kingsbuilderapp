@@ -1,3 +1,6 @@
+import IconListWidget from './widgets/IconListWidget';
+import SpacerWidget from './widgets/SpacerWidget';
+import HeadingWidget from './widgets/HeadingWidget';
 // COMPLETE WIDGET SYSTEM FIX
 class WidgetSystemFix {
     constructor() {
