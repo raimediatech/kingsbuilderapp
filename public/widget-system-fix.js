@@ -52,6 +52,18 @@ class WidgetSystemFix {
                     tag: 'h2'
                 }
             },
+container: {
+    name: 'Container',
+    icon: 'fas fa-border-all',
+    preview: '<div style="min-height:80px; border:2px dashed #ccc; padding:20px; text-align:center;">Drag elements here</div>',
+    properties: {
+        backgroundColor: '#ffffff',
+        padding: '20px',
+        border: 'none',
+        borderRadius: '0px'
+    }
+},
+
             button: {
                 name: 'Button',
                 icon: 'fas fa-mouse-pointer',
@@ -524,7 +536,6 @@ class WidgetSystemFix {
 }
 
 // Initialize widget system fix
-\1
 // Expose widgets globally so CompleteBuilderSystem can read them
 window.widgets = Object.entries(widgetSystemFix.widgets).map(([type, data]) => ({ type, ...data }));
 

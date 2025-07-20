@@ -356,6 +356,17 @@ class CompleteBuilderSystem {
                     tag: 'h2'
                 }
             },
+container: {
+    name: 'Container',
+    html: '<div class="kb-container" style="min-height:80px; border:2px dashed #ccc; padding:20px; text-align:center;">Drag elements here</div>',
+    properties: {
+        backgroundColor: '#ffffff',
+        padding: '20px',
+        border: 'none',
+        borderRadius: '0px'
+    }
+},
+
             'enhanced-heading': {
                 name: 'Enhanced Heading',
                 html: '<h2 class="kb-heading enhanced">Enhanced Heading</h2>',
