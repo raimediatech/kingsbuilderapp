@@ -1,0 +1,563 @@
+/* 🚨 CRITICAL UI FIXES CSS
+   Fixes all visual issues and enhances the page builder interface
+   Based on roadmap requirements for professional UI/UX */
+
+/* ========================================
+   CRITICAL ELEMENT INTERACTION FIXES
+   ======================================== */
+
+/* Enhanced element highlighting and controls */
+.kb-element {
+    position: relative;
+    border: 2px solid transparent !important;
+    border-radius: 6px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin-bottom: 16px !important;
+    background-clip: padding-box !important;
+}
+
+/* Element hover state - professional blue outline */
+.kb-element:hover {
+    border-color: #007cba !important;
+    box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.2), 
+                0 4px 12px rgba(0, 124, 186, 0.15) !important;
+    background: rgba(0, 124, 186, 0.02) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Selected element state - professional orange outline */
+.kb-element.selected {
+    border-color: #ff6b35 !important;
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.3), 
+                0 6px 16px rgba(255, 107, 53, 0.2) !important;
+    background: rgba(255, 107, 53, 0.03) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Element controls - floating toolbar */
+.kb-element-controls {
+    position: absolute !important;
+    top: -48px !important;
+    right: -2px !important;
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%) !important;
+    border-radius: 8px !important;
+    padding: 6px !important;
+    display: none !important;
+    z-index: 1000 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 
+                0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Show controls on hover or selection */
+.kb-element:hover .kb-element-controls,
+.kb-element.selected .kb-element-controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    animation: slideDown 0.2s ease !important;
+}
+
+/* Individual control buttons */
+.kb-element-control {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: none !important;
+    color: #ffffff !important;
+    padding: 8px 10px !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    transition: all 0.2s ease !important;
+    backdrop-filter: blur(4px) !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Control button hover effects */
+.kb-element-control:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Danger button styling */
+.kb-element-control.danger {
+    background: rgba(220, 53, 69, 0.2) !important;
+}
+
+.kb-element-control.danger:hover {
+    background: #dc3545 !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4) !important;
+}
+
+/* ========================================
+   CANVAS AND DRAG/DROP IMPROVEMENTS
+   ======================================== */
+
+/* Enhanced canvas styling */
+.canvas-frame {
+    min-height: 500px !important;
+    position: relative !important;
+    padding: 40px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Professional drag over state */
+.canvas-frame.drag-over {
+    background: linear-gradient(45deg, rgba(0, 124, 186, 0.08) 25%, transparent 25%),
+                linear-gradient(-45deg, rgba(0, 124, 186, 0.08) 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, rgba(0, 124, 186, 0.08) 75%),
+                linear-gradient(-45deg, transparent 75%, rgba(0, 124, 186, 0.08) 75%) !important;
+    background-size: 24px 24px !important;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0px !important;
+    border: 3px dashed #007cba !important;
+    border-radius: 16px !important;
+    box-shadow: inset 0 0 0 4px rgba(0, 124, 186, 0.1), 
+                0 8px 32px rgba(0, 124, 186, 0.2) !important;
+    animation: dragPulse 1.5s ease-in-out infinite !important;
+}
+
+/* Container placeholder improvements */
+.kb-container-placeholder {
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, rgba(0, 124, 186, 0.03) 0%, rgba(0, 124, 186, 0.01) 100%) !important;
+}
+
+.kb-container-placeholder:hover,
+.kb-container-placeholder.drag-over {
+    background: linear-gradient(135deg, rgba(0, 124, 186, 0.08) 0%, rgba(0, 124, 186, 0.04) 100%) !important;
+    border-color: #007cba !important;
+    box-shadow: inset 0 0 0 2px rgba(0, 124, 186, 0.2) !important;
+    transform: scale(1.02) !important;
+}
+
+/* ========================================
+   SIDEBAR AND PANEL IMPROVEMENTS
+   ======================================== */
+
+/* Enhanced element items in sidebar */
+.element-item {
+    border-radius: 8px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.element-item:hover {
+    background: linear-gradient(135deg, #007cba 0%, #005a87 100%) !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 124, 186, 0.25) !important;
+}
+
+.element-item.dragging {
+    opacity: 0.7 !important;
+    transform: scale(0.95) rotate(3deg) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Panel header improvements */
+.kingsbuilder-panel-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+/* Navigation tabs improvements */
+.nav-tab {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 8px !important;
+}
+
+.nav-tab:hover {
+    background: rgba(0, 124, 186, 0.08) !important;
+    transform: translateY(-1px) !important;
+}
+
+.nav-tab.active {
+    background: linear-gradient(135deg, #007cba 0%, #005a87 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(0, 124, 186, 0.3) !important;
+}
+
+/* ========================================
+   PROPERTIES PANEL IMPROVEMENTS
+   ======================================== */
+
+/* Properties header styling */
+.properties-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 20px !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+}
+
+.properties-header h3 {
+    margin: 0 !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #1a202c !important;
+}
+
+/* Properties actions buttons */
+.properties-actions {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.btn-sm {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.btn-sm:hover {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    color: white !important;
+    border-color: transparent !important;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%) !important;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3) !important;
+}
+
+/* Property groups styling */
+.property-group {
+    padding: 20px !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+    background: #ffffff !important;
+}
+
+.property-group:hover {
+    background: rgba(0, 124, 186, 0.01) !important;
+}
+
+.property-group label {
+    display: block !important;
+    margin-bottom: 8px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    color: #374151 !important;
+}
+
+.property-group input,
+.property-group textarea {
+    width: 100% !important;
+    padding: 12px 16px !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    margin-bottom: 12px !important;
+    transition: all 0.2s ease !important;
+    background: #ffffff !important;
+}
+
+.property-group input:focus,
+.property-group textarea:focus {
+    outline: none !important;
+    border-color: #007cba !important;
+    box-shadow: 0 0 0 3px rgba(0, 124, 186, 0.1) !important;
+    transform: translateY(-1px) !important;
+}
+
+.property-group button {
+    background: linear-gradient(135deg, #007cba 0%, #005a87 100%) !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.property-group button:hover {
+    background: linear-gradient(135deg, #005a87 0%, #004165 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 124, 186, 0.3) !important;
+}
+
+/* ========================================
+   CONTEXT MENU IMPROVEMENTS
+   ======================================== */
+
+.context-menu {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 
+                0 4px 8px rgba(0, 0, 0, 0.1) !important;
+    backdrop-filter: blur(12px) !important;
+    padding: 8px !important;
+    min-width: 200px !important;
+}
+
+.context-menu-item {
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+
+.context-menu-item:hover {
+    background: rgba(0, 124, 186, 0.08) !important;
+    transform: translateX(4px) !important;
+}
+
+.context-menu-item.danger:hover {
+    background: rgba(220, 53, 69, 0.08) !important;
+    color: #dc3545 !important;
+}
+
+/* ========================================
+   NAVIGATOR IMPROVEMENTS
+   ======================================== */
+
+.navigator-item {
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    margin-bottom: 4px !important;
+    transition: all 0.2s ease !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    cursor: pointer !important;
+}
+
+.navigator-item:hover {
+    background: rgba(0, 124, 186, 0.08) !important;
+    border-color: rgba(0, 124, 186, 0.2) !important;
+    transform: translateX(4px) !important;
+}
+
+.navigator-item.highlight {
+    background: rgba(255, 107, 53, 0.1) !important;
+    border-color: #ff6b35 !important;
+    animation: highlightPulse 2s ease-in-out !important;
+}
+
+.navigator-actions {
+    display: flex !important;
+    gap: 4px !important;
+    opacity: 0 !important;
+    transition: opacity 0.2s ease !important;
+}
+
+.navigator-item:hover .navigator-actions {
+    opacity: 1 !important;
+}
+
+.navigator-actions button {
+    background: rgba(0, 0, 0, 0.1) !important;
+    border: none !important;
+    padding: 4px 6px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.navigator-actions button:hover {
+    background: rgba(0, 124, 186, 0.2) !important;
+}
+
+/* ========================================
+   SUCCESS/ERROR MESSAGES
+   ======================================== */
+
+.success-message {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: white !important;
+    padding: 16px 24px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3), 
+                0 4px 8px rgba(16, 185, 129, 0.2) !important;
+    z-index: 10000 !important;
+    animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    backdrop-filter: blur(8px) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    font-weight: 500 !important;
+}
+
+.error-message {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    color: white !important;
+    padding: 16px 24px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(220, 53, 69, 0.3), 
+                0 4px 8px rgba(220, 53, 69, 0.2) !important;
+    z-index: 10000 !important;
+    animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    backdrop-filter: blur(8px) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    font-weight: 500 !important;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes slideDown {
+    from { 
+        opacity: 0; 
+        transform: translateY(-8px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+@keyframes slideInRight {
+    from { 
+        opacity: 0; 
+        transform: translateX(100%); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateX(0); 
+    }
+}
+
+@keyframes dragPulse {
+    0%, 100% { 
+        box-shadow: inset 0 0 0 4px rgba(0, 124, 186, 0.1), 
+                    0 8px 32px rgba(0, 124, 186, 0.2); 
+    }
+    50% { 
+        box-shadow: inset 0 0 0 6px rgba(0, 124, 186, 0.2), 
+                    0 12px 40px rgba(0, 124, 186, 0.3); 
+    }
+}
+
+@keyframes highlightPulse {
+    0%, 100% { 
+        background: rgba(255, 107, 53, 0.1); 
+    }
+    50% { 
+        background: rgba(255, 107, 53, 0.2); 
+    }
+}
+
+/* ========================================
+   RESPONSIVE IMPROVEMENTS
+   ======================================== */
+
+@media (max-width: 1200px) {
+    .kingsbuilder-panel {
+        width: 280px !important;
+    }
+    
+    .properties-header {
+        padding: 16px !important;
+    }
+    
+    .property-group {
+        padding: 16px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .kb-element-controls {
+        top: -40px !important;
+        right: 0 !important;
+    }
+    
+    .kb-element-control {
+        padding: 6px 8px !important;
+        min-width: 28px !important;
+        height: 28px !important;
+        font-size: 12px !important;
+    }
+    
+    .success-message,
+    .error-message {
+        right: 10px !important;
+        left: 10px !important;
+        padding: 12px 16px !important;
+    }
+}
+
+/* ========================================
+   SCROLLBAR IMPROVEMENTS
+   ======================================== */
+
+/* Custom scrollbar for webkit browsers */
+.kingsbuilder-panel-content::-webkit-scrollbar,
+.property-group::-webkit-scrollbar {
+    width: 6px;
+}
+
+.kingsbuilder-panel-content::-webkit-scrollbar-track,
+.property-group::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+.kingsbuilder-panel-content::-webkit-scrollbar-thumb,
+.property-group::-webkit-scrollbar-thumb {
+    background: rgba(0, 124, 186, 0.3);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.kingsbuilder-panel-content::-webkit-scrollbar-thumb:hover,
+.property-group::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 124, 186, 0.5);
+}
+
+/* ========================================
+   LOADING AND TRANSITION IMPROVEMENTS
+   ======================================== */
+
+.loading-overlay {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+.loading-spinner {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    padding: 40px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+}
