@@ -81,7 +81,6 @@ class ProperFix {
     displayInCanvas(htmlContent) {
         // Find the correct canvas content area
         const canvasFrame = document.querySelector('.canvas-frame');
-        const emptyCanvas = document.querySelector('.empty-canvas');
         
         if (!canvasFrame) {
             console.log('❌ Canvas frame not found');
@@ -90,23 +89,30 @@ class ProperFix {
         
         console.log('📝 Displaying content in canvas frame');
         
-        // Clear the empty canvas message
-        if (emptyCanvas) {
-            emptyCanvas.remove();
-        }
+        // FORCE REMOVE ALL EMPTY CANVAS ELEMENTS
+        const emptyCanvasElements = document.querySelectorAll('.empty-canvas');
+        emptyCanvasElements.forEach(element => {
+            console.log('🗑️ Removing empty canvas element');
+            element.remove();
+        });
         
-        // Create content container
+        // Clear the entire canvas frame
+        canvasFrame.innerHTML = '';
+        
+        // Create content container that fills the canvas
         const contentContainer = document.createElement('div');
         contentContainer.className = 'shopify-content-container';
         contentContainer.style.cssText = `
+            width: 100%;
+            height: 100%;
             padding: 20px;
             background: white;
-            min-height: 400px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 600px;
+            position: relative;
+            z-index: 10;
         `;
         
-        // Add the Shopify content
+        // Add the Shopify content directly
         contentContainer.innerHTML = htmlContent;
         
         // Make content editable
@@ -115,7 +121,12 @@ class ProperFix {
         // Add to canvas frame
         canvasFrame.appendChild(contentContainer);
         
-        console.log('✅ Content displayed in canvas');
+        // Force show the content
+        contentContainer.style.display = 'block';
+        contentContainer.style.visibility = 'visible';
+        contentContainer.style.opacity = '1';
+        
+        console.log('✅ Content displayed and empty canvas removed');
     }
 
     // Show empty canvas if no content
@@ -178,6 +189,28 @@ class ProperFix {
         };
     }
 
+    // Force remove empty canvas
+    forceRemoveEmptyCanvas() {
+        console.log('🗑️ Force removing empty canvas...');
+        
+        const emptyCanvasElements = document.querySelectorAll('.empty-canvas');
+        emptyCanvasElements.forEach(element => {
+            console.log('🗑️ Removing empty canvas element');
+            element.style.display = 'none';
+            element.remove();
+        });
+        
+        // Also remove any hidden empty canvas
+        const hiddenElements = document.querySelectorAll('[style*="display: none"]');
+        hiddenElements.forEach(element => {
+            if (element.classList.contains('empty-canvas')) {
+                element.remove();
+            }
+        });
+        
+        console.log('✅ Empty canvas elements removed');
+    }
+
     // Initialize
     async initialize() {
         if (!this.isBuilder) {
@@ -190,10 +223,20 @@ class ProperFix {
         // Fix icons immediately
         this.fixIcons();
         
+        // Force remove empty canvas immediately
+        this.forceRemoveEmptyCanvas();
+        
         // Wait for DOM to be ready, then load content
         setTimeout(async () => {
+            // Remove empty canvas again before loading content
+            this.forceRemoveEmptyCanvas();
             await this.loadShopifyContent();
-        }, 3000);
+        }, 1000);
+        
+        // Remove empty canvas one more time after content loads
+        setTimeout(() => {
+            this.forceRemoveEmptyCanvas();
+        }, 5000);
         
         console.log('✅ Proper Fix initialized');
     }
@@ -206,7 +249,8 @@ const properFix = new ProperFix();
 window.ProperFix = {
     initialize: () => properFix.initialize(),
     fixIcons: () => properFix.fixIcons(),
-    loadContent: () => properFix.loadShopifyContent()
+    loadContent: () => properFix.loadShopifyContent(),
+    removeEmptyCanvas: () => properFix.forceRemoveEmptyCanvas()
 };
 
 // Auto-initialize
