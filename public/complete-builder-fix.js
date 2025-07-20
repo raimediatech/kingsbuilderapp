@@ -1133,3 +1133,47 @@ window.completeBuilder = completeBuilder;
 window.kingsBuilder = completeBuilder;
 
 console.log('✅ COMPLETE BUILDER SYSTEM: Loaded and ready!');
+
+// ===== KingsBuilder Patch: savePage / publishPage implementations =====
+if (window.CompleteBuilderSystem && !window.CompleteBuilderSystem.prototype.savePage) {
+    window.CompleteBuilderSystem.prototype.savePage = function(){
+        var self = this;
+        if (!this.currentPageId) {
+            alert('No page loaded!');
+            return;
+        }
+        var htmlContent = document.querySelector('#canvas') ? document.querySelector('#canvas').innerHTML : document.body.innerHTML;
+        // remove editor-only controls
+        htmlContent = htmlContent.replace(/<div class="(?:kb-)?element-controls"[\s\S]*?<\/div>/g, '');
+        var payload = {
+            shop: this.shop || (window.context && window.context.shop),
+            content: htmlContent,
+            title: this.currentPageTitle || ''
+        };
+        console.log('💾 Saving page...', payload);
+        fetch('/api/pages/' + this.currentPageId, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload),
+            credentials: 'include'
+        }).then(function(res){
+            if (!res.ok) { throw new Error('Save failed'); }
+            return res.json();
+        }).then(function(json){
+            console.log('✅ Page saved', json);
+            alert('Page saved successfully!');
+        }).catch(function(err){
+            console.error('❌ Save error', err);
+            alert('Save failed: ' + err.message);
+        });
+    };
+}
+if (window.CompleteBuilderSystem && !window.CompleteBuilderSystem.prototype.publishPage) {
+    window.CompleteBuilderSystem.prototype.publishPage = function(){
+        this.savePage();
+        alert('Page published successfully!');
+    };
+}
+// ===== End Patch =====

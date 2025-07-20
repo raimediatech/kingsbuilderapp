@@ -10,7 +10,7 @@ class WidgetSystemFix {
     init() {
         if (!this.isBuilder) return;
         
-        console.log('🔧 WIDGET SYSTEM FIX: Initializing...');
+        console.log(' WIDGET SYSTEM FIX: Initializing...');
         
         // Fix widget system
         this.setupWidgetSystem();
@@ -18,12 +18,12 @@ class WidgetSystemFix {
         this.fixCanvasUI();
         this.setupWidgetPreviews();
         
-        console.log('✅ WIDGET SYSTEM FIX: Complete');
+        console.log(' WIDGET SYSTEM FIX: Complete');
     }
 
     // Setup proper widget system
     setupWidgetSystem() {
-        console.log('🔧 Setting up widget system...');
+        console.log(' Setting up widget system...');
         
         // Define proper widgets with real content
         this.widgets = {
@@ -110,22 +110,22 @@ class WidgetSystemFix {
         window.kingsBuilder.editElement = (id) => this.editWidget(id);
         window.kingsBuilder.deleteElement = (id) => this.deleteWidget(id);
         
-        console.log('✅ Widget system setup complete');
+        console.log(' Widget system setup complete');
     }
 
     // Add widget to canvas
     addWidget(type) {
-        console.log(`🔧 Adding widget: ${type}`);
+        console.log(` Adding widget: ${type}`);
         
         const widget = this.widgets[type];
         if (!widget) {
-            console.error(`❌ Widget type ${type} not found`);
+            console.error(` Widget type ${type} not found`);
             return;
         }
 
         const canvasFrame = document.querySelector('.canvas-frame');
         if (!canvasFrame) {
-            console.error('❌ Canvas frame not found');
+            console.error(' Canvas frame not found');
             return;
         }
 
@@ -210,12 +210,12 @@ class WidgetSystemFix {
         // Select the new widget
         this.selectWidget(widgetId);
 
-        console.log(`✅ Widget ${type} added with ID: ${widgetId}`);
+        console.log(` Widget ${type} added with ID: ${widgetId}`);
     }
 
     // Select widget and show properties
     selectWidget(widgetId) {
-        console.log(`🔧 Selecting widget: ${widgetId}`);
+        console.log(` Selecting widget: ${widgetId}`);
 
         // Remove previous selection
         document.querySelectorAll('.kb-widget').forEach(el => {
@@ -233,7 +233,7 @@ class WidgetSystemFix {
 
     // Show widget properties panel
     showWidgetProperties(widgetId) {
-        console.log(`🔧 Showing properties for: ${widgetId}`);
+        console.log(` Showing properties for: ${widgetId}`);
 
         const widget = this.widgets[widgetId];
         if (!widget) return;
@@ -270,7 +270,7 @@ class WidgetSystemFix {
                     font-size: 18px;
                     cursor: pointer;
                     color: #999;
-                ">×</button>
+                "></button>
             </div>
         `;
 
@@ -333,7 +333,7 @@ class WidgetSystemFix {
 
     // Apply property changes
     applyProperties(widgetId) {
-        console.log(`🔧 Applying properties for: ${widgetId}`);
+        console.log(` Applying properties for: ${widgetId}`);
 
         const widget = this.widgets[widgetId];
         if (!widget) return;
@@ -356,7 +356,7 @@ class WidgetSystemFix {
         // Re-render widget with new properties
         this.renderWidget(widgetId);
 
-        console.log(`✅ Properties applied for: ${widgetId}`);
+        console.log(` Properties applied for: ${widgetId}`);
     }
 
     // Render widget with current properties
@@ -401,7 +401,7 @@ class WidgetSystemFix {
 
     // Delete widget
     deleteWidget(widgetId) {
-        console.log(`🔧 Deleting widget: ${widgetId}`);
+        console.log(` Deleting widget: ${widgetId}`);
 
         const widgetElement = document.querySelector(`[data-widget-id="${widgetId}"]`);
         if (widgetElement) {
@@ -419,12 +419,12 @@ class WidgetSystemFix {
             this.selectedWidget = null;
         }
 
-        console.log(`✅ Widget deleted: ${widgetId}`);
+        console.log(` Widget deleted: ${widgetId}`);
     }
 
     // Fix widget properties panel
     fixWidgetProperties() {
-        console.log('🔧 Fixing widget properties...');
+        console.log(' Fixing widget properties...');
         
         // Override broken property system
         document.addEventListener('click', (e) => {
@@ -437,12 +437,12 @@ class WidgetSystemFix {
             }
         });
 
-        console.log('✅ Widget properties fixed');
+        console.log(' Widget properties fixed');
     }
 
     // Fix canvas UI
     fixCanvasUI() {
-        console.log('🔧 Fixing canvas UI...');
+        console.log(' Fixing canvas UI...');
 
         const style = document.createElement('style');
         style.id = 'canvas-ui-fix';
@@ -484,12 +484,12 @@ class WidgetSystemFix {
         `;
         document.head.appendChild(style);
 
-        console.log('✅ Canvas UI fixed');
+        console.log(' Canvas UI fixed');
     }
 
     // Setup widget previews in sidebar
     setupWidgetPreviews() {
-        console.log('🔧 Setting up widget previews...');
+        console.log(' Setting up widget previews...');
 
         // Fix sidebar widget items
         setTimeout(() => {
@@ -519,7 +519,7 @@ class WidgetSystemFix {
             });
         }, 1000);
 
-        console.log('✅ Widget previews setup complete');
+        console.log(' Widget previews setup complete');
     }
 }
 
@@ -528,4 +528,15 @@ class WidgetSystemFix {
 // Expose widgets globally so CompleteBuilderSystem can read them
 window.widgets = Object.entries(widgetSystemFix.widgets).map(([type, data]) => ({ type, ...data }));
 
-console.log('✅ WIDGET SYSTEM FIX: Loaded');
+console.log(' WIDGET SYSTEM FIX: Loaded');
+
+// ===== KingsBuilder Patch: expose widgets globally =====
+if (typeof window.widgets === 'undefined') {
+    try {
+        window.widgets = Object.entries(widgetSystemFix.widgets).map(([type, data]) => ({ type, ...data }));
+        console.log('✅ widgets exposed globally:', window.widgets.length);
+    } catch (err) {
+        console.error('❌ Failed to expose widgets array', err);
+    }
+}
+// ===== End Patch =====
