@@ -149,10 +149,19 @@ router.get('/:pageId', async (req, res) => {
 
         // Fetch specific page from Shopify
         console.log(`📡 Fetching page ${pageId} from Shopify API...`);
-        const page = await shopifyApi.getShopifyPageById(shop, accessToken, pageId, req);
+        const apiResponse = await shopifyApi.getShopifyPageById(shop, accessToken, pageId, req);
+        
+        // Handle Shopify API response structure
+        let page = null;
+        if (apiResponse && apiResponse.page) {
+            page = apiResponse.page;
+        } else if (apiResponse && apiResponse.id) {
+            page = apiResponse;
+        }
         
         if (page) {
-            console.log(`✅ Successfully fetched page: ${page.title}`);
+            console.log(`✅ Successfully fetched page: ${page.title || 'Untitled'}`);
+            console.log(`📄 Page content length: ${page.body_html ? page.body_html.length : 0} characters`);
             
             // Enhance page data
             const enhancedPage = {
