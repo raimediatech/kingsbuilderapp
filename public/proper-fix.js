@@ -77,7 +77,7 @@ class ProperFix {
         }
     }
 
-    // Display content in the CORRECT canvas area (not replacing toolbar)
+    // Display content DIRECTLY in canvas frame (no wrapper bullshit)
     displayInCanvas(htmlContent) {
         // Find the correct canvas content area
         const canvasFrame = document.querySelector('.canvas-frame');
@@ -87,7 +87,7 @@ class ProperFix {
             return;
         }
         
-        console.log('📝 Displaying content in canvas frame');
+        console.log('📝 Putting Shopify content DIRECTLY in canvas frame');
         
         // FORCE REMOVE ALL EMPTY CANVAS ELEMENTS
         const emptyCanvasElements = document.querySelectorAll('.empty-canvas');
@@ -99,34 +99,23 @@ class ProperFix {
         // Clear the entire canvas frame
         canvasFrame.innerHTML = '';
         
-        // Create content container that fills the canvas
-        const contentContainer = document.createElement('div');
-        contentContainer.className = 'shopify-content-container';
-        contentContainer.style.cssText = `
-            width: 100%;
-            height: 100%;
+        // Put Shopify content DIRECTLY in canvas frame (no wrapper container)
+        canvasFrame.innerHTML = htmlContent;
+        
+        // Style the canvas frame itself
+        canvasFrame.style.cssText = `
             padding: 20px;
             background: white;
             min-height: 600px;
-            position: relative;
-            z-index: 10;
+            width: 100%;
+            height: auto;
+            overflow: auto;
         `;
         
-        // Add the Shopify content directly
-        contentContainer.innerHTML = htmlContent;
-        
         // Make content editable
-        this.makeContentEditable(contentContainer);
+        this.makeContentEditable(canvasFrame);
         
-        // Add to canvas frame
-        canvasFrame.appendChild(contentContainer);
-        
-        // Force show the content
-        contentContainer.style.display = 'block';
-        contentContainer.style.visibility = 'visible';
-        contentContainer.style.opacity = '1';
-        
-        console.log('✅ Content displayed and empty canvas removed');
+        console.log('✅ Shopify content put DIRECTLY in canvas frame');
     }
 
     // Show empty canvas if no content
