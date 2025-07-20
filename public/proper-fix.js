@@ -165,7 +165,7 @@ class ProperFix {
         }
     }
 
-    // Display content DIRECTLY in canvas frame (no wrapper bullshit)
+    // Display content ONLY if canvas is empty (no duplicate frames)
     displayInCanvas(htmlContent) {
         // Find the correct canvas content area
         const canvasFrame = document.querySelector('.canvas-frame');
@@ -175,35 +175,49 @@ class ProperFix {
             return;
         }
         
-        console.log('📝 Putting Shopify content DIRECTLY in canvas frame');
+        // CHECK IF CANVAS ALREADY HAS CONTENT (not just empty canvas)
+        const hasRealContent = canvasFrame.children.length > 0 && 
+                              !canvasFrame.querySelector('.empty-canvas') &&
+                              canvasFrame.innerHTML.trim().length > 100;
         
-        // FORCE REMOVE ALL EMPTY CANVAS ELEMENTS
+        if (hasRealContent) {
+            console.log('✅ Canvas already has content, not replacing');
+            console.log('📄 Existing content length:', canvasFrame.innerHTML.length);
+            
+            // Just make existing content editable
+            this.makeContentEditable(canvasFrame);
+            return;
+        }
+        
+        console.log('📝 Canvas is empty, adding Shopify content');
+        
+        // ONLY REMOVE EMPTY CANVAS ELEMENTS
         const emptyCanvasElements = document.querySelectorAll('.empty-canvas');
         emptyCanvasElements.forEach(element => {
             console.log('🗑️ Removing empty canvas element');
             element.remove();
         });
         
-        // Clear the entire canvas frame
-        canvasFrame.innerHTML = '';
-        
-        // Put Shopify content DIRECTLY in canvas frame (no wrapper container)
-        canvasFrame.innerHTML = htmlContent;
-        
-        // Style the canvas frame itself
-        canvasFrame.style.cssText = `
-            padding: 20px;
-            background: white;
-            min-height: 600px;
-            width: 100%;
-            height: auto;
-            overflow: auto;
-        `;
+        // Only add content if canvas is truly empty
+        if (canvasFrame.innerHTML.trim().length < 100) {
+            // Put Shopify content DIRECTLY in canvas frame
+            canvasFrame.innerHTML = htmlContent;
+            
+            // Style the canvas frame itself
+            canvasFrame.style.cssText = `
+                padding: 20px;
+                background: white;
+                min-height: 600px;
+                width: 100%;
+                height: auto;
+                overflow: auto;
+            `;
+            
+            console.log('✅ Shopify content added to empty canvas');
+        }
         
         // Make content editable
         this.makeContentEditable(canvasFrame);
-        
-        console.log('✅ Shopify content put DIRECTLY in canvas frame');
     }
 
     // Show empty canvas if no content
