@@ -3,70 +3,19 @@ class WidgetSystemFix {
     constructor() {
         this.isBuilder = window.location.pathname.includes('builder');
         this.widgets = {
-    container: {
-        name: 'Container',
-        icon: 'fas fa-border-all',
-        preview: '<div class="kb-container" style="min-height:80px; border:2px dashed #ccc; padding:20px; text-align:center;">Drag elements here</div>',
-        properties: {
-            backgroundColor: '#ffffff',
-            padding: '20px',
-            border: 'none',
-            borderRadius: '0px'
-        }
-    },
-    heading: {
-        name: 'Heading',
-        icon: 'fas fa-heading',
-        preview: '<h2 class="kb-heading" style="margin:0; padding:10px; font-size:24px; color:#000; font-weight:bold;">Sample Heading</h2>',
-        properties: {
-            text: 'Sample Heading',
-            fontSize: '24px',
-            color: '#000000',
-            fontWeight: 'bold',
-            textAlign: 'left',
-            tag: 'h2'
-        }
-    },
-    text: {
-        name: 'Text',
-        icon: 'fas fa-font',
-        preview: '<p class="kb-text" style="margin:0; padding:10px; font-size:16px; color:#333;">Sample text content. Click to edit.</p>',
-        properties: {
-            text: 'Sample text content',
-            fontSize: '16px',
-            color: '#333333',
-            fontWeight: 'normal',
-            textAlign: 'left'
-        }
-    },
-    image: {
-        name: 'Image',
-        icon: 'fas fa-image',
-        preview: '<img src="https://placehold.co/600x400?text=Image" alt="Sample Image" style="width:100%; height:auto;">',
-        properties: {
-            src: '',
-            alt: '',
-            width: '100%',
-            height: 'auto',
-            borderRadius: '0px'
-        }
-    },
-    button: {
-        name: 'Button',
-        icon: 'fas fa-mouse-pointer',
-        preview: '<button class="kb-button" style="background:#007cba; color:#fff; padding:12px 24px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Click Me</button>',
-        properties: {
-            text: 'Click Me',
-            backgroundColor: '#007cba',
-            color: '#ffffff',
-            padding: '12px 24px',
-            borderRadius: '4px',
-            fontSize: '16px',
-            href: '#'
-        }
-    }
-};
 
+container: {
+    name: 'Container',
+    preview: '<div style="min-height:60px;border:2px dashed #888;padding:20px;text-align:center;">Drop elements here</div>',
+    properties: {
+        padding: '20px',
+        backgroundColor: 'transparent',
+        borderColor: '#888888',
+        borderStyle: 'dashed',
+        borderWidth: '2px'
+    }
+},
+};
         this.selectedWidget = null;
         this.init();
     }
@@ -74,7 +23,7 @@ class WidgetSystemFix {
     init() {
         if (!this.isBuilder) return;
         
-        console.log(' WIDGET SYSTEM FIX: Initializing...');
+        console.log('🔧 WIDGET SYSTEM FIX: Initializing...');
         
         // Fix widget system
         this.setupWidgetSystem();
@@ -82,12 +31,12 @@ class WidgetSystemFix {
         this.fixCanvasUI();
         this.setupWidgetPreviews();
         
-        console.log(' WIDGET SYSTEM FIX: Complete');
+        console.log('✅ WIDGET SYSTEM FIX: Complete');
     }
 
     // Setup proper widget system
     setupWidgetSystem() {
-        console.log(' Setting up widget system...');
+        console.log('🔧 Setting up widget system...');
         
         // Define proper widgets with real content
         this.widgets = {
@@ -116,18 +65,6 @@ class WidgetSystemFix {
                     tag: 'h2'
                 }
             },
-container: {
-    name: 'Container',
-    icon: 'fas fa-border-all',
-    preview: '<div style="min-height:80px; border:2px dashed #ccc; padding:20px; text-align:center;">Drag elements here</div>',
-    properties: {
-        backgroundColor: '#ffffff',
-        padding: '20px',
-        border: 'none',
-        borderRadius: '0px'
-    }
-},
-
             button: {
                 name: 'Button',
                 icon: 'fas fa-mouse-pointer',
@@ -186,22 +123,22 @@ container: {
         window.kingsBuilder.editElement = (id) => this.editWidget(id);
         window.kingsBuilder.deleteElement = (id) => this.deleteWidget(id);
         
-        console.log(' Widget system setup complete');
+        console.log('✅ Widget system setup complete');
     }
 
     // Add widget to canvas
     addWidget(type) {
-        console.log(` Adding widget: ${type}`);
+        console.log(`🔧 Adding widget: ${type}`);
         
         const widget = this.widgets[type];
         if (!widget) {
-            console.error(` Widget type ${type} not found`);
+            console.error(`❌ Widget type ${type} not found`);
             return;
         }
 
         const canvasFrame = document.querySelector('.canvas-frame');
         if (!canvasFrame) {
-            console.error(' Canvas frame not found');
+            console.error('❌ Canvas frame not found');
             return;
         }
 
@@ -286,12 +223,12 @@ container: {
         // Select the new widget
         this.selectWidget(widgetId);
 
-        console.log(` Widget ${type} added with ID: ${widgetId}`);
+        console.log(`✅ Widget ${type} added with ID: ${widgetId}`);
     }
 
     // Select widget and show properties
     selectWidget(widgetId) {
-        console.log(` Selecting widget: ${widgetId}`);
+        console.log(`🔧 Selecting widget: ${widgetId}`);
 
         // Remove previous selection
         document.querySelectorAll('.kb-widget').forEach(el => {
@@ -309,7 +246,7 @@ container: {
 
     // Show widget properties panel
     showWidgetProperties(widgetId) {
-        console.log(` Showing properties for: ${widgetId}`);
+        console.log(`🔧 Showing properties for: ${widgetId}`);
 
         const widget = this.widgets[widgetId];
         if (!widget) return;
@@ -346,7 +283,7 @@ container: {
                     font-size: 18px;
                     cursor: pointer;
                     color: #999;
-                "></button>
+                ">×</button>
             </div>
         `;
 
@@ -409,7 +346,7 @@ container: {
 
     // Apply property changes
     applyProperties(widgetId) {
-        console.log(` Applying properties for: ${widgetId}`);
+        console.log(`🔧 Applying properties for: ${widgetId}`);
 
         const widget = this.widgets[widgetId];
         if (!widget) return;
@@ -432,7 +369,7 @@ container: {
         // Re-render widget with new properties
         this.renderWidget(widgetId);
 
-        console.log(` Properties applied for: ${widgetId}`);
+        console.log(`✅ Properties applied for: ${widgetId}`);
     }
 
     // Render widget with current properties
@@ -477,7 +414,7 @@ container: {
 
     // Delete widget
     deleteWidget(widgetId) {
-        console.log(` Deleting widget: ${widgetId}`);
+        console.log(`🔧 Deleting widget: ${widgetId}`);
 
         const widgetElement = document.querySelector(`[data-widget-id="${widgetId}"]`);
         if (widgetElement) {
@@ -495,12 +432,12 @@ container: {
             this.selectedWidget = null;
         }
 
-        console.log(` Widget deleted: ${widgetId}`);
+        console.log(`✅ Widget deleted: ${widgetId}`);
     }
 
     // Fix widget properties panel
     fixWidgetProperties() {
-        console.log(' Fixing widget properties...');
+        console.log('🔧 Fixing widget properties...');
         
         // Override broken property system
         document.addEventListener('click', (e) => {
@@ -513,12 +450,12 @@ container: {
             }
         });
 
-        console.log(' Widget properties fixed');
+        console.log('✅ Widget properties fixed');
     }
 
     // Fix canvas UI
     fixCanvasUI() {
-        console.log(' Fixing canvas UI...');
+        console.log('🔧 Fixing canvas UI...');
 
         const style = document.createElement('style');
         style.id = 'canvas-ui-fix';
@@ -560,12 +497,12 @@ container: {
         `;
         document.head.appendChild(style);
 
-        console.log(' Canvas UI fixed');
+        console.log('✅ Canvas UI fixed');
     }
 
     // Setup widget previews in sidebar
     setupWidgetPreviews() {
-        console.log(' Setting up widget previews...');
+        console.log('🔧 Setting up widget previews...');
 
         // Fix sidebar widget items
         setTimeout(() => {
@@ -595,23 +532,17 @@ container: {
             });
         }, 1000);
 
-        console.log(' Widget previews setup complete');
+        console.log('✅ Widget previews setup complete');
     }
 }
 
 // Initialize widget system fix
+
 // Expose widgets globally so CompleteBuilderSystem can read them
+
+// Initialize and expose widgetSystemFix globally
+const widgetSystemFix = new WidgetSystemFix();
+window.widgetSystemFix = widgetSystemFix;
 window.widgets = Object.entries(widgetSystemFix.widgets).map(([type, data]) => ({ type, ...data }));
 
-console.log(' WIDGET SYSTEM FIX: Loaded');
-
-// ===== KingsBuilder Patch: expose widgets globally =====
-if (typeof window.widgets === 'undefined') {
-    try {
-        window.widgets = Object.entries(widgetSystemFix.widgets).map(([type, data]) => ({ type, ...data }));
-        console.log('✅ widgets exposed globally:', window.widgets.length);
-    } catch (err) {
-        console.error('❌ Failed to expose widgets array', err);
-    }
-}
-// ===== End Patch =====
+console.log('✅ WIDGET SYSTEM FIX: Loaded');
