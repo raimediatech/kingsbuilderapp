@@ -524,7 +524,8 @@ class WidgetSystemFix {
 }
 
 // Initialize widget system fix
-const widgetSystemFix = new WidgetSystemFix();
-window.widgetSystemFix = widgetSystemFix;
+\1
+// Expose widgets globally so CompleteBuilderSystem can read them
+window.widgets = Object.entries(widgetSystemFix.widgets).map(([type, data]) => ({ type, ...data }));
 
 console.log('✅ WIDGET SYSTEM FIX: Loaded');
