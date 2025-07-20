@@ -2,7 +2,71 @@
 class WidgetSystemFix {
     constructor() {
         this.isBuilder = window.location.pathname.includes('builder');
-        this.widgets = {};
+        this.widgets = {
+    container: {
+        name: 'Container',
+        icon: 'fas fa-border-all',
+        preview: '<div class="kb-container" style="min-height:80px; border:2px dashed #ccc; padding:20px; text-align:center;">Drag elements here</div>',
+        properties: {
+            backgroundColor: '#ffffff',
+            padding: '20px',
+            border: 'none',
+            borderRadius: '0px'
+        }
+    },
+    heading: {
+        name: 'Heading',
+        icon: 'fas fa-heading',
+        preview: '<h2 class="kb-heading" style="margin:0; padding:10px; font-size:24px; color:#000; font-weight:bold;">Sample Heading</h2>',
+        properties: {
+            text: 'Sample Heading',
+            fontSize: '24px',
+            color: '#000000',
+            fontWeight: 'bold',
+            textAlign: 'left',
+            tag: 'h2'
+        }
+    },
+    text: {
+        name: 'Text',
+        icon: 'fas fa-font',
+        preview: '<p class="kb-text" style="margin:0; padding:10px; font-size:16px; color:#333;">Sample text content. Click to edit.</p>',
+        properties: {
+            text: 'Sample text content',
+            fontSize: '16px',
+            color: '#333333',
+            fontWeight: 'normal',
+            textAlign: 'left'
+        }
+    },
+    image: {
+        name: 'Image',
+        icon: 'fas fa-image',
+        preview: '<img src="https://placehold.co/600x400?text=Image" alt="Sample Image" style="width:100%; height:auto;">',
+        properties: {
+            src: '',
+            alt: '',
+            width: '100%',
+            height: 'auto',
+            borderRadius: '0px'
+        }
+    },
+    button: {
+        name: 'Button',
+        icon: 'fas fa-mouse-pointer',
+        preview: '<button class="kb-button" style="background:#007cba; color:#fff; padding:12px 24px; border:none; border-radius:4px; cursor:pointer; font-size:16px;">Click Me</button>',
+        properties: {
+            text: 'Click Me',
+            backgroundColor: '#007cba',
+            color: '#ffffff',
+            padding: '12px 24px',
+            borderRadius: '4px',
+            fontSize: '16px',
+            href: '#'
+        }
+    }
+};
+
         this.selectedWidget = null;
         this.init();
     }
