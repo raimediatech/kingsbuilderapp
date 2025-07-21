@@ -441,7 +441,7 @@ class KingsBuilderComplete {
                  onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.2)'"
                  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'">
                 <i class="fas fa-rocket"></i>
-                <span id="completion-text">KingsBuilder Loading...</span>
+                
             </div>
         `;
         
@@ -552,7 +552,7 @@ class KingsBuilderComplete {
         const totalFeatures = Object.keys(this.completionStatus).length;
         const percentage = Math.round((completedFeatures / totalFeatures) * 100);
         
-        const completionText = document.getElementById('completion-text');
+        // Completion text removed
         if (completionText) {
             if (percentage === 100) {
                 completionText.textContent = 'KingsBuilder Complete ✨';
