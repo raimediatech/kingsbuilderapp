@@ -433,19 +433,8 @@ class KingsBuilderComplete {
     }
 
     addCompletionIndicator() {
-        const indicator = document.createElement('div');
-        indicator.id = 'completion-indicator';
-        indicator.innerHTML = `
-            <div style="position: fixed; bottom: 20px; left: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 20px; border-radius: 25px; font-size: 14px; font-weight: 500; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.3s;"
-                 onclick="kingsBuilderComplete.showCompletionDashboard()"
-                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.2)'"
-                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'">
-                <i class="fas fa-rocket"></i>
-                
-            </div>
-        `;
-        
-        document.body.appendChild(indicator);
+        // DISABLED - No completion indicator
+        return;
     }
 
     addVersionInfo() {

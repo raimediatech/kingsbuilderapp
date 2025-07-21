@@ -32,7 +32,7 @@
 }
 
 .responsive-indicator.desktop {
-    background: #3b82f6;
+    background: #000000;
     color: white;
 }
 
@@ -259,7 +259,7 @@
 }
 
 .button-group .btn.active {
-    background: #3b82f6;
+    background: #000000;
     color: white;
 }
 
@@ -397,7 +397,7 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #3b82f6;
+    background: #000000;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -406,7 +406,7 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #3b82f6;
+    background: #000000;
     cursor: pointer;
     border: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -446,7 +446,7 @@
 }
 
 .link-toggle[data-linked="true"] {
-    background: #3b82f6;
+    background: #000000;
     color: white;
     border-color: #3b82f6;
 }
@@ -590,7 +590,7 @@
 }
 
 .upload-buttons .btn-primary {
-    background: #3b82f6;
+    background: #000000;
     color: white;
     border-color: #3b82f6;
 }
@@ -630,7 +630,7 @@
 }
 
 .editor-btn.active {
-    background: #3b82f6;
+    background: #000000;
     color: white;
 }
 
@@ -717,7 +717,7 @@
 }
 
 .device-tab.active {
-    background: #3b82f6;
+    background: #000000;
     color: white;
 }
 
@@ -754,7 +754,7 @@
 }
 
 .shadow-preset-btn.active {
-    background: #3b82f6;
+    background: #000000;
     color: white;
     border-color: #3b82f6;
 }
@@ -1708,7 +1708,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #3b82f6;
+    background: #000000;
     color: white;
     padding: 12px 24px;
     border-radius: 6px;

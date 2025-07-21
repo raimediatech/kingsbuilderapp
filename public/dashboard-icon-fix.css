@@ -304,21 +304,21 @@
 }
 
 .btn-primary {
-    background: #3b82f6;
+    background: #000000;
     color: white;
 }
 
 .btn-primary:hover {
-    background: #2563eb;
+    background: #333333;
 }
 
 .btn-secondary {
-    background: #6b7280;
+    background: #000000;
     color: white;
 }
 
 .btn-secondary:hover {
-    background: #4b5563;
+    background: #333333;
 }
 
 .btn-danger {
