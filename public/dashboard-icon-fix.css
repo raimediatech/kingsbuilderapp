@@ -304,21 +304,25 @@
 }
 
 .btn-primary {
-    background: #000000;
-    color: white;
+    background: #000000 !important;
+    color: white !important;
+    border: 1px solid #000000 !important;
 }
 
 .btn-primary:hover {
-    background: #333333;
+    background: #333333 !important;
+    border-color: #333333 !important;
 }
 
 .btn-secondary {
-    background: #000000;
-    color: white;
+    background: #000000 !important;
+    color: white !important;
+    border: 1px solid #000000 !important;
 }
 
 .btn-secondary:hover {
-    background: #333333;
+    background: #333333 !important;
+    border-color: #333333 !important;
 }
 
 .btn-danger {
