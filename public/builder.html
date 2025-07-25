@@ -149,6 +149,7 @@ class CanvasManager {
         
         this.setupElementor();
         this.bindEvents();
+        this.bindColumnControls();
         this.updateCanvasEmpty();
         this.initialized = true;
         console.log("? Elementor Canvas Ready");
@@ -309,6 +310,48 @@ class CanvasManager {
                 document.body.style.cursor = '';
             }
         });
+    }
+
+    bindColumnControls() {
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.kb-control-btn');
+            if (!btn) return;
+
+            const action = btn.dataset.action;
+            const column = btn.closest('.elementor-column');
+            
+            switch (action) {
+                case 'edit':
+                    this.selectElement(column);
+                    break;
+                case 'resize':
+                    // Toggle resize mode
+                    column.classList.toggle('kb-resize-mode');
+                    break;
+                case 'duplicate':
+                    this.duplicateColumn(column);
+                    break;
+                case 'delete':
+                    this.deleteColumn(column);
+                    break;
+            }
+        });
+    }
+
+    duplicateColumn(column) {
+        const clone = column.cloneNode(true);
+        clone.dataset.id = this.generateId();
+        column.parentNode.insertBefore(clone, column.nextSibling);
+        this.makeInteractive(clone);
+        this.addColumnResize(clone);
+    }
+
+    deleteColumn(column) {
+        if (confirm('Delete this column?')) {
+            column.remove();
+            this.updateCanvasEmpty();
+            this.updateNavigator();
+        }
     }
 
     createSectionWithWidget(widget, dropInfo) {
@@ -497,16 +540,20 @@ class CanvasManager {
     }
 
     deselectAll() {
-        if (this.selectedElement) {
+        if (this.selectedElement && this.selectedElement.classList) {
             this.selectedElement.classList.remove("elementor-element-edit-mode");
             this.selectedElement = null;
         }
         this.canvas.querySelectorAll(".elementor-element-edit-mode").forEach(el => {
-            el.classList.remove("elementor-element-edit-mode");
+            if (el && el.classList) {
+                el.classList.remove("elementor-element-edit-mode");
+            }
         });
         
         // Show page settings when nothing is selected
-        window.kingsBuilder.selectElement(null);
+        if (window.kingsBuilder && window.kingsBuilder.selectElement) {
+            window.kingsBuilder.selectElement(null);
+        }
     }
 
     editElement(element) {
@@ -988,6 +1035,10 @@ window.CanvasManager = CanvasManager;
     </script>
 </body>
 </html>
+
+
+
+
 
 
 
