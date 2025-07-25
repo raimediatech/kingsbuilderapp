@@ -96,6 +96,25 @@
 
         .elementor-column {
             position: relative;
+            width: 100%;
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        .elementor-section .elementor-container {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .elementor-col-100 {
+            width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+
+        .elementor-widget-wrap {
+            width: 100%;
+            min-height: 50px;
         }
     </style>
 
@@ -229,6 +248,8 @@ class CanvasManager {
     createColumn(width = 100) {
         const column = document.createElement("div");
         column.className = "elementor-column elementor-col-100 elementor-top-column kb-column";
+        column.style.width = "100%";
+        column.style.flex = "0 0 100%";
         column.dataset.id = this.generateId();
         column.dataset.element_type = "column";
         
@@ -967,6 +988,8 @@ window.CanvasManager = CanvasManager;
     </script>
 </body>
 </html>
+
+
 
 
 
