@@ -533,7 +533,38 @@ function createCleanElementorInterface() {
         .canvas-wrapper {
             width: 100%;
             height: 100%;
-            padding: 20px;
+            padding: 0;
+        }
+
+        /* MAKE EXISTING CANVAS VISIBLE */
+        #kingsbuilder-canvas-container,
+        .kingsbuilder-canvas-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+            height: 100% !important;
+            position: relative !important;
+        }
+
+        #kingsbuilder-canvas,
+        .kingsbuilder-canvas {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .canvas-frame {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: white !important;
+            border-radius: 8px !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
         }
 
         /* ELEMENT SELECTION */
@@ -648,18 +679,45 @@ function createCleanElementorInterface() {
 }
 
 function moveCanvasToInterface() {
-    const existingCanvas = document.querySelector('.canvas, .builder-canvas, #canvas, .canvas-frame');
+    const existingCanvas = document.querySelector('#kingsbuilder-canvas-container, .kingsbuilder-canvas-container, #kingsbuilder-canvas, .canvas-frame');
     const canvasWrapper = document.querySelector('.canvas-wrapper');
     
     if (existingCanvas && canvasWrapper) {
         console.log('📦 Moving canvas to interface...');
-        canvasWrapper.appendChild(existingCanvas);
+        
+        // Move the entire canvas container
+        const canvasContainer = document.querySelector('#kingsbuilder-canvas-container') || document.querySelector('.kingsbuilder-canvas-container');
+        if (canvasContainer) {
+            canvasWrapper.appendChild(canvasContainer);
+            console.log('✅ Canvas container moved successfully');
+        } else {
+            canvasWrapper.appendChild(existingCanvas);
+            console.log('✅ Canvas moved successfully');
+        }
+        
+        // Make sure it's visible
+        existingCanvas.style.display = 'block';
+        existingCanvas.style.visibility = 'visible';
+        existingCanvas.style.opacity = '1';
         existingCanvas.style.width = '100%';
         existingCanvas.style.height = '100%';
-        existingCanvas.style.background = 'white';
-        existingCanvas.style.borderRadius = '8px';
-        existingCanvas.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-        console.log('✅ Canvas moved successfully');
+        
+    } else {
+        console.log('❌ Canvas not found, creating placeholder...');
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+        if (canvasWrapper) {
+            canvasWrapper.innerHTML = `
+                <div class="canvas-frame" style="width: 100%; height: 100%; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px;">
+                    <div class="empty-canvas" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: #6b7280;">
+                        <div class="empty-canvas-icon" style="font-size: 48px; margin-bottom: 20px;">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <h2 style="margin-bottom: 10px; color: #374151;">Start Building Your Page</h2>
+                        <p style="margin-bottom: 20px;">Drag elements from the left panel to start creating</p>
+                    </div>
+                </div>
+            `;
+        }
     }
 }
 
