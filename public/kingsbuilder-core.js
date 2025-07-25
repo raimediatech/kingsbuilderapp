@@ -688,3 +688,4 @@ class KingsBuilderCore {
 
 // Export for global use
 window.KingsBuilderCore = KingsBuilderCore;
+

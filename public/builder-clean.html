@@ -568,8 +568,13 @@ class CanvasManager {
                 const element = temp.firstElementChild;
                 if (element) {
                     this.canvas.appendChild(element);
+                    
+                    // Restore widget references for all widgets
+                    this.restoreWidgetReferences(element);
+                    
                     this.makeInteractive(element);
                     element.querySelectorAll(".elementor-column, .elementor-widget").forEach(child => {
+                        this.restoreWidgetReferences(child);
                         this.makeInteractive(child);
                     });
                 }
@@ -577,6 +582,24 @@ class CanvasManager {
         }
         this.updateCanvasEmpty();
         this.updateNavigator();
+    }
+
+    restoreWidgetReferences(element) {
+        // Only restore for widgets, not sections or columns
+        if (element.classList.contains("elementor-widget")) {
+            const widgetType = element.dataset.widget;
+            if (widgetType && window.kingsBuilder && window.kingsBuilder.widgetManager) {
+                const widget = window.kingsBuilder.widgetManager.getWidget(widgetType);
+                if (widget) {
+                    element._kbWidget = widget;
+                    // Restore settings if they exist
+                    if (!element._kbSettings) {
+                        element._kbSettings = widget.getDefaultSettings();
+                    }
+                    console.log(`?? Restored widget reference for: ${widgetType}`);
+                }
+            }
+        }
     }
 }
 
@@ -858,3 +881,4 @@ window.CanvasManager = CanvasManager;
     </script>
 </body>
 </html>
+
