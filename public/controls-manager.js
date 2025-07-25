@@ -748,7 +748,20 @@ class ControlsManager {
 
         const settings = window.kingsBuilder.pageSettings;
 
-        settingsContent.innerHTML = `
+        // Clear the entire settings panel and replace with page settings
+        const settingsPanel = settingsContent.closest('.kb-tab-content');
+        if (settingsPanel) {
+            settingsPanel.innerHTML = `
+                <div class="kb-settings-header">
+                    <h3 id="kb-settings-title">Page Settings</h3>
+                </div>
+                <div class="kb-settings-content" id="kb-settings-content">
+                </div>
+            `;
+        }
+
+        const newSettingsContent = document.getElementById('kb-settings-content');
+        newSettingsContent.innerHTML = `
             <div class="kb-controls-container">
                 <div class="kb-control-group">
                     <label class="kb-control-label">Page Title</label>
@@ -868,4 +881,5 @@ class ControlsManager {
 
 // Export for global use
 window.ControlsManager = ControlsManager;
+
 
