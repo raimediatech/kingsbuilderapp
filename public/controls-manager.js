@@ -704,10 +704,168 @@ class ControlsManager {
                 
                 // Save state
                 window.kingsBuilder?.historyManager?.saveState();
-            });
+            });        });
+    }
+
+    /**
+     * Load page settings
+     */
+    loadPageSettings() {
+        console.log('?? Loading page settings');
+        
+        // Update settings title
+        const settingsTitle = document.getElementById('kb-settings-title');
+        if (settingsTitle) {
+            settingsTitle.textContent = 'Page Settings';
+        }
+
+        // Get or create page settings
+        if (!window.kingsBuilder.pageSettings) {
+            window.kingsBuilder.pageSettings = {
+                title: document.title || 'Untitled Page',
+                description: '',
+                keywords: '',
+                favicon: '',
+                customCSS: '',
+                customJS: '',
+                bodyClass: '',
+                backgroundColor: '#ffffff',
+                backgroundImage: '',
+                maxWidth: '1200px'
+            };
+        }
+
+        // Render page settings
+        this.renderPageSettings();
+    }
+
+    /**
+     * Render page settings panel
+     */
+    renderPageSettings() {
+        const settingsContent = document.getElementById('kb-settings-content');
+        if (!settingsContent) return;
+
+        const settings = window.kingsBuilder.pageSettings;
+
+        settingsContent.innerHTML = `
+            <div class="kb-controls-container">
+                <div class="kb-control-group">
+                    <label class="kb-control-label">Page Title</label>
+                    <input type="text" class="kb-control-input" data-setting="title" value="${settings.title}" placeholder="Enter page title">
+                </div>
+                
+                <div class="kb-control-group">
+                    <label class="kb-control-label">Meta Description</label>
+                    <textarea class="kb-control-textarea" data-setting="description" placeholder="Enter page description">${settings.description}</textarea>
+                </div>
+                
+                <div class="kb-control-group">
+                    <label class="kb-control-label">Keywords</label>
+                    <input type="text" class="kb-control-input" data-setting="keywords" value="${settings.keywords}" placeholder="keyword1, keyword2, keyword3">
+                </div>
+                
+                <div class="kb-control-group">
+                    <label class="kb-control-label">Background Color</label>
+                    <input type="color" class="kb-control-color" data-setting="backgroundColor" value="${settings.backgroundColor}">
+                </div>
+                
+                <div class="kb-control-group">
+                    <label class="kb-control-label">Background Image URL</label>
+                    <input type="url" class="kb-control-input" data-setting="backgroundImage" value="${settings.backgroundImage}" placeholder="https://example.com/image.jpg">
+                </div>
+                
+                <div class="kb-control-group">
+                    <label class="kb-control-label">Max Width</label>
+                    <input type="text" class="kb-control-input" data-setting="maxWidth" value="${settings.maxWidth}" placeholder="1200px">
+                </div>
+                
+                <div class="kb-control-group">
+                    <label class="kb-control-label">Body CSS Class</label>
+                    <input type="text" class="kb-control-input" data-setting="bodyClass" value="${settings.bodyClass}" placeholder="custom-class">
+                </div>
+                
+                <div class="kb-control-group">
+                    <label class="kb-control-label">Custom CSS</label>
+                    <textarea class="kb-control-textarea" data-setting="customCSS" placeholder="/* Custom CSS */" rows="6">${settings.customCSS}</textarea>
+                </div>
+                
+                <div class="kb-control-group">
+                    <label class="kb-control-label">Custom JavaScript</label>
+                    <textarea class="kb-control-textarea" data-setting="customJS" placeholder="/* Custom JavaScript */" rows="4">${settings.customJS}</textarea>
+                </div>
+            </div>
+        `;
+
+        // Bind page settings events
+        this.bindPageSettingsEvents();
+    }
+
+    /**
+     * Bind page settings events
+     */
+    bindPageSettingsEvents() {
+        const settingsContent = document.getElementById('kb-settings-content');
+        if (!settingsContent) return;
+
+        // Handle input changes
+        settingsContent.addEventListener('input', (e) => {
+            const setting = e.target.dataset.setting;
+            const value = e.target.value;
+            
+            if (setting && window.kingsBuilder.pageSettings) {
+                window.kingsBuilder.pageSettings[setting] = value;
+                this.applyPageSetting(setting, value);
+                console.log(`?? Updated page setting: ${setting} = ${value}`);
+            }
         });
+    }
+
+    /**
+     * Apply page setting to the page
+     */
+    applyPageSetting(setting, value) {
+        switch (setting) {
+            case 'title':
+                document.title = value;
+                break;
+            case 'backgroundColor':
+                document.body.style.backgroundColor = value;
+                break;
+            case 'backgroundImage':
+                if (value) {
+                    document.body.style.backgroundImage = `url(${value})`;
+                } else {
+                    document.body.style.backgroundImage = '';
+                }
+                break;
+            case 'bodyClass':
+                // Remove old custom classes and add new one
+                document.body.className = document.body.className.replace(/kb-custom-\S+/g, '');
+                if (value) {
+                    document.body.classList.add(`kb-custom-${value}`);
+                }
+                break;
+            case 'customCSS':
+                // Update or create custom CSS style tag
+                let customStyle = document.getElementById('kb-custom-css');
+                if (!customStyle) {
+                    customStyle = document.createElement('style');
+                    customStyle.id = 'kb-custom-css';
+                    document.head.appendChild(customStyle);
+                }
+                customStyle.textContent = value;
+                break;
+            case 'maxWidth':
+                const canvas = document.getElementById('kb-canvas');
+                if (canvas) {
+                    canvas.style.maxWidth = value;
+                }
+                break;
+        }
     }
 }
 
 // Export for global use
 window.ControlsManager = ControlsManager;
+

@@ -400,6 +400,9 @@ class CanvasManager {
         this.canvas.querySelectorAll(".elementor-element-edit-mode").forEach(el => {
             el.classList.remove("elementor-element-edit-mode");
         });
+        
+        // Show page settings when nothing is selected
+        window.kingsBuilder.selectElement(null);
     }
 
     editElement(element) {
@@ -881,4 +884,5 @@ window.CanvasManager = CanvasManager;
     </script>
 </body>
 </html>
+
 
